@@ -1,0 +1,58 @@
+name: Bug report
+description: Report reproducible incorrect behavior
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a problem. Do not include API keys, runtime tokens, raw desktop screenshots, accessibility dumps, or private window contents.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the incorrect behavior and the result you expected.
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows 11
+        - Ubuntu / GNOME
+        - Other Linux desktop
+        - Protocol or platform-independent
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS version, desktop or shell version, Node version, compiler, and native build type when relevant.
+      placeholder: Windows 11 24H2; Node 22.x; Visual Studio 2022; Release build
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Use a disposable fixture when the issue involves desktop input.
+      placeholder: |
+        1. Build with ...
+        2. Start a session with ...
+        3. Run ...
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Sanitized output
+      description: Paste the smallest relevant error or JSON response after removing tokens, paths, window contents, and personal data.
+      render: text
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I reviewed this report and removed credentials and private desktop data.
+          required: true

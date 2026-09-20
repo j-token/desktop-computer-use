@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.desktop-computer-use"
+          path="/org/gnome/shell/extensions/desktop-computer-use/">
+    <key name="desktop-computer-use-stop-accelerator" type="as">
+      <default>['Escape']</default>
+      <summary>Computer Use stop accelerator</summary>
+      <description>Stops an active computer use session and releases the indicator.</description>
+    </key>
+  </schema>
+</schemalist>

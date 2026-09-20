@@ -1,0 +1,538 @@
+{
+  "window": {
+    "app": "KohuzUtil.ejo",
+    "height": 868,
+    "id": "hwnd:66794",
+    "isForeground": false,
+    "isMinimized": false,
+    "isOffscreen": false,
+    "pid": 44236,
+    "title": "주므부추",
+    "width": 392,
+    "x": 2772,
+    "y": 130
+  },
+  "accessibility": {
+    "elementCount": 30,
+    "elements": [
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 868,
+          "width": 392,
+          "x": 0,
+          "y": 0
+        },
+        "className": "TAF_Ezejov_Eligam",
+        "controlType": "Window",
+        "enabled": true,
+        "focused": false,
+        "index": 0,
+        "name": "주므부추",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "TAF_Ezejov_Eligam",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 1,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "4181",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "JOD_UteveGudoma",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 2,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "2978",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "JOD_UteveGudoma",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 3,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "9630",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "JOD_UteveGudoma",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 4,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "Putefa_RozuliSan_6",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 5,
+        "name": "HASARU 카보",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "Jozebarumehi J9K Etedum",
+        "controlType": "Pane",
+        "enabled": false,
+        "focused": false,
+        "index": 6,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "BagekevOrefUror",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 7,
+        "name": "LIGIPO 사크 - 브 구아고",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "TenAtagupEloj",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 8,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "LiposenaPenudihEpukeMovi",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 9,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "ZusevavIlat",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 10,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": -2772,
+          "y": -130
+        },
+        "className": "LovOrotikugiTudu",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 11,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "ZuharerObafegadIsiloHopi",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 12,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "ZuharerObafegadIsiloHopi",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 13,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "TizetObujotipIbar",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 14,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "Pipo",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 15,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": -2772,
+          "y": -130
+        },
+        "className": "Pipo",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 16,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "PinuTahUbas",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "",
+        "controlType": "ControlType_50030",
+        "enabled": true,
+        "focused": true,
+        "index": 17,
+        "name": "HASARU 카보",
+        "offscreen": false,
+        "patterns": [
+          "value"
+        ],
+        "value": "pavot://e4.ozazibab.aho/gef/erekaf/og.atir"
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 16,
+          "width": 53,
+          "x": -9993,
+          "y": 763
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 18,
+        "name": "트포 코누",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 90,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "migo_te",
+        "controlType": "Hyperlink",
+        "enabled": true,
+        "focused": false,
+        "index": 19,
+        "name": "카투 느구부 크호호다주 코투마노 마라토쿠타 소모바느르타 수르 보나 Epenu Zafeh",
+        "offscreen": false,
+        "patterns": [
+          "invoke",
+          "value"
+        ],
+        "value": "kelar://ej.eh.ivoge.buv/era?po=-FokO54bizi4A8uJETIDEvo9AgOPAKapIjIfEb3Bide&sah=oJor_iF9M9tafiZugIparEhum5tOH-016K4PaJAnOzINi7E0oHE4udAgI6i1udI6U-0I0UbiKuLesaVUgosEKih15AhUz0BiRO-7iM4SaSakOjukopOPO6A0UbAGOnufAKImOVivO2AJ7GaroJiVosofUDapaSImA-NaHiSUriJAN1bi1ePIhU72rolEnEluZISa3O-9aSITOtEK7-revOG2PamOZOPeLO1_AVog5l1VA-Si6oNODUmEDIsA_PI3ovuvU-T87IGI9ElU9UForiBOta_Z9fUfUrEBihOREg5j-iBeFivovE62498E4A2omoNIp6MuJaS1nOSAbe7EPI0UH_iSUT43IbOGiKUz6DOHEVI8EKIpe0uLezAmobObaGuTu6aMa2u8iREvEvUnOkuDOzoSIPIVoDIToFaFEK83u7ume7e76HiNAzIhuDEkUtAD9ginU0otEzIL75ufEr63_ifA-jON1Gudo0UKA6EhiJeG5tIMinuvEF12i2apoV7M2Paz73-aNipUveV7HOloT2b5K9riROpaSEMUFub4JiS--8RO3AtE_bOP4TAr&unopelose=v592k848ra954ar157260999v231g228&li=9"
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 62,
+          "width": 122,
+          "x": 31,
+          "y": 785
+        },
+        "className": "nop_iluro",
+        "controlType": "Image",
+        "enabled": true,
+        "focused": false,
+        "index": 20,
+        "name": "흐쿠 루루부 우자후로파",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": -2772,
+          "y": -130
+        },
+        "className": "BusaduboJituvukUlijahepUzer",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 21,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": -2772,
+          "y": -130
+        },
+        "className": "BopetoziNujipepAseLodiSulu",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 22,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "RazIfuridokuKehehetEzil",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 23,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "971",
+        "bounds": {
+          "height": 734,
+          "width": 390,
+          "x": 1,
+          "y": 31
+        },
+        "className": "JOD_UteveGudoma",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 24,
+        "name": "BerenuMomeFuta_5o509473ko",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "6836",
+        "bounds": {
+          "height": 734,
+          "width": 325,
+          "x": 66,
+          "y": 31
+        },
+        "className": "TEJ_Ilijik",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 25,
+        "name": "TakeNadoHamuMive_1e9119796i",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "0282",
+        "bounds": {
+          "height": 649,
+          "width": 325,
+          "x": 66,
+          "y": 116
+        },
+        "className": "KUP_OM_ObovEpusari_Gopavo",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 26,
+        "name": "HotiDadoTuhuZafo_2i17438755",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "980",
+        "bounds": {
+          "height": 649,
+          "width": 14,
+          "x": 377,
+          "y": 116
+        },
+        "className": "_JAF_EfokopIrevupIbav",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 27,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "0682",
+        "bounds": {
+          "height": 40,
+          "width": 325,
+          "x": 66,
+          "y": 76
+        },
+        "className": "TAF_Ezejov_Eligam",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 28,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "3492",
+        "bounds": {
+          "height": 91,
+          "width": 380,
+          "x": 6,
+          "y": 771
+        },
+        "className": "JOD_UteveGudoma",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 29,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      }
+    ],
+    "tree": "[0] Window \"주므부추\" rect=0,0 392x868\n[1] Pane rect=6,771 380x91\n[2] Pane rect=6,771 380x91\n[3] Pane rect=6,771 380x91\n[4] Pane rect=6,771 380x91\n[5] Pane \"HASARU 카보\" rect=6,771 380x91\n[6] Pane rect=6,771 380x91\n[7] Pane \"LIGIPO 사크 - 브 구아고\" rect=6,771 380x91\n[8] Pane rect=6,771 380x91\n[9] Pane rect=6,771 380x91\n[10] Pane rect=6,771 380x91\n[11] Pane rect=-2772,-130 0x0\n[12] Pane rect=6,771 380x91\n[13] Pane rect=6,771 380x91\n[14] Pane rect=6,771 380x91\n[15] Pane rect=6,771 380x91\n[16] Pane rect=-2772,-130 0x0\n[17] ControlType_50030 \"HASARU 카보\" rect=6,771 380x91 value=\"pavot://e4.ozazibab.aho/gef/erekaf/og.atir\"\n[18] Text \"트포 코누\" rect=-9993,763 53x16\n[19] Hyperlink \"카투 느구부 크호호다주 코투마노 마라토쿠타 소모바느르타 수르 보나 Epenu Zafeh\" rect=6,771 380x90 value=\"kelar://ej.eh.ivoge.buv/era?po=-FokO54bizi4A8uJETIDEvo9AgOPAKapIjIfEb3Bide&sah=oJor_iF9M9tafiZugIparEhum5tOH-016K4PaJAnOzINi7E0oHE4udAgI6i1udI6U-0I0UbiKuLesaVUgosEKih15AhUz0BiRO-7iM4SaSakOjukopOPO6A0UbAGOnufAKImOVivO2AJ7GaroJiVosofUDapaSImA-NaHiSUriJAN1bi1ePIhU72rolEnEluZISa3O-9aSITOtEK7-revOG2PamOZOPeLO1_AVog5l1VA-Si6oNODUmEDIsA_PI3ovuvU-T87IGI9ElU9UForiBOta_Z9fUfUrEBihOREg5j-iBeFivovE62498E4A2omoNIp6MuJaS1nOSAbe7EPI0UH_iSUT43IbOGiKUz6DOHEVI8EKIpe0uLezAmobObaGuTu6aMa2u8iREvEvUnOkuDOzoSIPIVoDIToFaFEK83u7ume7e76HiNAzIhuDEkUtAD9ginU0otEzIL75ufEr63_ifA-jON1Gudo0UKA6EhiJeG5tIMinuvEF12i2apoV7M2Paz73-aNipUveV7HOloT2b5K9riROpaSEMUFub4JiS--8RO3AtE_bOP4TAr&unopelose=v592k848ra954ar157260999v231g228&li=9\"\n[20] Image \"흐쿠 루루부 우자후로파\" rect=31,785 122x62\n[21] Pane rect=-2772,-130 0x0\n[22] Pane rect=-2772,-130 0x0\n[23] Pane rect=6,771 380x91\n[24] Pane \"BerenuMomeFuta_5o509473ko\" rect=1,31 390x734\n[25] Pane \"TakeNadoHamuMive_1e9119796i\" rect=66,31 325x734\n[26] Pane \"HotiDadoTuhuZafo_2i17438755\" rect=66,116 325x649\n[27] Pane rect=377,116 14x649\n[28] Pane rect=66,76 325x40\n[29] Pane rect=6,771 380x91\n"
+  }
+}

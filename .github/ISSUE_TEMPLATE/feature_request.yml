@@ -1,0 +1,30 @@
+name: Feature request
+description: Propose a focused capability or platform improvement
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What task cannot be completed with the current behavior?
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Requested behavior
+      description: Describe the observable result and the platform or application class it applies to.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints and alternatives
+      description: Note accessibility, permission, session-safety, or compatibility constraints and any workaround you tried.
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This request concerns a desktop interface that exposes accessible controls, or explains why a native extension is needed.
+          required: true

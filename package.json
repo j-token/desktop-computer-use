@@ -1,0 +1,37 @@
+{
+  "name": "desktop-computer-use",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone native desktop computer-use CLI and skill",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "desktop-computer-use": "skills/desktop-computer-use/scripts/dcu.mjs"
+  },
+  "files": [
+    "dist",
+    "scripts",
+    "skills",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "bundle": "node scripts/build-skill.mjs",
+    "build:all": "npm run build && npm run bundle",
+    "test": "npm run build:all && node --test --test-concurrency=1 tests/*.test.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "package:skill": "node scripts/package-skill.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.8.2"
+  }
+}

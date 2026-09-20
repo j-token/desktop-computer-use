@@ -1,0 +1,8 @@
+{
+  "uuid": "desktop-computer-use@local",
+  "name": "Desktop Computer Use",
+  "description": "Shows when Desktop Computer Use is controlling the session and exposes window discovery over D-Bus.",
+  "version": 1,
+  "shell-version": ["45", "46", "47", "48", "49", "50"],
+  "settings-schema": "org.gnome.shell.extensions.desktop-computer-use"
+}

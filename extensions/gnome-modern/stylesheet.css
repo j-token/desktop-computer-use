@@ -1,0 +1,61 @@
+.dcu-panel-label {
+  color: #ffffff;
+  font-weight: bold;
+  padding: 0 7px;
+}
+
+.dcu-banner {
+  background-color: rgba(31, 42, 56, 0.96);
+  border: 2px solid #8bd5ff;
+  border-radius: 9px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  padding: 6px 16px;
+}
+
+.dcu-banner-label {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.dcu-cursor {
+  background-color: rgba(8, 12, 18, 0.48);
+  border: 3px solid #ffdc5e;
+  border-radius: 22px;
+  box-shadow: 0 0 10px rgba(255, 220, 94, 0.9);
+  height: 44px;
+  width: 44px;
+}
+
+.dcu-cursor-arrow {
+  color: #ffffff;
+  font-size: 25px;
+  font-weight: bold;
+  margin-left: 11px;
+  margin-top: 5px;
+  text-shadow: 1px 1px 2px #000000;
+}
+
+
+/* Each edge fades from blue at the screen boundary to transparent inward. */
+.dcu-screen-border-top {
+  background-gradient-direction: vertical;
+  background-gradient-start: rgba(35, 140, 255, 0.78);
+  background-gradient-end: rgba(35, 140, 255, 0);
+}
+.dcu-screen-border-bottom {
+  background-gradient-direction: vertical;
+  background-gradient-start: rgba(35, 140, 255, 0);
+  background-gradient-end: rgba(35, 140, 255, 0.78);
+}
+.dcu-screen-border-left {
+  background-gradient-direction: horizontal;
+  background-gradient-start: rgba(35, 140, 255, 0.78);
+  background-gradient-end: rgba(35, 140, 255, 0);
+}
+.dcu-screen-border-right {
+  background-gradient-direction: horizontal;
+  background-gradient-start: rgba(35, 140, 255, 0);
+  background-gradient-end: rgba(35, 140, 255, 0.78);
+}

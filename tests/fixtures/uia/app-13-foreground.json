@@ -1,0 +1,41 @@
+{
+  "window": {
+    "app": "VeJumaLas.omo",
+    "height": 22,
+    "id": "hwnd:67466",
+    "isForeground": true,
+    "isMinimized": false,
+    "isOffscreen": false,
+    "pid": 7284,
+    "title": "Mamilo PUF",
+    "width": 22,
+    "x": 1898,
+    "y": 1010
+  },
+  "accessibility": {
+    "elementCount": 1,
+    "elements": [
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 22,
+          "width": 22,
+          "x": 0,
+          "y": 0
+        },
+        "className": "JOdigoKuzifeheg",
+        "controlType": "Window",
+        "enabled": true,
+        "focused": true,
+        "index": 0,
+        "name": "Mamilo PUF",
+        "offscreen": false,
+        "patterns": [
+          "invoke",
+          "value"
+        ]
+      }
+    ],
+    "tree": "[0] Window \"Mamilo PUF\" rect=0,0 22x22\n"
+  }
+}

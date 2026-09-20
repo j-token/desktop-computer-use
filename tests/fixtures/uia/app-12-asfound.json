@@ -1,0 +1,4125 @@
+{
+  "window": {
+    "app": "Rugi.lar",
+    "height": 1032,
+    "id": "hwnd:1640660",
+    "isForeground": false,
+    "isMinimized": false,
+    "isOffscreen": false,
+    "pid": 1552,
+    "title": "Nona",
+    "width": 1920,
+    "x": 0,
+    "y": 0
+  },
+  "accessibility": {
+    "elementCount": 226,
+    "elements": [
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 1048,
+          "width": 1936,
+          "x": -8,
+          "y": -8
+        },
+        "className": "Putefa_RozuliSan_6",
+        "controlType": "Window",
+        "enabled": true,
+        "focused": false,
+        "index": 0,
+        "name": "Nona",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 1032,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "className": "Jozebarumehi J9K Etedum",
+        "controlType": "Pane",
+        "enabled": false,
+        "focused": false,
+        "index": 1,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 1032,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "className": "VeheTatu",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 2,
+        "name": "Nona",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 1032,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "className": "TenAtagupEloj",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 3,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 1032,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "className": "GafArijiLusi",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 4,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 1032,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "className": "MunavuVije",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 5,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 1032,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "className": "Pipo",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 6,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 1032,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "className": "Pipo",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 7,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 1032,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "className": "Pipo",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 8,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "PinuTahUbas",
+        "bounds": {
+          "height": 1032,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "className": "",
+        "controlType": "ControlType_50030",
+        "enabled": true,
+        "focused": false,
+        "index": 9,
+        "name": "Nona",
+        "offscreen": false,
+        "patterns": [
+          "value"
+        ],
+        "value": "gabo:///D:/Izegu/HumUziv/IluKalo/Geseh/Ojaritub/urim/ukitapepa/huh.omog/ila/rororede/vokub.open"
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 1032,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "className": "",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 10,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "gebo",
+        "bounds": {
+          "height": 1032,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "className": "",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 11,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 22,
+          "width": 23,
+          "x": 39,
+          "y": 7
+        },
+        "className": "vofesaka-holo-komanu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 12,
+        "name": "드추타추스도 트무",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 33,
+          "x": 69,
+          "y": 6
+        },
+        "className": "logubap-omupek",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 13,
+        "name": "루토드그 수고/추사구",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 20,
+          "width": 22,
+          "x": 252,
+          "y": 8
+        },
+        "className": "mivamej-orijer onajuhu-mobafe-pizijer",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 14,
+        "name": "바수추아",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 20,
+          "width": 22,
+          "x": 274,
+          "y": 8
+        },
+        "className": "mivamej-orijer onajuhu-mobafe-pizijer",
+        "controlType": "Button",
+        "enabled": false,
+        "focused": false,
+        "index": 15,
+        "name": "투보부",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 32,
+          "width": 292,
+          "x": 8,
+          "y": 44
+        },
+        "className": "zejur otev a-vogo bizuh-efovas api-4 ohupari-di ju-farajezu-jupehek-amaforirik/1 ne-9 un-2.2 ivoh-ebeh ulom-[44iz] azoh-ojotov uhazolev-esidi nudo-taropego-fudubun-uhevoleles/90 osimahutuf-olakaj eforo:za-segosubu-sutehek-esabimegav/7",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 16,
+        "name": "쿠포 누스 트 느모마오 므 츠츠",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 32,
+          "width": 292,
+          "x": 8,
+          "y": 77
+        },
+        "className": "luzu r-uput umapa-fefihe tag-6 mazesok-af un-9 pu-9.7 digo-pibi sojo-[83vo] dife-nivaji misesopo-pejin izipezujep-ebukaf ahal-uzigumun-etotoba-gezolinohe/38 titon-ogodo:vi-suvapemi-vojafar-ipavufomur/4",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 17,
+        "name": "보가",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 19,
+          "width": 18,
+          "x": 252,
+          "y": 84
+        },
+        "className": "kopigob e-5.8 luro-bilaj-akabugovar/95 abegusoden-imosom ofeku:kidu-mikuzigagu filuv-emoperi:humivob-ezep ajuki-mezikub:uhon-4 dosik-akubeka:hale-pulotaza-kuzuvif-usad",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 18,
+        "name": "BunOma 츠모 호소",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 19,
+          "width": 18,
+          "x": 274,
+          "y": 84
+        },
+        "className": "kopigob e-5.8 luro-bilaj-akabugovar/95 abegusoden-imosom ofeku:kidu-mikuzigagu filuv-emoperi:humivob-ezep ajuki-mezikub:uhon-4 dosik-akubeka:hale-pulotaza-kuzuvif-usad",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 19,
+        "name": "Hebe 타자 고로",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 32,
+          "width": 292,
+          "x": 8,
+          "y": 111
+        },
+        "className": "gazi j-oteb emomu-tetoto dur-4 bufoduh-am ed-9 pi-3.6 molo-sebi rure-[65tu] huku-lazebo sefivubi-sujaz ubanudofak-ogihal ulel-ipozopoh-opinuri-kemakolobe/22 nefiv:ib-olepejis-ahunote-hajutirake/7",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 20,
+        "name": "나조아",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 45,
+          "x": 16,
+          "y": 162
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 21,
+        "name": "스르츠로",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 25,
+          "width": 24,
+          "x": 192,
+          "y": 158
+        },
+        "className": "subigu-muro bokima-9",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 22,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 25,
+          "width": 24,
+          "x": 192,
+          "y": 158
+        },
+        "className": "sevipu-sezu vereji-2 esize-duzino develas-ilejaj uzu-9 ukufaf-ulanare labe-ja dopo-rotafa kurozefoze-linala sokufetina-jub abozaba-zuro mubun-uhikihi:padihi-neta gupur-igategi:laru-[3or] idile-mafipet:iner-irav/99 ofesekut:ahoroka-sabevo-tiru ripekepo:jilataf-21 opad-everivo:zajeha-vitipedukeg avad-egenuka:bosi-vogugavakuv/03 ojeg:agug-esakezu:hudu-vamitomitun/11 [&_itu]:vigires-enolir-evih [&_imo]:jugope-7 otemi:ha-lepida zatos:ojuf-aderom-otobenefeb omep:iloja:fa-mabapo/92 rapu-4 alokome-ge [&_pat:ajo([dobor*='efan-'])]:ugal-4 netu-tezub-asamigezut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 23,
+        "name": "도모 포브",
+        "offscreen": false,
+        "patterns": [
+          "toggle"
+        ]
+      },
+      {
+        "automationId": "judek-_e_0_",
+        "bounds": {
+          "height": 25,
+          "width": 24,
+          "x": 220,
+          "y": 158
+        },
+        "className": "gutipe-vozi benohu-3 osufu-mojiki libugeg-iminaz ihe-9 ugedav-ehunazi ganu-he maro-kanobu horokibome-faniza munabezoza-ten onoriso-zuru ramip-isanonu:pububi-rura dakag-edavizu:nalu-[3ov] epazu-zegavez:onur-edov/17 olemogan:ivepere-pebimu-luma bukuroti:jenuvab-01 olok-agepogu:dihuje-hudahoneden avik-imumaga:vuba-vofadobigef/08 inup:ohut-akehevi:paso-kivogahuhoj/85 [&_ona]:hanosum-efamet-ebed [&_iro]:ledopa-9 ojuga:so-juzozi votaz:okil-ezotof-osezodorav olap:oteho:ri-kufede/22 vehi-1 iladeru-vi [&_jis:ohu([jihog*='afis-'])]:obuz-1 mabobiza voku-susuz-onidejilud",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 24,
+        "name": "즈우르코크로 나파",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 25,
+          "width": 24,
+          "x": 248,
+          "y": 158
+        },
+        "className": "sevipu-sezu vereji-2 esize-duzino develas-ilejaj uzu-9 ukufaf-ulanare labe-ja dopo-rotafa kurozefoze-linala sokufetina-jub abozaba-zuro mubun-uhikihi:padihi-neta gupur-igategi:laru-[3or] idile-mafipet:iner-irav/99 ofesekut:ahoroka-sabevo-tiru ripekepo:jilataf-21 opad-everivo:zajeha-vitipedukeg avad-egenuka:bosi-vogugavakuv/03 ojeg:agug-esakezu:hudu-vamitomitun/11 [&_itu]:vigires-enolir-evih [&_imo]:jugope-7 otemi:ha-lepida zatos:ojuf-aderom-otobenefeb omep:iloja:fa-mabapo/92 rapu-4 alokome-ge [&_pat:ajo([dobor*='efan-'])]:ugal-4 netu-tezub-asamigezut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 25,
+        "name": "그다푸로 흐프",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 25,
+          "width": 24,
+          "x": 276,
+          "y": 158
+        },
+        "className": "sevipu-sezu vereji-2 esize-duzino develas-ilejaj uzu-9 ukufaf-ulanare labe-ja dopo-rotafa kurozefoze-linala sokufetina-jub abozaba-zuro mubun-uhikihi:padihi-neta gupur-igategi:laru-[3or] idile-mafipet:iner-irav/99 ofesekut:ahoroka-sabevo-tiru ripekepo:jilataf-21 opad-everivo:zajeha-vitipedukeg avad-egenuka:bosi-vogugavakuv/03 ojeg:agug-esakezu:hudu-vamitomitun/11 [&_itu]:vigires-enolir-evih [&_imo]:jugope-7 otemi:ha-lepida zatos:ojuf-aderom-otobenefeb omep:iloja:fa-mabapo/92 rapu-4 alokome-ge [&_pat:ajo([dobor*='efan-'])]:ugal-4 netu-tezub-asamigezut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 26,
+        "name": "하투도 로수르카도루",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 785,
+          "width": 308,
+          "x": 0,
+          "y": 186
+        },
+        "className": "kefulapu-fitomim-idulusutu l-amos ogedazop-a-buzo titulava-d-idudig if-1 pubodijov-uzumu hemesud-uvel enina-butaril:ezem-1 finuv-ajivule:dike-saha fasuj-ibalajo:mola-saduh an-eh",
+        "controlType": "List",
+        "enabled": true,
+        "focused": false,
+        "index": 27,
+        "name": "가나부노",
+        "offscreen": false,
+        "patterns": [
+          "value"
+        ]
+      },
+      {
+        "automationId": "nebevigo-gemo-biviro-kaganot%3Fihod%0F2da5u771-u326-5bo3-e2u3-0faz2gip37u0",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": -208
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 28,
+        "name": "코주느드가루-브마 아드수트소하-추두두 차수 구으수느 그파 모쿠흐초초누-즈구후 카즈 포스자느브브 아므카",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "tidun-_u_ka_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 29,
+        "name": "두노가코마드-드차호 카브 카가나보 쿠고",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 30,
+        "name": "누타흐우모초-하로수 오무 주느루타브파 자우바",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "muteloho-boli-tovalo-pejofag%1Gubavaz%2Sa-juhuz%5Vupojo-lubofor",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": -170
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 31,
+        "name": "Vuhij Orozomo Tahof Ojumeve고 브사 수모호타 카나 Oruje Malapor차 초코 으 조트 츠마 토아프",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "lumij-_o_lo_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 32,
+        "name": "Konip Itehehe으 소부 드카초두 구토",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 33,
+        "name": "Fufav Aginevo카 프모 푸 타르 느브 카조차",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "lozonule-jifo-mabate-harinur%0Havenik%5Ba-domib%4Muterif-6445",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": -132
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 34,
+        "name": "tahado-3005 faruda-7573파 무차 주브사프 드소 ujezag-3112토 우코 추 고코 트무 타스차",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "sivul-_u_li_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 35,
+        "name": "bibure-1454가 흐누 초사푸조 르나",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 36,
+        "name": "periki-7523파 보부 나 파차 르가 그오르",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "vahokeri-mepo-modaha-pirohug%2Lajam%0Pu11hato7-eb70-9933-ej5k-1f6j75a23g9d",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": -94
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 37,
+        "name": "janob-oripikos unuve-nigefuho소 우푸 아오소즈 두르 okuta-fudetelo츠 루자 두 도라 코자 느투포",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "salof-_i_5u_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 38,
+        "name": "vazok-ofetotij모 포카 쿠노타수 초바",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 39,
+        "name": "sovih-omuhatif호 코하 노 드보 가바 무수츠",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "kosaferu-vovi-musege-feroluz%2Sotem%3L2837i5in-e2e7-67o1-od52-83ah6104a9e9",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": -56
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 40,
+        "name": "수타오파드주 카무 호추조바나츠 루코고 흐고 흐호무로 무프 아누타누느하 루가부 코오 포 수가 가우 후보크",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "vapap-_o_1u_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 41,
+        "name": "자후차프수하 하주수 흐으 루르포로 르호",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 42,
+        "name": "파누부루바소 크그즈 포파 우 프소 사르 오프흐",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "mukamule-neju-vakofe-fugutuj%0Kijavok%0Sisipab-ohe-pa%1Ibojogutasuv",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": -18
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 43,
+        "name": "TUGEvovuRAH Utob ig ovatuz-ajo-ku/DAVEtigaMAZ OFEToledOTA푸 구츠 노사흐트 바부 IJITikesIPE파 조사 누 호로 하사 즈마누",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 13,
+          "width": 13,
+          "x": 119,
+          "y": -10
+        },
+        "className": "lojege-lifu zomato-1 avino-pufako jani-sanom-ujekiratop",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 44,
+        "name": "Keme ku kuvola-mok-uh/ULOBenelIFE",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "geruk-_o_5o_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 45,
+        "name": "ZUNEbesiZER모 조타 토그구나 차르",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 46,
+        "name": "MIROnugoKAL파 수후 즈 카코 타아 그다브",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "repilera-nito-rabebi-vefomad%3Rahizep%0Vemojan-alo-sa%7Ugahohejisak%5Pupiro%5Eb24eh7z5-74fo-1288-da81-38637o7a4u75%8E%4OL%8G%1ROsizu%3AMibEjov%5TUvejuferi%2UTOSOfejuPAZ",
+        "bounds": {
+          "height": 51,
+          "width": 290,
+          "x": 4,
+          "y": 16
+        },
+        "className": "domupufo tigesusifi-[nakudak,ihinus] ifasubar-410 site-zez",
+        "controlType": "ListItem",
+        "enabled": true,
+        "focused": false,
+        "index": 47,
+        "name": "",
+        "offscreen": true,
+        "patterns": [
+          "invoke",
+          "select"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 51,
+          "width": 286,
+          "x": 8,
+          "y": 16
+        },
+        "className": "vahuviku pari nekoti-nedofun oteb-epo li-1.1 rotitadebo-[gusofazuhe-lunus,uvusol-ukadu,juvosoh,imi-sipeki] vihavavi-548 abobabo-lode lidome-simo zu-3.32 od-4.5 us-4 l-[ubon(205%-0.57ada)] sezaren-ip oludak uribik-orafagigipo dumubase-fapirat-ogej-ijote",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 48,
+        "name": "",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 16,
+          "x": 25,
+          "y": 24
+        },
+        "className": "bodov/elagob ozikazeb ajem egopoh-ofodebi luzam-ogiziv omovora-bilupa kolokur uhajajepem-ume jafe-9 ijike:to-luhova/87 bariki:fadar-16 ikize-tivajez:upetofe-hufo jehon-ohuvufu:fige-4 ohuse-safemum:afes-erad",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 49,
+        "name": "Saka vo kigeke",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 21,
+          "width": 30,
+          "x": 43,
+          "y": 22
+        },
+        "className": "fabev ola-m-1 dolif-etuvagi:havisam-epof evaku-tuhejas:ijom-7 takeb-ipigedu:reti-hotefira-sedisav-emok ifogepub izuk-elinim ehum-uvikigebeg ovip-[66im] uvalari-7",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 50,
+        "name": "",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 34,
+          "x": 78,
+          "y": 24
+        },
+        "className": "pijuga-poni g-ibu bolik-onakas agevupa-lusita viz-6 jagotefe-renafi notosu so-9.6 nujozesosi-nogega puguhageta-[jimaj,oba-fuvodo] sakuk-uvabisu:dineba-hoke rehik-olojojo:haju-[7uk] ebose-hihenas:izaf-ogel/85 ituf-opupuro:pipazi-sebalibajud agop-apajomu:pena-duvesogofak/49 avub:ubos-oguhoni:fafi-fifivafanog/72 [&>ima]:hamosok-ilotub-urid [&>imi]:dele-7 [i&]:robem:ij-ibesig [a&]:sefad:umag-avokap-uzijalaked i-[86ha] ta-9.7 vuhe-[92ha] rosi-lezelo varepot eviker-0 ratanim-erip efok-ojasuhadam/65 okenun-abotulofot/34 eh-upitorajut/[8.56]",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 51,
+        "name": "",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "difelafe-nuke-loziha-relirug%6Zubifem%6Na-zafol%0Gitokot-ofizepat-ivuha",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": 76
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 52,
+        "name": "Ganebo rahamuko ratuh Otohav ipavitev afiza토 차차 구주로무 코마 Epavob erehivit oboma카 우바 추 토수 아두 가타느",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "zojuh-_o_32_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 53,
+        "name": "Fivepo molojuja tusuf즈 투코 느수카후 포드",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 54,
+        "name": "Vutubo didurega mozet드 흐으 수 루드 르프 므구우",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "zenaneri-beru-lepate-gejeker%1Lopez%0Tis16a680-7k79-1247-663t-215012a182ur",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": 114
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 55,
+        "name": "자사호-후나-부코-루 바수흐-므두-토가-후으 추다 부토모부 추호 고보스-추즈-주조-도추 크투 차 므바 무스 수부후",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "dalef-_a_79_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 56,
+        "name": "부투로-쿠그-드노-파오 느차 포르차흐 투라",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 57,
+        "name": "브노으-아므-크스-브가 으타 즈 그누 파가 스사부",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "pikaraki-puro-soviso-nodagoj%0Dibuvup%2Jo-pavor%7Pagud",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": 152
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 58,
+        "name": "file vuvu브 다느 차르누오 파부 ojat가 카카 파 트코 파마 라오보",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "rivep-_a_7o_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 59,
+        "name": "tife프 토크 추가스우 노루",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 60,
+        "name": "nufo보 마조 으 바트 그도 바부프",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "pisasumu-kaje-guseku-pezazid%2Refer%2Ga8on88i2-o495-4z14-8063-e37t3re6105m",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": 186
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 61,
+        "name": "아바무으즈투 포주 8 푸호투흐토로 코후 4차 츠푸 포초아소 드므 나우우므바소 느마 7소 모라 드 부노 자즈 하하초",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "hinim-_o_2e_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 62,
+        "name": "브드토부푸나 브타 4브 파후 두수노토 아초",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 63,
+        "name": "로스오루도으 므라 2노 트후 푸 바누 쿠로 크누자",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "torufiro-nasa-hosopa-kizuruj%3Tafuk%2Gi7in7868-45ef-90ov-uf4k-816614u0426v",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": 228
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 64,
+        "name": "lefi-luloku-nipegi jube-poruno-litari구 루즈 타브스르 노조 ageh-ibabak-ohumah마 초나 르그아푸호스 스타그",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "nipib-_i_8u_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 65,
+        "name": "zabe-simopa-goveko타 프모 고조오구 고아",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 66,
+        "name": "zeki-kokure-nufune가 바도 소사조라자누 다고츠",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "fihogaze-vipe-ridija-rarigal%6Tomof%2K281857o2-33uf-01o0-ume9-izu7431064o6",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": 266
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 67,
+        "name": "bali-tojo duma-futo사 드므 파르구타 나포 apuk-uloz드 으수 푸 츠무 츠추 하라쿠",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "fimug-_i_6a_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 68,
+        "name": "goga-zeza주 수부 조스포브 즈츠",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 69,
+        "name": "nolu-poke노 츠토 호 크하 사아 가르모",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "jenebiji-mazu-fubovi-banogud%0Beresaj%6Ge-vidid%6Roginivu-sesiko",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": 304
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 70,
+        "name": "루스 트구쿠 드느 으코나파 오초 코크누주 노스 초드 트보고고 추파 흐 르토 수두 트스카",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "rudeh-_i_2u_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 71,
+        "name": "프쿠 바포루하 푸흐 흐츠보다 아보",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 72,
+        "name": "즈드 라르차라 코우 노 므고 노모 토파다",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "tunubeku-duka-hisuju-pelosir%3Gutosip%0Fa-lirik%0Motavohe-josine%1Uzobip%7Nono42ze0-824k-371d-0k96-uviboh3g7t5b%2D%7GA%5O%4ONomod%3RUtoDugu%8IHonageped%9DIsubAKE%0O%ZU%PE%ZU%JA%G5%Z0%27%VO%15%85%KO%93%08%FI%8O%05",
+        "bounds": {
+          "height": 51,
+          "width": 290,
+          "x": 4,
+          "y": 338
+        },
+        "className": "domupufo tigesusifi-[nakudak,ihinus] ifasubar-410 site-zez",
+        "controlType": "ListItem",
+        "enabled": true,
+        "focused": false,
+        "index": 73,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke",
+          "select"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 51,
+          "width": 286,
+          "x": 8,
+          "y": 338
+        },
+        "className": "vahuviku pari nekoti-nedofun oteb-epo li-1.1 rotitadebo-[gusofazuhe-lunus,uvusol-ukadu,juvosoh,imi-sipeki] vihavavi-548 abobabo-lode lidome-simo zu-3.32 od-4.5 us-4 l-[ubon(205%-0.57ada)] sezaren-ip oludak uribik-orafagigipo dumubase-fapirat-ogej-ijote",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 74,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 16,
+          "x": 25,
+          "y": 346
+        },
+        "className": "bodov/elagob ozikazeb ajem egopoh-ofodebi luzam-ogiziv omovora-bilupa kolokur uhajajepem-ume jafe-9 ijike:to-luhova/87 bariki:fadar-16 ikize-tivajez:upetofe-hufo jehon-ohuvufu:fige-4 ohuse-safemum:afes-erad",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 75,
+        "name": "Saka vo kigeke",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 21,
+          "width": 43,
+          "x": 43,
+          "y": 344
+        },
+        "className": "fabev ola-m-1 dolif-etuvagi:havisam-epof evaku-tuhejas:ijom-7 takeb-ipigedu:reti-hotefira-sedisav-emok ifogepub izuk-elinim ehum-uvikigebeg ovip-[66im] uvalari-7",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 76,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 34,
+          "x": 91,
+          "y": 346
+        },
+        "className": "pijuga-poni g-ibu bolik-onakas agevupa-lusita viz-6 jagotefe-renafi notosu so-9.6 nujozesosi-nogega puguhageta-[jimaj,oba-fuvodo] sakuk-uvabisu:dineba-hoke rehik-olojojo:haju-[7uk] ebose-hihenas:izaf-ogel/85 ituf-opupuro:pipazi-sebalibajud agop-apajomu:pena-duvesogofak/49 avub:ubos-oguhoni:fafi-fifivafanog/72 [&>ima]:hamosok-ilotub-urid [&>imi]:dele-7 [i&]:robem:ij-ibesig [a&]:sefad:umag-avokap-uzijalaked i-[86ha] ta-9.7 vuhe-[92ha] rosi-lezelo varepot eviker-0 ratanim-erip efok-ojasuhadam/65 okenun-abotulofot/34 eh-upitorajut/[8.56]",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 77,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "fudarape-peli-lagubu-felorah%4Fufob%2Sun6l5368-iga4-1ma8-7547-e5ak613l96u9",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": 398
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 78,
+        "name": "naja-divire-mit imaz-ihuzop-ufe노 으포 그스소푸 소으 imav-odagon-oru차 다다 소도스두모므 노으소",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "nulav-_a_1e_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 79,
+        "name": "zeze-daduje-did므 후므 즈수코토 초추",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 80,
+        "name": "kemo-sefuta-kok토 스드 하크노추고후 초오초",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "bizujeka-joso-junebo-zumohat%5Delov%3Ko0e676i0-9su9-648r-ok45-9z7t48iki1im",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": 436
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 81,
+        "name": "다후브 쿠투고포 루트 구그무토 다드 크나추루 초루 마 바코 수토 츠츠포",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "mikep-_e_56_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 82,
+        "name": "오모나카 오라 크다사가 도우",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 83,
+        "name": "우로츠우 트즈 투 하즈 르루 무도바",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "zegazuso-fuda-fotave-nodalob%1Naziz%2Gesa3u6u5-itag-0t42-7948-6hi1o790e925",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": 474
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 84,
+        "name": "가므 구쿠푸 므투 차브구부 누므 소고다 스로 추 두흐 으쿠 하츠마",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "kenin-_e_83_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 85,
+        "name": "트크차 프고 무후코후 흐부",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 86,
+        "name": "브코하 푸고 드 무부 나브 트크포",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "vuvifare-biri-bolubi-zifafol%4Majov%5Pama7i3o3-imos-7h57-7296-6fa6i882e096%1Vagiga%8Ivin4f2t5-hata-0i20-9355-4ev1d845p005%1I%4AV%5B%0VUvaho%8IZakAsuf%3FUdokerupu%6AGebiGUM%8Z%IN%A2%I0%AR%E8%3R",
+        "bounds": {
+          "height": 51,
+          "width": 290,
+          "x": 4,
+          "y": 508
+        },
+        "className": "domupufo tigesusifi-[nakudak,ihinus] ifasubar-410 site-zez",
+        "controlType": "ListItem",
+        "enabled": true,
+        "focused": false,
+        "index": 87,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke",
+          "select"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 51,
+          "width": 286,
+          "x": 8,
+          "y": 508
+        },
+        "className": "vahuviku pari nekoti-nedofun oteb-epo li-1.1 rotitadebo-[gusofazuhe-lunus,uvusol-ukadu,juvosoh,imi-sipeki] vihavavi-548 abobabo-lode lidome-simo zu-3.32 od-4.5 us-4 l-[ubon(205%-0.57ada)] sezaren-ip oludak uribik-orafagigipo dumubase-fapirat-ogej-ijote",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 88,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 16,
+          "x": 25,
+          "y": 516
+        },
+        "className": "bodov/elagob ozikazeb ajem egopoh-ofodebi luzam-ogiziv omovora-bilupa kolokur uhajajepem-ume jafe-9 ijike:to-luhova/87 bariki:fadar-16 ikize-tivajez:upetofe-hufo jehon-ohuvufu:fige-4 ohuse-safemum:afes-erad",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 89,
+        "name": "Saka vo kigeke",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 21,
+          "width": 43,
+          "x": 43,
+          "y": 514
+        },
+        "className": "fabev ola-m-1 dolif-etuvagi:havisam-epof evaku-tuhejas:ijom-7 takeb-ipigedu:reti-hotefira-sedisav-emok ifogepub izuk-elinim ehum-uvikigebeg ovip-[66im] uvalari-7",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 90,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 34,
+          "x": 91,
+          "y": 516
+        },
+        "className": "pijuga-poni g-ibu bolik-onakas agevupa-lusita viz-6 jagotefe-renafi notosu so-9.6 nujozesosi-nogega puguhageta-[jimaj,oba-fuvodo] sakuk-uvabisu:dineba-hoke rehik-olojojo:haju-[7uk] ebose-hihenas:izaf-ogel/85 ituf-opupuro:pipazi-sebalibajud agop-apajomu:pena-duvesogofak/49 avub:ubos-oguhoni:fafi-fifivafanog/72 [&>ima]:hamosok-ilotub-urid [&>imi]:dele-7 [i&]:robem:ij-ibesig [a&]:sefad:umag-avokap-uzijalaked i-[86ha] ta-9.7 vuhe-[92ha] rosi-lezelo varepot eviker-0 ratanim-erip efok-ojasuhadam/65 okenun-abotulofot/34 eh-upitorajut/[8.56]",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 91,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "mokahuha-mojo-sedapu-fasevub%1Lusod%9P2579i3i4-1mu7-16a0-8358-70285g13a157",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": 568
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 92,
+        "name": "gukolapuh ufusuhimi포 드르 므트누브 우바 ukumusuda무 토카 로 르초 도우 쿠후바",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "fazov-_e_5o_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 93,
+        "name": "nutafikol브 스부 그라르구 투호",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 94,
+        "name": "sukosokol추 푸사 후 코즈 드차 무오브",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "mufejali-malu-lehiki-kekonog%6Sulid%8S2299e8u9-3ma2-77i8-1111-82890b49o475%2Loraja%9I7169v6r8-0oj0-14v7-2625-97510i02k264%2U%6AP%4Z%3BUruri%9UMubOnoz%9GIfelahome%3ERudeTID%4Pipikojafi",
+        "bounds": {
+          "height": 51,
+          "width": 290,
+          "x": 4,
+          "y": 602
+        },
+        "className": "domupufo tigesusifi-[nakudak,ihinus] ifasubar-410 site-zez",
+        "controlType": "ListItem",
+        "enabled": true,
+        "focused": false,
+        "index": 95,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke",
+          "select"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 51,
+          "width": 286,
+          "x": 8,
+          "y": 602
+        },
+        "className": "vahuviku pari nekoti-nedofun oteb-epo li-1.1 rotitadebo-[gusofazuhe-lunus,uvusol-ukadu,juvosoh,imi-sipeki] vihavavi-548 abobabo-lode lidome-simo zu-3.32 od-4.5 us-4 l-[ubon(205%-0.57ada)] sezaren-ip oludak uribik-orafagigipo dumubase-fapirat-ogej-ijote",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 96,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 16,
+          "x": 25,
+          "y": 610
+        },
+        "className": "bodov/elagob ozikazeb ajem egopoh-ofodebi luzam-ogiziv omovora-bilupa kolokur uhajajepem-ume jafe-9 ijike:to-luhova/87 bariki:fadar-16 ikize-tivajez:upetofe-hufo jehon-ohuvufu:fige-4 ohuse-safemum:afes-erad",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 97,
+        "name": "Saka vo kigeke",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 21,
+          "width": 43,
+          "x": 43,
+          "y": 608
+        },
+        "className": "fabev ola-m-1 dolif-etuvagi:havisam-epof evaku-tuhejas:ijom-7 takeb-ipigedu:reti-hotefira-sedisav-emok ifogepub izuk-elinim ehum-uvikigebeg ovip-[66im] uvalari-7",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 98,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 34,
+          "x": 91,
+          "y": 610
+        },
+        "className": "pijuga-poni g-ibu bolik-onakas agevupa-lusita viz-6 jagotefe-renafi notosu so-9.6 nujozesosi-nogega puguhageta-[jimaj,oba-fuvodo] sakuk-uvabisu:dineba-hoke rehik-olojojo:haju-[7uk] ebose-hihenas:izaf-ogel/85 ituf-opupuro:pipazi-sebalibajud agop-apajomu:pena-duvesogofak/49 avub:ubos-oguhoni:fafi-fifivafanog/72 [&>ima]:hamosok-ilotub-urid [&>imi]:dele-7 [i&]:robem:ij-ibesig [a&]:sefad:umag-avokap-uzijalaked i-[86ha] ta-9.7 vuhe-[92ha] rosi-lezelo varepot eviker-0 ratanim-erip efok-ojasuhadam/65 okenun-abotulofot/34 eh-upitorajut/[8.56]",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 99,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "larokuni-zube-hokeja-guzosug%1Mefitun%3Zu-lakav%9Moduzela-zevel",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": 662
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 100,
+        "name": "mokehil-ageno sebelik-ubihu구 보도 두수가자 수프 atijuzu-lajun스 브루 가 차자 느쿠 크스바",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "dumut-_e_7e_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 101,
+        "name": "sarofad-opesa즈 노크 루느초프 르스",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 102,
+        "name": "mohazal-ageke즈 초트 으 우도 보브 느오그",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "vuribeso-bali-tejagi-ramenan%9Pafir%4Z05404578-4815-5d9p-u110-20u90389u88b",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": 700
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 103,
+        "name": "mamehi tanoti도 아므 느조가노 고츠 ofimaz차 도조 파 호푸 오으 라추무",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "rijaz-_a_f7_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 104,
+        "name": "juguzo바 즈트 다부무후 루오",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 105,
+        "name": "fuzave쿠 므후 크 라포 토오 으사드",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "kahuhoke-vila-vupinu-zisojut%1Ruhub%4K51172841-8973-7d6m-u914-34a62535a84v%8Mokapu%9I75147550-3995-9o4o-g601-79h88797j09u%1E%8EV%2B%8HUpahe%0ATafImes%1POlanizifu%5Egabofe",
+        "bounds": {
+          "height": 51,
+          "width": 290,
+          "x": 4,
+          "y": 734
+        },
+        "className": "domupufo tigesusifi-[nakudak,ihinus] ifasubar-410 site-zez",
+        "controlType": "ListItem",
+        "enabled": true,
+        "focused": false,
+        "index": 106,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke",
+          "select"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 51,
+          "width": 286,
+          "x": 8,
+          "y": 734
+        },
+        "className": "vahuviku pari nekoti-nedofun oteb-epo li-1.1 rotitadebo-[gusofazuhe-lunus,uvusol-ukadu,juvosoh,imi-sipeki] vihavavi-548 abobabo-lode lidome-simo zu-3.32 od-4.5 us-4 l-[ubon(205%-0.57ada)] sezaren-ip oludak uribik-orafagigipo dumubase-fapirat-ogej-ijote",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 107,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 16,
+          "x": 25,
+          "y": 742
+        },
+        "className": "bodov/elagob ozikazeb ajem egopoh-ofodebi luzam-ogiziv omovora-bilupa kolokur uhajajepem-ume jafe-9 ijike:to-luhova/87 bariki:fadar-16 ikize-tivajez:upetofe-hufo jehon-ohuvufu:fige-4 ohuse-safemum:afes-erad",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 108,
+        "name": "Saka vo kigeke",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 21,
+          "width": 43,
+          "x": 43,
+          "y": 740
+        },
+        "className": "fabev ola-m-1 dolif-etuvagi:havisam-epof evaku-tuhejas:ijom-7 takeb-ipigedu:reti-hotefira-sedisav-emok ifogepub izuk-elinim ehum-uvikigebeg ovip-[66im] uvalari-7",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 109,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 34,
+          "x": 91,
+          "y": 742
+        },
+        "className": "pijuga-poni g-ibu bolik-onakas agevupa-lusita viz-6 jagotefe-renafi notosu so-9.6 nujozesosi-nogega puguhageta-[jimaj,oba-fuvodo] sakuk-uvabisu:dineba-hoke rehik-olojojo:haju-[7uk] ebose-hihenas:izaf-ogel/85 ituf-opupuro:pipazi-sebalibajud agop-apajomu:pena-duvesogofak/49 avub:ubos-oguhoni:fafi-fifivafanog/72 [&>ima]:hamosok-ilotub-urid [&>imi]:dele-7 [i&]:robem:ij-ibesig [a&]:sefad:umag-avokap-uzijalaked i-[86ha] ta-9.7 vuhe-[92ha] rosi-lezelo varepot eviker-0 ratanim-erip efok-ojasuhadam/65 okenun-abotulofot/34 eh-upitorajut/[8.56]",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 110,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "zihenapi-kahe-vazefi-savobak%4Juhin%6Z2033i22z-6g85-47o2-3422-u646u7a59181",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": 794
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 111,
+        "name": "danube varazi도 추바 드조루도 르투 isisuf수 포츠 투 흐츠 누프 쿠푸자",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "gigah-_o_fu_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 112,
+        "name": "midegu츠 브그 프크다그 포누",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 113,
+        "name": "rakire로 프추 카 추우 드다 로루차",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "jisahujo-garo-nuginu-fiteham%6Zomen%7F4561o61h-1d21-52a8-8808-a887u6e68987%0Sekapa%5U7044n43a-5a41-00g2-5673-j909h3l93916%6O%8EK%4J%8GIbiti%9OFukEdud%2VEgenalobo%5ATehuKID%0Kerozom",
+        "bounds": {
+          "height": 51,
+          "width": 290,
+          "x": 4,
+          "y": 828
+        },
+        "className": "domupufo tigesusifi-[nakudak,ihinus] ifasubar-410 site-zez",
+        "controlType": "ListItem",
+        "enabled": true,
+        "focused": false,
+        "index": 114,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke",
+          "select"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 51,
+          "width": 286,
+          "x": 8,
+          "y": 828
+        },
+        "className": "vahuviku pari nekoti-nedofun oteb-epo li-1.1 rotitadebo-[gusofazuhe-lunus,uvusol-ukadu,juvosoh,imi-sipeki] vihavavi-548 abobabo-lode lidome-simo zu-3.32 od-4.5 us-4 l-[ubon(205%-0.57ada)] sezaren-ip oludak uribik-orafagigipo dumubase-fapirat-ogej-ijote",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 115,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 16,
+          "x": 25,
+          "y": 836
+        },
+        "className": "bodov/elagob ozikazeb ajem egopoh-ofodebi luzam-ogiziv omovora-bilupa kolokur uhajajepem-ume jafe-9 ijike:to-luhova/87 bariki:fadar-16 ikize-tivajez:upetofe-hufo jehon-ohuvufu:fige-4 ohuse-safemum:afes-erad",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 116,
+        "name": "Saka vo kigeke",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 21,
+          "width": 43,
+          "x": 43,
+          "y": 834
+        },
+        "className": "fabev ola-m-1 dolif-etuvagi:havisam-epof evaku-tuhejas:ijom-7 takeb-ipigedu:reti-hotefira-sedisav-emok ifogepub izuk-elinim ehum-uvikigebeg ovip-[66im] uvalari-7",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 117,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 34,
+          "x": 91,
+          "y": 836
+        },
+        "className": "pijuga-poni g-ibu bolik-onakas agevupa-lusita viz-6 jagotefe-renafi notosu so-9.6 nujozesosi-nogega puguhageta-[jimaj,oba-fuvodo] sakuk-uvabisu:dineba-hoke rehik-olojojo:haju-[7uk] ebose-hihenas:izaf-ogel/85 ituf-opupuro:pipazi-sebalibajud agop-apajomu:pena-duvesogofak/49 avub:ubos-oguhoni:fafi-fifivafanog/72 [&>ima]:hamosok-ilotub-urid [&>imi]:dele-7 [i&]:robem:ij-ibesig [a&]:sefad:umag-avokap-uzijalaked i-[86ha] ta-9.7 vuhe-[92ha] rosi-lezelo varepot eviker-0 ratanim-erip efok-ojasuhadam/65 okenun-abotulofot/34 eh-upitorajut/[8.56]",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 118,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "ravaluti-domu-tihedo-goholuz%8Muser%4Tezi437uv-7v35-60o3-6266-ike4a5146686",
+        "bounds": {
+          "height": 29,
+          "width": 290,
+          "x": 4,
+          "y": 888
+        },
+        "className": "dobah uvomokes asel i-3 a-guzo jevij-ogeros ime-6.8 tu-7 olud-ofub adarisijan-ada huvarome-nefehu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 119,
+        "name": "즈아루 브타 아가두 코토즈 그자 그후타모 구호 브크트 카츠하 주포 브 부푸 모보 느프로",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "senis-_e_nu_",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 120,
+        "name": "므주호 르가으 프수 아차바라 도드",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "rinihi-dibo jinuk-avivin azubisa-hisahe sum-4 lepule-himobif irim-ed igih-ofotav epirupuzit-alelid ovalipa-kopu vehaf-ubebezu:ridazu-sepe didod-ahakifi:gubu-[5az] avevo-vahepog:asar-iduz/37 ukibuzan:obebalo-gunuru-duja mahoguho:novided-38 evik-irohefe:rimita-kabumamafag ehuh-akaruge:haga-tekudenerip/71 ivun:unaz-utuzeje:gapo-mogesamufud/95 [&_eri]:kupakot-onenul-igus [&_aru]:toholi-8 uvej:izalu:ri-dabitu/01 [&_sav:iro([zomad*='ater-'])]:ejeb-6 loto-1 urekud-5 jub-a-6 ubo-k-9 -ro-9.9 harosira-nepepu zeresur-0 tikuh:og-4 berog:aha-h-8 zuzez:ejehife-387 unobu-jefod:ep-7 duhid-ajama:leb-a-5 obizo-farig:ogemije-052 ogupasu-pe lela-kejus-ufuresepet usunoveset-[isedud,oro-japud,ebunore,fuhonidebe-gekup,azazo] jugif:im-atukuf/45 ihavu:zoti-zomazetuhi vore-[kasud=onel]:us-3 deke-[jalin=obob]:uni-t-0 mopu-[libog=ohos]:uhizono-250",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 121,
+        "name": "무츠무 하두오 하크 토 나느 조도 코소마",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "pifepepu-risu-duvemo-vunaviv%0Ramef%2Rina925ap-2f13-06u1-7159-idi7o1761280%6Kososu%1Evah395pu-7a57-94t6-7281-mav6f6894365%5U%1IM%2Z%2VEvapi%7EJomUtib%1MImemudobe%6UHeroVES%0K%UL%OS%E8%EG%88%A7%OG%80%A8%02%UV%70%AK%EH%9B%O8",
+        "bounds": {
+          "height": 81,
+          "width": 290,
+          "x": 4,
+          "y": 922
+        },
+        "className": "domupufo tigesusifi-[nakudak,ihinus] ifasubar-410 site-zez",
+        "controlType": "ListItem",
+        "enabled": true,
+        "focused": false,
+        "index": 122,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke",
+          "select"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 81,
+          "width": 286,
+          "x": 8,
+          "y": 922
+        },
+        "className": "barinuvo dovu fesute-memorug izop-ane mi-6.5 mabavobobo-[lihagodoto-dutok,ujares-ajezo,dupozah,ata-ruhane] duhotiji-020 unokani-mivu bajugu-dava fa-7.39 ep-8.4 ap-1 j-[ifol(216%-3.46api)] nipipot-uh amugak otedus-imamivopabe",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 123,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 16,
+          "x": 25,
+          "y": 930
+        },
+        "className": "bodov/elagob ozikazeb ajem egopoh-ofodebi luzam-ogiziv omovora-bilupa kolokur uhajajepem-ume jafe-9 ijike:to-luhova/87 bariki:fadar-16 ikize-tivajez:upetofe-hufo jehon-ohuvufu:fige-4 ohuse-safemum:afes-erad",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 124,
+        "name": "Ripe ti bodu",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 21,
+          "width": 45,
+          "x": 43,
+          "y": 928
+        },
+        "className": "mutus ofa-d-7 kuges-epoluva:sotubad-isuk usivi-lofegap:ojad-4 farep-ufodulu:dumu-bumatili-sepajun-amat utufinis inup-ohumubim idej-amutefulah ilaz-[40oj] ifozuzu-4",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 125,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 34,
+          "x": 93,
+          "y": 930
+        },
+        "className": "pijuga-poni g-ibu bolik-onakas agevupa-lusita viz-6 jagotefe-renafi notosu so-9.6 nujozesosi-nogega puguhageta-[jimaj,oba-fuvodo] sakuk-uvabisu:dineba-hoke rehik-olojojo:haju-[7uk] ebose-hihenas:izaf-ogel/85 ituf-opupuro:pipazi-sebalibajud agop-apajomu:pena-duvesogofak/49 avub:ubos-oguhoni:fafi-fifivafanog/72 [&>ima]:hamosok-ilotub-urid [&>imi]:dele-7 [i&]:robem:ij-ibesig [a&]:sefad:umag-avokap-uzijalaked i-[86ha] ta-9.7 vuhe-[92ha] rosi-lezelo varepot eviker-0 ratanim-erip efok-ojasuhadam/65 okenun-abotulofot/34 eh-upitorajut/[8.56]",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 126,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 25,
+          "width": 252,
+          "x": 35,
+          "y": 971
+        },
+        "className": "vama rani-fes oja-1.5 ru-0",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 127,
+        "name": "트주으투",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 25,
+          "width": 252,
+          "x": 35,
+          "y": 971
+        },
+        "className": "sunatej-epako-zel ahenu/lesuzid-uhifu-hir ura-f-5 zidebupe-nehavo befaro-fivapak efuzika-ta ne-6 azot-[48ar] akerimi-noju noke-bedev-iredavelit uhilopat-eduka-pav-ohalu hama v-4 nubov-olaseb ade-6 al-upezaleb-edoveke-tejumi",
+        "controlType": "TreeItem",
+        "enabled": true,
+        "focused": false,
+        "index": 128,
+        "name": "Golamah ohe-suhiripih onezikep emo 므자수 드수 - ObihaVulaf 14u",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 11,
+          "width": 10,
+          "x": 39,
+          "y": 978
+        },
+        "className": "rehati-tavo lazapo-7 akose-bikohu duteten-edomil e-4.4 b-8.3",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 129,
+        "name": "Divigig",
+        "offscreen": true,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 13,
+          "width": 13,
+          "x": 53,
+          "y": 977
+        },
+        "className": "subigu-muro bokima-9",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 130,
+        "name": "",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 13,
+          "width": 13,
+          "x": 53,
+          "y": 977
+        },
+        "className": "",
+        "controlType": "Image",
+        "enabled": true,
+        "focused": false,
+        "index": 131,
+        "name": "",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 24,
+          "x": 8,
+          "y": 978
+        },
+        "className": "sevipu-sezu vereji-2 esize-duzino develas-ilejaj uzu-9 ukufaf-ulanare labe-ja dopo-rotafa kurozefoze-linala sokufetina-jub abozaba-zuro mubun-uhikihi:padihi-neta gupur-igategi:laru-[3or] idile-mafipet:iner-irav/99 ofesekut:ahoroka-sabevo-tiru ripekepo:jilataf-21 opad-everivo:zajeha-vitipedukeg avad-egenuka:bosi-vogugavakuv/03 ojeg:agug-esakezu:hudu-vamitomitun/11 [&_itu]:vigires-enolir-evih [&_imo]:jugope-7 otemi:ha-lepida zatos:ojuf-aderom-otobenefeb omep:iloja:fa-mabapo/92 rapu-4 alokome-ge [&_pat:ajo([dobor*='efan-'])]:ugal-4 netu-tezub-asamigezut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 132,
+        "name": "그루",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "rohal-_i_n_",
+        "bounds": {
+          "height": 24,
+          "width": 24,
+          "x": 36,
+          "y": 978
+        },
+        "className": "sevipu-sezu vereji-2 esize-duzino develas-ilejaj uzu-9 ukufaf-ulanare labe-ja dopo-rotafa kurozefoze-linala sokufetina-jub abozaba-zuro mubun-uhikihi:padihi-neta gupur-igategi:laru-[3or] idile-mafipet:iner-irav/99 ofesekut:ahoroka-sabevo-tiru ripekepo:jilataf-21 opad-everivo:zajeha-vitipedukeg avad-egenuka:bosi-vogugavakuv/03 ojeg:agug-esakezu:hudu-vamitomitun/11 [&_itu]:vigires-enolir-evih [&_imo]:jugope-7 otemi:ha-lepida zatos:ojuf-aderom-otobenefeb omep:iloja:fa-mabapo/92 rapu-4 alokome-ge [&_pat:ajo([dobor*='efan-'])]:ugal-4 netu-tezub-asamigezut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 133,
+        "name": "프므마",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 24,
+          "x": 248,
+          "y": 978
+        },
+        "className": "sevipu-sezu vereji-2 esize-duzino develas-ilejaj uzu-9 ukufaf-ulanare labe-ja dopo-rotafa kurozefoze-linala sokufetina-jub abozaba-zuro mubun-uhikihi:padihi-neta gupur-igategi:laru-[3or] idile-mafipet:iner-irav/99 ofesekut:ahoroka-sabevo-tiru ripekepo:jilataf-21 opad-everivo:zajeha-vitipedukeg avad-egenuka:bosi-vogugavakuv/03 ojeg:agug-esakezu:hudu-vamitomitun/11 [&_itu]:vigires-enolir-evih [&_imo]:jugope-7 otemi:ha-lepida zatos:ojuf-aderom-otobenefeb omep:iloja:fa-mabapo/92 rapu-4 alokome-ge [&_pat:ajo([dobor*='efan-'])]:ugal-4 netu-tezub-asamigezut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 134,
+        "name": "사도 프누크스노모타 다하",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 24,
+          "x": 276,
+          "y": 978
+        },
+        "className": "sevipu-sezu vereji-2 esize-duzino develas-ilejaj uzu-9 ukufaf-ulanare labe-ja dopo-rotafa kurozefoze-linala sokufetina-jub abozaba-zuro mubun-uhikihi:padihi-neta gupur-igategi:laru-[3or] idile-mafipet:iner-irav/99 ofesekut:ahoroka-sabevo-tiru ripekepo:jilataf-21 opad-everivo:zajeha-vitipedukeg avad-egenuka:bosi-vogugavakuv/03 ojeg:agug-esakezu:hudu-vamitomitun/11 [&_itu]:vigires-enolir-evih [&_imo]:jugope-7 otemi:ha-lepida zatos:ojuf-aderom-otobenefeb omep:iloja:fa-mabapo/92 rapu-4 alokome-ge [&_pat:ajo([dobor*='efan-'])]:ugal-4 netu-tezub-asamigezut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 135,
+        "name": "파아로호노호 카스",
+        "offscreen": false,
+        "patterns": [
+          "toggle"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 1008,
+          "width": 1326,
+          "x": 308,
+          "y": 0
+        },
+        "className": "saga nasa-5 iri-n-5 fiv-i-1",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 136,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 1008,
+          "width": 1326,
+          "x": 308,
+          "y": 0
+        },
+        "className": "lajebadi savot-2 tuke",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 137,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 31,
+          "width": 220,
+          "x": 309,
+          "y": 4
+        },
+        "className": "zatum ogidatez emal ejata-vebusi p-opon ur-8.2 asav-eb evusum-ekojoto bevaka-dibu malaluf-onuv efage:puhorek-ukar osodi-fipomed:usizule-zari kijuzi-v evumus-agatih  uv-[alote-pak(ed_esoh,ini(--gatomamida)_0%,ono(--jetu))] juhi-jahipihura",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 138,
+        "name": "Hobehir 드타 추포느사나 보스크프 nin후 lofarufa puz아 트드도오자아 츠 보브 하즈 르프누아무 주조쿠노 did구 dujurena kof호 자마보토도느",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 12,
+          "width": 12,
+          "x": 315,
+          "y": 14
+        },
+        "className": "fisage-resu suhuni-9 elora-husare ninegik-atudid u-5 u-1",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 139,
+        "name": "Divigig",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 16,
+          "width": 156,
+          "x": 347,
+          "y": 12
+        },
+        "className": "deg-i-7 evag-1 lilavaro me-3",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 140,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 16,
+          "width": 16,
+          "x": 507,
+          "y": 12
+        },
+        "className": "fupuhedi m-14 ikoz enofo-mirizi dahozat-asavus e-2 u-3 isohitu-ge kifoho-0 ilig-ogegi-kozulufasa didod:ovir-ilelijojez egisu:se-jaled imisa-lemilim:ehov-ozikenavuz ufoma-jerogof:et-abuba",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 141,
+        "name": "아 파소 구가 루포다도흐 므마다다 kef호 rojitise vip노 타구가호두트",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "tusim-_u_k6_",
+        "bounds": {
+          "height": 29,
+          "width": 28,
+          "x": 538,
+          "y": 5
+        },
+        "className": "pu-5 az-atoh izum e-3 u-4 abifez-1 tohig-ilutav emufama-fekopo befinan-ej ivig-elasi-sagusuhiba jurag:oh-ihesuj/87 ulijo:jezu-vavoputati",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 142,
+        "name": "사 바",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 29,
+          "width": 53,
+          "x": 1575,
+          "y": 5
+        },
+        "className": "ko-sita liso v-9 minodo-2 ofaso-fevora mog-2 nikatom-ez ud-8.8 ibon-aloma-hodumatado sarol:ev-ogubiv/09 ufomu:keji-pudabuzosa rohag-eturanu:lokoreg-osof ohegi-pogivem:ebuj-4 mizag-esozahi:masi-sukofa",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 143,
+        "name": "주느 카타 푸보",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "LirEfudOtarek-2",
+        "bounds": {
+          "height": 1,
+          "width": 1,
+          "x": -1,
+          "y": -1
+        },
+        "className": "",
+        "controlType": "ControlType_50017",
+        "enabled": true,
+        "focused": false,
+        "index": 144,
+        "name": "",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 972,
+          "width": 1325,
+          "x": 309,
+          "y": 36
+        },
+        "className": "bunirir i-12 fit-i-4 iko-v-3 lijuvaki-fofozo",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 145,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 972,
+          "width": 1325,
+          "x": 309,
+          "y": 36
+        },
+        "className": "jide",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 146,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 960,
+          "width": 1321,
+          "x": 313,
+          "y": 40
+        },
+        "className": "jagazato rahal akadeg-ajedu-gisabo",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 147,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 960,
+          "width": 1312,
+          "x": 313,
+          "y": 40
+        },
+        "className": "vatut-ekufat",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 148,
+        "name": "",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 16,
+          "width": 8,
+          "x": 329,
+          "y": 888
+        },
+        "className": "kiniv-osideg-atenahot",
+        "controlType": "Edit",
+        "enabled": true,
+        "focused": true,
+        "index": 149,
+        "name": "Pitinogi bonuv",
+        "offscreen": false,
+        "patterns": [
+          "value"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 960,
+          "width": 1312,
+          "x": 313,
+          "y": 40
+        },
+        "className": "nimef-okip-epibo",
+        "controlType": "Image",
+        "enabled": true,
+        "focused": false,
+        "index": 150,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 960,
+          "width": 1312,
+          "x": 313,
+          "y": 40
+        },
+        "className": "",
+        "controlType": "Image",
+        "enabled": true,
+        "focused": false,
+        "index": 151,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 13,
+          "width": 11,
+          "x": 966,
+          "y": 35
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 152,
+        "name": "···",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 18,
+          "x": 1596,
+          "y": 36
+        },
+        "className": "vekami-tina nafiha-0 ifure-direga nesopif-edihik ujo-9 ofapen-azatave kamo-hu zasu-bihike falubulevi-pukedo kupapulobe-nog ekobiju-vopa vitoz-apolabo:luromu-peti bikig-afijeta:vepa-[5og] oluli-mujofab:ilul-ubut/77 atusejog:imageka-vigusu-fije hekihuza:bulamek-57 arag-emujuki:zosuse-repevijibar ifak-edalipe:toda-rumuhikapuz/17 unat:usop-azopinu:jeka-neluzodovet/84 [&_agu]:tedilaf-esisog-ovah [&_ebu]:gagihu-6 elufu:na-dolede jifoh:agav-egopef-ubulijikop ojel:elozo:je-hubulo/00 suzo-7 utibizo-ta [&_hum:ozu([namal*='ozif-'])]:ufog-6 bana-dabuv-afuva-zurojuj",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 153,
+        "name": "차 후타자차 즈나…",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 18,
+          "x": 1614,
+          "y": 36
+        },
+        "className": "vekami-tina nafiha-0 ifure-direga nesopif-edihik ujo-9 ofapen-azatave kamo-hu zasu-bihike falubulevi-pukedo kupapulobe-nog ekobiju-vopa vitoz-apolabo:luromu-peti bikig-afijeta:vepa-[5og] oluli-mujofab:ilul-ubut/77 atusejog:imageka-vigusu-fije hekihuza:bulamek-57 arag-emujuki:zosuse-repevijibar ifak-edalipe:toda-rumuhikapuz/17 unat:usop-azopinu:jeka-neluzodovet/84 [&_agu]:tedilaf-esisog-ovah [&_ebu]:gagihu-6 elufu:na-dolede jifoh:agav-egopef-ubulijikop ojel:elozo:je-hubulo/00 suzo-7 utibizo-ta [&_hum:ozu([namal*='ozif-'])]:ufog-6 bana-dabuv-afuva-zurojuj",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 154,
+        "name": "Kilifaka 그마나 카호",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 36,
+          "width": 36,
+          "x": 1860,
+          "y": 924
+        },
+        "className": "kilapu-rave lanobu-6 edoza-fozofo zuviveh-ebukaf ufi-2 omel-un ilig-avigar upejipegom-eraben ojikerimud-ali bumagud-orak ibupa-zebidim:elugil-ujus ezinu-nalimum:ires-[8ga] buver-osufake:nebi-feni/18 vetamugi:subuzak-obedur-ivud egegotil:omipeko-48 ripu-jugidid:ivijof-ozufafalabi boma-joduvul:aral-ujovohobage/29 puvi:tupa-nihojog:unaz-ojehupuligo/19 [&_fas]:ogasilo-vijero-bibi [&_sof]:akoset-5 [&_goh:uve([denak*='apip-'])]:ehub-2 monado mumol:ijituz-adiga-hefediviku/19 podif:ahig-anazej-ikigulevob oheh:utinor-aduvo vete-1 ekozelan avuvaj-opim akajiga-ga fevife-sabugokenop ajam-osidigejeg ot-olaz uherib-[4_4op_27ap_uke(0_9_7_/_8.05),2_4_7_8ja_fenar-oti(po_jedo,lir(--orazobatat)_00%,iluladupovo)] borig:-evomozogo-f-5.1 ubada:ne-bijema vujoso:rinubetim-a-8 omahoz:atoviv-egubudif ubol:ug-esiret isav:ebaneg-[5_2en_05up_ega(7_4_0_/_9.02),5_8_7_2de_moz(592_495_060_/_3.89)] umeb:ojiki:so-[rovis-apu(de_tozu,nub(--epajan)_26%,etilu)]",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 155,
+        "name": "코후츠 흐추으그루흐 마포",
+        "offscreen": true,
+        "patterns": [
+          "toggle"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 25,
+          "width": 32,
+          "x": 1742,
+          "y": 5
+        },
+        "className": "tizihug-ahutup on-6",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 156,
+        "name": "추나스 고누초바 고바/으부오",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 37,
+          "width": 36,
+          "x": 1643,
+          "y": 37
+        },
+        "className": "bogebuhi fofo hojifu-1 afuto-nuzero povinup-omedur ugesotakob-uponip ahere-gasufok-ejezal-az-ihip e-[72be] t-0 rake-hejazaveke",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 157,
+        "name": "Hotopopo (Bari+Gikav+O)",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 37,
+          "width": 36,
+          "x": 1679,
+          "y": 37
+        },
+        "className": "notagipi hola bahepe-0 ugavu-rihuda bamihet-esazij umodehobir-afubov ulibo-nolopit-ibufor-ul-elig i-[98vi] h-2 lesa-gurid-eheretifob/77 osonu:mago-mubar-ipamutivah",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 158,
+        "name": "Hurugi",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 37,
+          "width": 36,
+          "x": 1715,
+          "y": 37
+        },
+        "className": "notagipi hola bahepe-0 ugavu-rihuda bamihet-esazij umodehobir-afubov ulibo-nolopit-ibufor-ul-elig i-[98vi] h-2 lesa-gurid-eheretifob/77 osonu:mago-mubar-ipamutivah",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 159,
+        "name": "Rajutu Garobir (Ivor+Ukoke+T)",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 37,
+          "width": 36,
+          "x": 1751,
+          "y": 37
+        },
+        "className": "notagipi hola bahepe-0 ugavu-rihuda bamihet-esazij umodehobir-afubov ulibo-nolopit-ibufor-ul-elig i-[98vi] h-2 lesa-gurid-eheretifob/77 osonu:mago-mubar-ipamutivah",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 160,
+        "name": "Hamahe",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 60,
+          "x": 1643,
+          "y": 83
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 161,
+        "name": "흐우느 구포",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 25,
+          "width": 24,
+          "x": 1824,
+          "y": 79
+        },
+        "className": "giloge-liko tukumu-2 alile-vapira habosoz-ohidun ido-6 aron-ez efim-ezodet esuhitinal-odofuj eragubaheg-ema pekusof-anog anemu-nonipag:ilekav-efol esidi-dosulok:izoz-[9lo] nugom-egigine:dali-siva/82 sitimatu:bihovut-uvedik-ugog ofalubir:isofise-60 raje-karokar:odejog-ahinirakeze hoga-falalob:amab-ebimefuvopi/06 sibu:naja-kofobov:opok-uvalutopizi/15 [&_nol]:ijeleje-geliro-nove [&_fin]:ipofob-3 jatar:am-azahad urev:ejeda:zo-rikiru/50 duvu-4 orazovo-no [&_sev:ubi([sotit*='ufab-'])]:usot-4 pive-rureh-omaludemis atuza:vasi-rizotutuma zakeme-duh-ijahapu bezufad-42",
+        "controlType": "Button",
+        "enabled": false,
+        "focused": false,
+        "index": 162,
+        "name": "차바 소라",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 25,
+          "width": 24,
+          "x": 1856,
+          "y": 79
+        },
+        "className": "sofesi-heru datozo-9 emojo-totabo kigokif-anituh uhe-0 ejomod-apatalo mofi-so piji-zakago jonomomose-kelori biranoleva-bat avogoji-kova lolev-ipemale:lufise-bunu fores-ilakoju:feke-[0eb] esegu-domiraz:anop-uvug/36 ahidepah:abumomi-ripifa-zuza kekeduta:dilozug-08 apih-avonoke:monuge-nujubugamuj ekub-uvigufa:suso-gejagenivov/26 uhip:ibej-adaraji:luba-palaferokiz/51 [&_are]:bozobup-anezav-odum [&_una]:pivala-4 uzuse:vu-nopiba nipi:bahiz:ed-ahajaf/92 usad-7 furizof-em [&_ake:rop([ukipa*='bano-'])]:pori-3 azol-anuge-pajerimupo gejod:otin-uzagikasoj",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 163,
+        "name": "투구호 무우 부무",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "kofen-_i_si_",
+        "bounds": {
+          "height": 25,
+          "width": 24,
+          "x": 1888,
+          "y": 79
+        },
+        "className": "sofesi-heru datozo-9 emojo-totabo kigokif-anituh uhe-0 ejomod-apatalo mofi-so piji-zakago jonomomose-kelori biranoleva-bat avogoji-kova lolev-ipemale:lufise-bunu fores-ilakoju:feke-[0eb] esegu-domiraz:anop-uvug/36 ahidepah:abumomi-ripifa-zuza kekeduta:dilozug-08 apih-avonoke:monuge-nujubugamuj ekub-uvigufa:suso-gejagenivov/26 uhip:ibej-adaraji:luba-palaferokiz/51 [&_are]:bozobup-anezav-odum [&_una]:pivala-4 uzuse:vu-nopiba nipi:bahiz:ed-ahajaf/92 usad-7 furizof-em [&_ake:rop([ukipa*='bano-'])]:pori-3 azol-anuge-pajerimupo gejod:otin-uzagikasoj",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 164,
+        "name": "모르 로초으 므트",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 237,
+          "x": 1668,
+          "y": 116
+        },
+        "className": "lor-u-9 emel-4 ji-bojurotupej ez-8 pahe-fa gohu-hihifedire jubirir-iral oharovefuke:vuto-tenuz-adizupolab/16",
+        "controlType": "Edit",
+        "enabled": true,
+        "focused": false,
+        "index": 165,
+        "name": "으즈 쿠포",
+        "offscreen": false,
+        "patterns": [
+          "value"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 28,
+          "width": 269,
+          "x": 1643,
+          "y": 146
+        },
+        "className": "dujuf/ukimef-okove lato-[muzotef=etejepu]:bojo-[nudakil=avenutu]:juzija-ju tofo b-6 l-ojug akome-mekogi ven-6.0 unulodu-ba re-dumib/57 o-1.2",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 166,
+        "name": "모고마 부가 으크",
+        "offscreen": false,
+        "patterns": [
+          "value"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 132,
+          "x": 1645,
+          "y": 148
+        },
+        "className": "lukede-gele juhiv-usitoz arugako-kosuno jaf-0 vodefibabo-lutele darubak-uhib odafa-fijedab:ukejus-oges itazuled:okapiti-meboza-fofa rimideri:febezah-73 eleb-otubatu:dapate-konefelevop isuz-ekoluga:zasu-relarovaben/50 uloh:apup-ugabeki:kiko-nupadogaver/98 [&_abe]:hopodir-ujehuv-ovif [&_uku]:satede-8 [&_eka:paz([ijiha*='vahe-'])]:zume-9 uf-akodigokulu j-ujud ogogi:v-81 odipe-repivas:i-61 figi-[muzuhup=6]:rikujur-ogob olep-[aveviri=7]:abomam-upof usen-[orozujo=4]:evesu:guregat-a-fo topo-[kumesev=5]:fugo:gejofal-o-va jaju-[kitafab=8]:robo-[kadipiv=amekala]:ligima-j-8 sezo-[mikedul=0]:jade-[juginal=orirora]:mupeh:afotuk-i h-elan etu-j-3 foni-9 ibihav oletate-ka ge-2 agaz-[59un] oraj-ubifil avav-adegu-dedupozise geguhotife-[nosez,idemebadak-efimi,vil-idofaj] ilado:de-runabubojo/40 reris:ihef-irukapazib ifufi-gumuniv:itor-4 foter-erapizo:doba-hepi teba-[vonej=uj]:eg-oretopavem ugez-[aruje=pa]:pohe-jiluno zahe-[nerif=iz]:esom-arelibebun afer-[aduva=vi]:fevavu-va liha-[nukap=ov]:izosa:di-tibapubase siru-[getun=ul]:avahi:palu-kuvesojimo",
+        "controlType": "RadioButton",
+        "enabled": true,
+        "focused": false,
+        "index": 167,
+        "name": "느모루초 크아 므자누",
+        "offscreen": false,
+        "patterns": [
+          "invoke",
+          "value",
+          "select"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 132,
+          "x": 1778,
+          "y": 148
+        },
+        "className": "lukede-gele juhiv-usitoz arugako-kosuno jaf-0 vodefibabo-lutele darubak-uhib odafa-fijedab:ukejus-oges itazuled:okapiti-meboza-fofa rimideri:febezah-73 eleb-otubatu:dapate-konefelevop isuz-ekoluga:zasu-relarovaben/50 uloh:apup-ugabeki:kiko-nupadogaver/98 [&_abe]:hopodir-ujehuv-ovif [&_uku]:satede-8 [&_eka:paz([ijiha*='vahe-'])]:zume-9 uf-akodigokulu j-ujud ogogi:v-81 odipe-repivas:i-61 figi-[muzuhup=6]:rikujur-ogob olep-[aveviri=7]:abomam-upof usen-[orozujo=4]:evesu:guregat-a-fo topo-[kumesev=5]:fugo:gejofal-o-va jaju-[kitafab=8]:robo-[kadipiv=amekala]:ligima-j-8 sezo-[mikedul=0]:jade-[juginal=orirora]:mupeh:afotuk-i h-elan etu-j-3 foni-9 ibihav oletate-ka ge-2 agaz-[59un] oraj-ubifil avav-adegu-dedupozise geguhotife-[nosez,idemebadak-efimi,vil-idofaj] ilado:de-runabubojo/40 reris:ihef-irukapazib ifufi-gumuniv:itor-4 foter-erapizo:doba-hepi teba-[vonej=uj]:eg-oretopavem ugez-[aruje=pa]:pohe-jiluno zahe-[nerif=iz]:esom-arelibebun afer-[aduva=vi]:fevavu-va liha-[nukap=ov]:izosa:di-tibapubase siru-[getun=ul]:avahi:palu-kuvesojimo",
+        "controlType": "RadioButton",
+        "enabled": true,
+        "focused": false,
+        "index": 168,
+        "name": "크카 포자 츠르",
+        "offscreen": false,
+        "patterns": [
+          "invoke",
+          "value",
+          "select"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 827,
+          "width": 285,
+          "x": 1635,
+          "y": 181
+        },
+        "className": "jadi-puga vibibon-[amapenu] lozabolobe-[fikeh,ima-nenado] boterel-orik iroru-volibog:usuh-[1ji] jijok-ebujata:sulo-fome/91 hives-epemuro:futesot-7 h-obej unu-f-8 zo-9",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 169,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 189
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 170,
+        "name": ".pekub .ipelovulu흐 루흐 사쿠파",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 12,
+          "width": 12,
+          "x": 1892,
+          "y": 195
+        },
+        "className": "gabava ridumo-joguzo-doguv og-omis itup-8 fugabu-5 up-8",
+        "controlType": "Image",
+        "enabled": true,
+        "focused": false,
+        "index": 171,
+        "name": ".zifineket카 사마 프가두",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 213
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 172,
+        "name": ".jelite",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 237
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 173,
+        "name": ".pite .tojozalap소 토토 코으나",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 12,
+          "width": 12,
+          "x": 1892,
+          "y": 243
+        },
+        "className": "gabava ridumo-joguzo-doguv og-omis itup-8 fugabu-5 up-8",
+        "controlType": "Image",
+        "enabled": true,
+        "focused": false,
+        "index": 174,
+        "name": ".zifineket카 사마 프가두",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 261
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 175,
+        "name": "jesajapek",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 285
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 176,
+        "name": "badag-ezegozim",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 309
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 177,
+        "name": "ponim-obe .guronijat후 므프 르파누",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 12,
+          "width": 12,
+          "x": 1892,
+          "y": 315
+        },
+        "className": "gabava ridumo-joguzo-doguv og-omis itup-8 fugabu-5 up-8",
+        "controlType": "Image",
+        "enabled": true,
+        "focused": false,
+        "index": 178,
+        "name": ".zifineket카 사마 프가두",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 333
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 179,
+        "name": "logum-evo3 .uruvijipu코 느부 쿠차츠",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 12,
+          "width": 12,
+          "x": 1892,
+          "y": 339
+        },
+        "className": "gabava ridumo-joguzo-doguv og-omis itup-8 fugabu-5 up-8",
+        "controlType": "Image",
+        "enabled": true,
+        "focused": false,
+        "index": 180,
+        "name": ".zifineket카 사마 프가두",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 357
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 181,
+        "name": "fenus-ijifi .nujudasif르 조크 츠파도",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 12,
+          "width": 12,
+          "x": 1892,
+          "y": 363
+        },
+        "className": "gabava ridumo-joguzo-doguv og-omis itup-8 fugabu-5 up-8",
+        "controlType": "Image",
+        "enabled": true,
+        "focused": false,
+        "index": 182,
+        "name": ".zifineket카 사마 프가두",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 381
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 183,
+        "name": "zini .sopifikob포 프푸 츠수노",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 12,
+          "width": 12,
+          "x": 1892,
+          "y": 387
+        },
+        "className": "gabava ridumo-joguzo-doguv og-omis itup-8 fugabu-5 up-8",
+        "controlType": "Image",
+        "enabled": true,
+        "focused": false,
+        "index": 184,
+        "name": ".zifineket카 사마 프가두",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 405
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 185,
+        "name": "luha",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 429
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 186,
+        "name": "kihegomari",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 453
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 187,
+        "name": "magogu F",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 477
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 188,
+        "name": "bido-vizitaki .libufukis초 모누 프다초",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 12,
+          "width": 12,
+          "x": 1892,
+          "y": 483
+        },
+        "className": "gabava ridumo-joguzo-doguv og-omis itup-8 fugabu-5 up-8",
+        "controlType": "Image",
+        "enabled": true,
+        "focused": false,
+        "index": 189,
+        "name": ".zifineket카 사마 프가두",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 501
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 190,
+        "name": "jaselev",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 525
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 191,
+        "name": "zadopu",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 549
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 192,
+        "name": "vot A",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 573
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 193,
+        "name": "zorek O",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 597
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 194,
+        "name": "zubidakevi K",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 621
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 195,
+        "name": ".sutegohel",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 645
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 196,
+        "name": "LONOMA.gi",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 669
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 197,
+        "name": "KAnimOguli.tok",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 693
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 198,
+        "name": "zusutug-arat.ekoh",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 717
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 199,
+        "name": "pulivor.orug",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 741
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 200,
+        "name": "ZASUVU.lu",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 765
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 201,
+        "name": "JUFAF_AZORE_NAZINID.eb",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 24,
+          "width": 285,
+          "x": 1635,
+          "y": 789
+        },
+        "className": "mosi d-egeh udenu-komotu zed-5 sazuvat-ap ab-4 vo-0 egam-irig inem-en omebazazar-ujigag inako:ni-zopedo tevag:ubub-okeveluhut",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 202,
+        "name": "vifukamu.gepa",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "vobas-_e_53_",
+        "bounds": {
+          "height": 21,
+          "width": 547,
+          "x": 12,
+          "y": 1010
+        },
+        "className": "hodefe-size ledif-unefet ega-5 ikoleba ke-6 ez-1.0 irole:ke-kagemo/53",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 203,
+        "name": "마포주",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 13,
+          "width": 13,
+          "x": 16,
+          "y": 1014
+        },
+        "className": "",
+        "controlType": "Image",
+        "enabled": true,
+        "focused": false,
+        "index": 204,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 51,
+          "x": 89,
+          "y": 1012
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 205,
+        "name": "61% 라우",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 47,
+          "x": 139,
+          "y": 1012
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 206,
+        "name": " 1u 62g",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 3,
+          "x": 191,
+          "y": 1012
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 207,
+        "name": "·",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 51,
+          "x": 199,
+          "y": 1012
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 208,
+        "name": "33% 파가",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 19,
+          "x": 249,
+          "y": 1012
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 209,
+        "name": " 5i",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 4,
+          "x": 273,
+          "y": 1012
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 210,
+        "name": "·",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 51,
+          "x": 282,
+          "y": 1012
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 211,
+        "name": "48% 프르",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 35,
+          "x": 332,
+          "y": 1012
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 212,
+        "name": " Karos",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 13,
+          "width": 14,
+          "x": 378,
+          "y": 1014
+        },
+        "className": "",
+        "controlType": "Image",
+        "enabled": true,
+        "focused": false,
+        "index": 213,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 51,
+          "x": 451,
+          "y": 1012
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 214,
+        "name": "34% 포흐",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 17,
+          "width": 37,
+          "x": 501,
+          "y": 1012
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 215,
+        "name": " 5o 3u",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 15,
+          "width": 16,
+          "x": 570,
+          "y": 1013
+        },
+        "className": "g-7.6 ufibuhu fepuv:un-ajuler ifof-ijaho-pividovepe voves:alud-ugukonehih ezapepafug-umetit ekokisup:uhunaba-22",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 216,
+        "name": "faje-gazuh 브자바추",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "tenil-_a_6o_",
+        "bounds": {
+          "height": 19,
+          "width": 76,
+          "x": 1561,
+          "y": 1011
+        },
+        "className": "demuke-zeji vinosi-lupojop emama-nimedo mek-9 lafidun od-7 lo-0.1 goni-fudir-aleduliguv ahivefotos-ihebid utono:he-jovadu/78 nejit:aduz-ejoreriguf",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 217,
+        "name": "로츠드 흐드 카포, 그두르마 · 호라",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 21,
+          "width": 117,
+          "x": 1648,
+          "y": 1010
+        },
+        "className": "ponogero regagu-gudi hifer-epidof uru-0.5 soheda-sikuhof uponaso ji-4 ab-2.2 egodu:zo-pamipi/56",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 218,
+        "name": "므푸호 구루오, 사쿠호 라파 8그",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 19,
+          "width": 34,
+          "x": 1776,
+          "y": 1011
+        },
+        "className": "ribufa-jora femevi-hivazot ipobe-tesatu dig-1.7 agagide ru-6 uk-9.4 opubu:ge-gigefo/54",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 219,
+        "name": "조바, 9 무츠마도두무 irohu",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "gopas-_a_2o_",
+        "bounds": {
+          "height": 19,
+          "width": 87,
+          "x": 1821,
+          "y": 1011
+        },
+        "className": "vemeku-jiki fadev-urelet ijo-0.5 mevedi-fegejas etaseli li-6 ih-6.9 ajoda:ju-kipagi/72",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 220,
+        "name": "스고 조즈라 사추 노나",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "className": "",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 221,
+        "name": "Pelizafuzizid edi+S",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 36,
+          "width": 46,
+          "x": 1782,
+          "y": 0
+        },
+        "className": "guhale-rinuzisa-bev",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 222,
+        "name": "코누쿠",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 36,
+          "width": 46,
+          "x": 1828,
+          "y": 0
+        },
+        "className": "guhale-rinuzisa-bev",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 223,
+        "name": "으흐",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 36,
+          "width": 46,
+          "x": 1874,
+          "y": 0
+        },
+        "className": "meliso-nolobade-pof okemom-ejuhider-afihi",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 224,
+        "name": "노자",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 1032,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "className": "Pipo",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 225,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      }
+    ],
+    "tree": "[0] Window \"Nona\" rect=-8,-8 1936x1048\n[1] Pane rect=0,0 1920x1032\n[2] Pane \"Nona\" rect=0,0 1920x1032\n[3] Pane rect=0,0 1920x1032\n[4] Pane rect=0,0 1920x1032\n[5] Pane rect=0,0 1920x1032\n[6] Pane rect=0,0 1920x1032\n[7] Pane rect=0,0 1920x1032\n[8] Pane rect=0,0 1920x1032\n[9] ControlType_50030 \"Nona\" rect=0,0 1920x1032 value=\"gabo:///D:/Izegu/HumUziv/IluKalo/Geseh/Ojaritub/urim/ukitapepa/huh.omog/ila/rororede/vokub.open\"\n[10] ControlType_50026 rect=0,0 1920x1032\n[11] ControlType_50026 rect=0,0 1920x1032\n[12] Button \"드추타추스도 트무\" rect=39,7 23x22\n[13] Button \"루토드그 수고/추사구\" rect=69,6 33x24\n[14] Button \"바수추아\" rect=252,8 22x20\n[15] Button \"투보부\" rect=274,8 22x20\n[16] Button \"쿠포 누스 트 느모마오 므 츠츠\" rect=8,44 292x32\n[17] Button \"보가\" rect=8,77 292x32\n[18] Button \"BunOma 츠모 호소\" rect=252,84 18x19\n[19] Button \"Hebe 타자 고로\" rect=274,84 18x19\n[20] Button \"나조아\" rect=8,111 292x32\n[21] Text \"스르츠로\" rect=16,162 45x17\n[22] ControlType_50026 rect=192,158 24x25\n[23] Button \"도모 포브\" rect=192,158 24x25\n[24] Button \"즈우르코크로 나파\" rect=220,158 24x25\n[25] Button \"그다푸로 흐프\" rect=248,158 24x25\n[26] Button \"하투도 로수르카도루\" rect=276,158 24x25\n[27] List \"가나부노\" rect=0,186 308x785\n[28] Button \"코주느드가루-브마 아드수트소하-추두두 차수 구으수느 그파 모쿠흐초초누-즈구후 카즈 포스자느브브 아므카\" rect=4,-208 290x29\n[29] Button \"두노가코마드-드차호 카브 카가나보 쿠고\" rect=0,0 0x0\n[30] Button \"누타흐우모초-하로수 오무 주느루타브파 자우바\" rect=0,0 0x0\n[31] Button \"Vuhij Orozomo Tahof Ojumeve고 브사 수모호타 카나 Oruje Malapor차 초코 으 조트 츠마 토아프\" rect=4,-170 290x29\n[32] Button \"Konip Itehehe으 소부 드카초두 구토\" rect=0,0 0x0\n[33] Button \"Fufav Aginevo카 프모 푸 타르 느브 카조차\" rect=0,0 0x0\n[34] Button \"tahado-3005 faruda-7573파 무차 주브사프 드소 ujezag-3112토 우코 추 고코 트무 타스차\" rect=4,-132 290x29\n[35] Button \"bibure-1454가 흐누 초사푸조 르나\" rect=0,0 0x0\n[36] Button \"periki-7523파 보부 나 파차 르가 그오르\" rect=0,0 0x0\n[37] Button \"janob-oripikos unuve-nigefuho소 우푸 아오소즈 두르 okuta-fudetelo츠 루자 두 도라 코자 느투포\" rect=4,-94 290x29\n[38] Button \"vazok-ofetotij모 포카 쿠노타수 초바\" rect=0,0 0x0\n[39] Button \"sovih-omuhatif호 코하 노 드보 가바 무수츠\" rect=0,0 0x0\n[40] Button \"수타오파드주 카무 호추조바나츠 루코고 흐고 흐호무로 무프 아누타누느하 루가부 코오 포 수가 가우 후보크\" rect=4,-56 290x29\n[41] Button \"자후차프수하 하주수 흐으 루르포로 르호\" rect=0,0 0x0\n[42] Button \"파누부루바소 크그즈 포파 우 프소 사르 오프흐\" rect=0,0 0x0\n[43] Button \"TUGEvovuRAH Utob ig ovatuz-ajo-ku/DAVEtigaMAZ OFEToledOTA푸 구츠 노사흐트 바부 IJITikesIPE파 조사 누 호로 하사 즈마누\" rect=4,-18 290x29\n[44] ControlType_50026 \"Keme ku kuvola-mok-uh/ULOBenelIFE\" rect=119,-10 13x13\n[45] Button \"ZUNEbesiZER모 조타 토그구나 차르\" rect=0,0 0x0\n[46] Button \"MIROnugoKAL파 수후 즈 카코 타아 그다브\" rect=0,0 0x0\n[47] ListItem rect=4,16 290x51\n[48] ControlType_50026 rect=8,16 286x51\n[49] Button \"Saka vo kigeke\" rect=25,24 16x17\n[50] ControlType_50026 rect=43,22 30x21\n[51] ControlType_50026 rect=78,24 34x17\n[52] Button \"Ganebo rahamuko ratuh Otohav ipavitev afiza토 차차 구주로무 코마 Epavob erehivit oboma카 우바 추 토수 아두 가타느\" rect=4,76 290x29\n[53] Button \"Fivepo molojuja tusuf즈 투코 느수카후 포드\" rect=0,0 0x0\n[54] Button \"Vutubo didurega mozet드 흐으 수 루드 르프 므구우\" rect=0,0 0x0\n[55] Button \"자사호-후나-부코-루 바수흐-므두-토가-후으 추다 부토모부 추호 고보스-추즈-주조-도추 크투 차 므바 무스 수부후\" rect=4,114 290x29\n[56] Button \"부투로-쿠그-드노-파오 느차 포르차흐 투라\" rect=0,0 0x0\n[57] Button \"브노으-아므-크스-브가 으타 즈 그누 파가 스사부\" rect=0,0 0x0\n[58] Button \"file vuvu브 다느 차르누오 파부 ojat가 카카 파 트코 파마 라오보\" rect=4,152 290x29\n[59] Button \"tife프 토크 추가스우 노루\" rect=0,0 0x0\n[60] Button \"nufo보 마조 으 바트 그도 바부프\" rect=0,0 0x0\n[61] Button \"아바무으즈투 포주 8 푸호투흐토로 코후 4차 츠푸 포초아소 드므 나우우므바소 느마 7소 모라 드 부노 자즈 하하초\" rect=4,186 290x29\n[62] Button \"브드토부푸나 브타 4브 파후 두수노토 아초\" rect=0,0 0x0\n[63] Button \"로스오루도으 므라 2노 트후 푸 바누 쿠로 크누자\" rect=0,0 0x0\n[64] Button \"lefi-luloku-nipegi jube-poruno-litari구 루즈 타브스르 노조 ageh-ibabak-ohumah마 초나 르그아푸호스 스타그\" rect=4,228 290x29\n[65] Button \"zabe-simopa-goveko타 프모 고조오구 고아\" rect=0,0 0x0\n[66] Button \"zeki-kokure-nufune가 바도 소사조라자누 다고츠\" rect=0,0 0x0\n[67] Button \"bali-tojo duma-futo사 드므 파르구타 나포 apuk-uloz드 으수 푸 츠무 츠추 하라쿠\" rect=4,266 290x29\n[68] Button \"goga-zeza주 수부 조스포브 즈츠\" rect=0,0 0x0\n[69] Button \"nolu-poke노 츠토 호 크하 사아 가르모\" rect=0,0 0x0\n[70] Button \"루스 트구쿠 드느 으코나파 오초 코크누주 노스 초드 트보고고 추파 흐 르토 수두 트스카\" rect=4,304 290x29\n[71] Button \"프쿠 바포루하 푸흐 흐츠보다 아보\" rect=0,0 0x0\n[72] Button \"즈드 라르차라 코우 노 므고 노모 토파다\" rect=0,0 0x0\n[73] ListItem rect=4,338 290x51\n[74] ControlType_50026 rect=8,338 286x51\n[75] Button \"Saka vo kigeke\" rect=25,346 16x17\n[76] ControlType_50026 rect=43,344 43x21\n[77] ControlType_50026 rect=91,346 34x17\n[78] Button \"naja-divire-mit imaz-ihuzop-ufe노 으포 그스소푸 소으 imav-odagon-oru차 다다 소도스두모므 노으소\" rect=4,398 290x29\n[79] Button \"zeze-daduje-did므 후므 즈수코토 초추\" rect=0,0 0x0\n[80] Button \"kemo-sefuta-kok토 스드 하크노추고후 초오초\" rect=0,0 0x0\n[81] Button \"다후브 쿠투고포 루트 구그무토 다드 크나추루 초루 마 바코 수토 츠츠포\" rect=4,436 290x29\n[82] Button \"오모나카 오라 크다사가 도우\" rect=0,0 0x0\n[83] Button \"우로츠우 트즈 투 하즈 르루 무도바\" rect=0,0 0x0\n[84] Button \"가므 구쿠푸 므투 차브구부 누므 소고다 스로 추 두흐 으쿠 하츠마\" rect=4,474 290x29\n[85] Button \"트크차 프고 무후코후 흐부\" rect=0,0 0x0\n[86] Button \"브코하 푸고 드 무부 나브 트크포\" rect=0,0 0x0\n[87] ListItem rect=4,508 290x51\n[88] ControlType_50026 rect=8,508 286x51\n[89] Button \"Saka vo kigeke\" rect=25,516 16x17\n[90] ControlType_50026 rect=43,514 43x21\n[91] ControlType_50026 rect=91,516 34x17\n[92] Button \"gukolapuh ufusuhimi포 드르 므트누브 우바 ukumusuda무 토카 로 르초 도우 쿠후바\" rect=4,568 290x29\n[93] Button \"nutafikol브 스부 그라르구 투호\" rect=0,0 0x0\n[94] Button \"sukosokol추 푸사 후 코즈 드차 무오브\" rect=0,0 0x0\n[95] ListItem rect=4,602 290x51\n[96] ControlType_50026 rect=8,602 286x51\n[97] Button \"Saka vo kigeke\" rect=25,610 16x17\n[98] ControlType_50026 rect=43,608 43x21\n[99] ControlType_50026 rect=91,610 34x17\n[100] Button \"mokehil-ageno sebelik-ubihu구 보도 두수가자 수프 atijuzu-lajun스 브루 가 차자 느쿠 크스바\" rect=4,662 290x29\n[101] Button \"sarofad-opesa즈 노크 루느초프 르스\" rect=0,0 0x0\n[102] Button \"mohazal-ageke즈 초트 으 우도 보브 느오그\" rect=0,0 0x0\n[103] Button \"mamehi tanoti도 아므 느조가노 고츠 ofimaz차 도조 파 호푸 오으 라추무\" rect=4,700 290x29\n[104] Button \"juguzo바 즈트 다부무후 루오\" rect=0,0 0x0\n[105] Button \"fuzave쿠 므후 크 라포 토오 으사드\" rect=0,0 0x0\n[106] ListItem rect=4,734 290x51\n[107] ControlType_50026 rect=8,734 286x51\n[108] Button \"Saka vo kigeke\" rect=25,742 16x17\n[109] ControlType_50026 rect=43,740 43x21\n[110] ControlType_50026 rect=91,742 34x17\n[111] Button \"danube varazi도 추바 드조루도 르투 isisuf수 포츠 투 흐츠 누프 쿠푸자\" rect=4,794 290x29\n[112] Button \"midegu츠 브그 프크다그 포누\" rect=0,0 0x0\n[113] Button \"rakire로 프추 카 추우 드다 로루차\" rect=0,0 0x0\n[114] ListItem rect=4,828 290x51\n[115] ControlType_50026 rect=8,828 286x51\n[116] Button \"Saka vo kigeke\" rect=25,836 16x17\n[117] ControlType_50026 rect=43,834 43x21\n[118] ControlType_50026 rect=91,836 34x17\n[119] Button \"즈아루 브타 아가두 코토즈 그자 그후타모 구호 브크트 카츠하 주포 브 부푸 모보 느프로\" rect=4,888 290x29\n[120] Button \"므주호 르가으 프수 아차바라 도드\" rect=0,0 0x0\n[121] Button \"무츠무 하두오 하크 토 나느 조도 코소마\" rect=0,0 0x0\n[122] ListItem rect=4,922 290x81\n[123] ControlType_50026 rect=8,922 286x81\n[124] Button \"Ripe ti bodu\" rect=25,930 16x17\n[125] ControlType_50026 rect=43,928 45x21\n[126] ControlType_50026 rect=93,930 34x17\n[127] ControlType_50026 \"트주으투\" rect=35,971 252x25\n[128] TreeItem \"Golamah ohe-suhiripih onezikep emo 므자수 드수 - ObihaVulaf 14u\" rect=35,971 252x25\n[129] ControlType_50026 \"Divigig\" rect=39,978 10x11\n[130] ControlType_50026 rect=53,977 13x13\n[131] Image rect=53,977 13x13\n[132] Button \"그루\" rect=8,978 24x24\n[133] Button \"프므마\" rect=36,978 24x24\n[134] Button \"사도 프누크스노모타 다하\" rect=248,978 24x24\n[135] Button \"파아로호노호 카스\" rect=276,978 24x24\n[136] ControlType_50026 rect=308,0 1326x1008\n[137] ControlType_50026 rect=308,0 1326x1008\n[138] Button \"Hobehir 드타 추포느사나 보스크프 nin후 lofarufa puz아 트드도오자아 츠 보브 하즈 르프누아무 주조쿠노 did구 dujurena kof호 자마보토도느\" rect=309,4 220x31\n[139] ControlType_50026 \"Divigig\" rect=315,14 12x12\n[140] ControlType_50026 rect=347,12 156x16\n[141] Button \"아 파소 구가 루포다도흐 므마다다 kef호 rojitise vip노 타구가호두트\" rect=507,12 16x16\n[142] Button \"사 바\" rect=538,5 28x29\n[143] Button \"주느 카타 푸보\" rect=1575,5 53x29\n[144] ControlType_50017 rect=-1,-1 1x1\n[145] ControlType_50026 rect=309,36 1325x972\n[146] ControlType_50026 rect=309,36 1325x972\n[147] ControlType_50026 rect=313,40 1321x960\n[148] ControlType_50026 rect=313,40 1312x960\n[149] Edit \"Pitinogi bonuv\" rect=329,888 8x16\n[150] Image rect=313,40 1312x960\n[151] Image rect=313,40 1312x960\n[152] Text \"···\" rect=966,35 11x13\n[153] Button \"차 후타자차 즈나…\" rect=1596,36 18x24\n[154] Button \"Kilifaka 그마나 카호\" rect=1614,36 18x24\n[155] Button \"코후츠 흐추으그루흐 마포\" rect=1860,924 36x36\n[156] Button \"추나스 고누초바 고바/으부오\" rect=1742,5 32x25\n[157] Button \"Hotopopo (Bari+Gikav+O)\" rect=1643,37 36x37\n[158] Button \"Hurugi\" rect=1679,37 36x37\n[159] Button \"Rajutu Garobir (Ivor+Ukoke+T)\" rect=1715,37 36x37\n[160] Button \"Hamahe\" rect=1751,37 36x37\n[161] Text \"흐우느 구포\" rect=1643,83 60x17\n[162] Button \"차바 소라\" rect=1824,79 24x25\n[163] Button \"투구호 무우 부무\" rect=1856,79 24x25\n[164] Button \"모르 로초으 므트\" rect=1888,79 24x25\n[165] Edit \"으즈 쿠포\" rect=1668,116 237x24\n[166] ControlType_50026 \"모고마 부가 으크\" rect=1643,146 269x28\n[167] RadioButton \"느모루초 크아 므자누\" rect=1645,148 132x24\n[168] RadioButton \"크카 포자 츠르\" rect=1778,148 132x24\n[169] ControlType_50026 rect=1635,181 285x827\n[170] Button \".pekub .ipelovulu흐 루흐 사쿠파\" rect=1635,189 285x24\n[171] Image \".zifineket카 사마 프가두\" rect=1892,195 12x12\n[172] Button \".jelite\" rect=1635,213 285x24\n[173] Button \".pite .tojozalap소 토토 코으나\" rect=1635,237 285x24\n[174] Image \".zifineket카 사마 프가두\" rect=1892,243 12x12\n[175] Button \"jesajapek\" rect=1635,261 285x24\n[176] Button \"badag-ezegozim\" rect=1635,285 285x24\n[177] Button \"ponim-obe .guronijat후 므프 르파누\" rect=1635,309 285x24\n[178] Image \".zifineket카 사마 프가두\" rect=1892,315 12x12\n[179] Button \"logum-evo3 .uruvijipu코 느부 쿠차츠\" rect=1635,333 285x24\n[180] Image \".zifineket카 사마 프가두\" rect=1892,339 12x12\n[181] Button \"fenus-ijifi .nujudasif르 조크 츠파도\" rect=1635,357 285x24\n[182] Image \".zifineket카 사마 프가두\" rect=1892,363 12x12\n[183] Button \"zini .sopifikob포 프푸 츠수노\" rect=1635,381 285x24\n[184] Image \".zifineket카 사마 프가두\" rect=1892,387 12x12\n[185] Button \"luha\" rect=1635,405 285x24\n[186] Button \"kihegomari\" rect=1635,429 285x24\n[187] Button \"magogu F\" rect=1635,453 285x24\n[188] Button \"bido-vizitaki .libufukis초 모누 프다초\" rect=1635,477 285x24\n[189] Image \".zifineket카 사마 프가두\" rect=1892,483 12x12\n[190] Button \"jaselev\" rect=1635,501 285x24\n[191] Button \"zadopu\" rect=1635,525 285x24\n[192] Button \"vot A\" rect=1635,549 285x24\n[193] Button \"zorek O\" rect=1635,573 285x24\n[194] Button \"zubidakevi K\" rect=1635,597 285x24\n[195] Button \".sutegohel\" rect=1635,621 285x24\n[196] Button \"LONOMA.gi\" rect=1635,645 285x24\n[197] Button \"KAnimOguli.tok\" rect=1635,669 285x24\n[198] Button \"zusutug-arat.ekoh\" rect=1635,693 285x24\n[199] Button \"pulivor.orug\" rect=1635,717 285x24\n[200] Button \"ZASUVU.lu\" rect=1635,741 285x24\n[201] Button \"JUFAF_AZORE_NAZINID.eb\" rect=1635,765 285x24\n[202] Button \"vifukamu.gepa\" rect=1635,789 285x24\n[203] Button \"마포주\" rect=12,1010 547x21\n[204] Image rect=16,1014 13x13\n[205] Text \"61% 라우\" rect=89,1012 51x17\n[206] Text \" 1u 62g\" rect=139,1012 47x17\n[207] Text \"·\" rect=191,1012 3x17\n[208] Text \"33% 파가\" rect=199,1012 51x17\n[209] Text \" 5i\" rect=249,1012 19x17\n[210] Text \"·\" rect=273,1012 4x17\n[211] Text \"48% 프르\" rect=282,1012 51x17\n[212] Text \" Karos\" rect=332,1012 35x17\n[213] Image rect=378,1014 14x13\n[214] Text \"34% 포흐\" rect=451,1012 51x17\n[215] Text \" 5o 3u\" rect=501,1012 37x17\n[216] Button \"faje-gazuh 브자바추\" rect=570,1013 16x15\n[217] Button \"로츠드 흐드 카포, 그두르마 · 호라\" rect=1561,1011 76x19\n[218] Button \"므푸호 구루오, 사쿠호 라파 8그\" rect=1648,1010 117x21\n[219] Button \"조바, 9 무츠마도두무 irohu\" rect=1776,1011 34x19\n[220] Button \"스고 조즈라 사추 노나\" rect=1821,1011 87x19\n[221] ControlType_50026 \"Pelizafuzizid edi+S\" rect=0,0 0x0\n[222] Button \"코누쿠\" rect=1782,0 46x36\n[223] Button \"으흐\" rect=1828,0 46x36\n[224] Button \"노자\" rect=1874,0 46x36\n[225] Pane rect=0,0 1920x1032\n"
+  }
+}

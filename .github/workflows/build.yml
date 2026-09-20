@@ -1,0 +1,86 @@
+name: Build and validate desktop computer use
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore: ['orca-research/**']
+  pull_request:
+    paths-ignore: ['orca-research/**']
+permissions:
+  contents: read
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-22.04, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build pkg-config libglib2.0-dev libx11-dev libxtst-dev libxrandr-dev libjpeg-dev libpng-dev libpipewire-0.3-dev libatspi2.0-dev nlohmann-json3-dev
+      - name: Configure Linux
+        if: runner.os == 'Linux'
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Configure Windows
+        if: runner.os == 'Windows'
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+      - run: cmake --build build --config Release --parallel 2
+      - run: ctest --test-dir build -C Release --output-on-failure
+      - name: Upload native executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.os }}
+          path: |
+            build/desktop-computer-use-native
+            build/Release/desktop-computer-use-native.exe
+          if-no-files-found: error
+  adapters:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run bundle
+      - run: bash extensions/package.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skill-adapters
+          path: |
+            skills/desktop-computer-use
+            extensions/dist/*.zip
+  package:
+    needs: [native, adapters]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: .cache/native-artifacts
+      - run: npm ci
+      - name: Assemble both platform executables
+        run: |
+          mkdir -p .cache/package-bin/win32-x64 .cache/package-bin/linux-x64
+          find .cache/native-artifacts/native-windows-2022 -name desktop-computer-use-native.exe -exec cp '{}' .cache/package-bin/win32-x64/ \;
+          find .cache/native-artifacts/native-ubuntu-22.04 -name desktop-computer-use-native -exec cp '{}' .cache/package-bin/linux-x64/ \;
+          test -f .cache/package-bin/win32-x64/desktop-computer-use-native.exe
+          test -f .cache/package-bin/linux-x64/desktop-computer-use-native
+          chmod +x .cache/package-bin/linux-x64/desktop-computer-use-native
+          bash extensions/package.sh
+          npm run package:skill -- --native-dir .cache/package-bin --extension-dir extensions/dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-computer-use-skill
+          path: dist/desktop-computer-use-skill
+          if-no-files-found: error

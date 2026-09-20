@@ -1,0 +1,31 @@
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+build*/
+cmake-empty/
+dist/
+artifacts/
+.cache/
+*.log
+orca-research/
+skills/desktop-computer-use/bin/
+skills/desktop-computer-use/scripts/dcu.mjs
+
+# Local credentials and agent configuration.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+/.codex/
+/.agents/
+
+# Raw desktop recordings may contain private text and session identifiers.
+/validation/
+/tests/integration/**/results/
+/tests/fixtures/uia/*
+!/tests/fixtures/uia/app-[0-9][0-9]-asfound.json
+!/tests/fixtures/uia/app-[0-9][0-9]-foreground.json

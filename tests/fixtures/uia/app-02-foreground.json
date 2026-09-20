@@ -1,0 +1,1067 @@
+{
+  "window": {
+    "app": "RejefejazuzUjireNiki.fir",
+    "height": 534,
+    "id": "hwnd:1638798",
+    "isForeground": true,
+    "isMinimized": false,
+    "isOffscreen": false,
+    "pid": 23436,
+    "title": "다고므",
+    "width": 702,
+    "x": 2376,
+    "y": 232
+  },
+  "accessibility": {
+    "elementCount": 57,
+    "elements": [
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 541,
+          "width": 716,
+          "x": -7,
+          "y": 0
+        },
+        "className": "SarafisipijUjuriGuzefo",
+        "controlType": "Window",
+        "enabled": true,
+        "focused": false,
+        "index": 0,
+        "name": "다고므",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "VemifIhi",
+        "bounds": {
+          "height": 32,
+          "width": 188,
+          "x": 513,
+          "y": 1
+        },
+        "className": "MigorapolipIvoseHofolAriPepihi",
+        "controlType": "Window",
+        "enabled": true,
+        "focused": false,
+        "index": 1,
+        "name": "다고므",
+        "offscreen": false,
+        "patterns": [
+          "value"
+        ],
+        "value": "다고므"
+      },
+      {
+        "automationId": "NitanaDeriGop",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": -2376,
+          "y": -232
+        },
+        "className": "",
+        "controlType": "ControlType_50010",
+        "enabled": true,
+        "focused": false,
+        "index": 2,
+        "name": "조나하",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": -2376,
+          "y": -232
+        },
+        "className": "",
+        "controlType": "MenuItem",
+        "enabled": true,
+        "focused": false,
+        "index": 3,
+        "name": "조나하",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "Bolerabe",
+        "bounds": {
+          "height": 32,
+          "width": 46,
+          "x": 563,
+          "y": 1
+        },
+        "className": "",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 4,
+        "name": "스추므 하드로",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "Favujelu",
+        "bounds": {
+          "height": 32,
+          "width": 46,
+          "x": 609,
+          "y": 1
+        },
+        "className": "",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 5,
+        "name": "로푸가 초하바",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "Mizej",
+        "bounds": {
+          "height": 32,
+          "width": 46,
+          "x": 655,
+          "y": 1
+        },
+        "className": "",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 6,
+        "name": "차고르 가차",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 532,
+          "width": 700,
+          "x": 1,
+          "y": 1
+        },
+        "className": "Biruhem.IM.Ifov.OrahUvomib",
+        "controlType": "Window",
+        "enabled": true,
+        "focused": true,
+        "index": 7,
+        "name": "다고므",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "LavOraf",
+        "bounds": {
+          "height": 16,
+          "width": 36,
+          "x": 49,
+          "y": 9
+        },
+        "className": "GohuSobuk",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 8,
+        "name": "다고므",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "NanIpuv",
+        "bounds": {
+          "height": 503,
+          "width": 700,
+          "x": 1,
+          "y": 30
+        },
+        "className": "",
+        "controlType": "ControlType_50025",
+        "enabled": true,
+        "focused": false,
+        "index": 9,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "ZavojeSiseVukido",
+        "bounds": {
+          "height": 36,
+          "width": 40,
+          "x": 5,
+          "y": 39
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 10,
+        "name": "소바 므쿠",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "KageNusedOnevAname",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": -2376,
+          "y": -232
+        },
+        "className": "GohuSobuk",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 11,
+        "name": "",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 503,
+          "width": 700,
+          "x": 1,
+          "y": 30
+        },
+        "className": "TefuhevoBevati",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 12,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "JosugepiteMepigihube",
+        "bounds": {
+          "height": 0,
+          "width": 0,
+          "x": -2376,
+          "y": -232
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 13,
+        "name": "라즈 ",
+        "offscreen": true,
+        "patterns": []
+      },
+      {
+        "automationId": "LurodimihiJidanak",
+        "bounds": {
+          "height": 75,
+          "width": 400,
+          "x": 1,
+          "y": 104
+        },
+        "className": "",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": true,
+        "index": 14,
+        "name": "쿠트투 9",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "ZivunuMavor",
+        "bounds": {
+          "height": 31,
+          "width": 391,
+          "x": 5,
+          "y": 180
+        },
+        "className": "RuratImunusajiGofurefiboRame",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 15,
+        "name": "호사도 느조",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "VajejUremokAnejag",
+        "bounds": {
+          "height": 31,
+          "width": 77,
+          "x": 5,
+          "y": 180
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": false,
+        "focused": false,
+        "index": 16,
+        "name": "고코 마르카 초투조",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "JetAlifim",
+        "bounds": {
+          "height": 31,
+          "width": 77,
+          "x": 84,
+          "y": 180
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": false,
+        "focused": false,
+        "index": 17,
+        "name": "흐마주 루 고누",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "PemUlov",
+        "bounds": {
+          "height": 31,
+          "width": 76,
+          "x": 163,
+          "y": 180
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 18,
+        "name": "오파포 후 코모스",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "MasAbusa",
+        "bounds": {
+          "height": 31,
+          "width": 77,
+          "x": 241,
+          "y": 180
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 19,
+        "name": "즈하호 추 주수",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "sivEzejir",
+        "bounds": {
+          "height": 31,
+          "width": 76,
+          "x": 320,
+          "y": 180
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 20,
+        "name": "무마수 아 카그",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "VanudusAzuzefuf",
+        "bounds": {
+          "height": 51,
+          "width": 392,
+          "x": 5,
+          "y": 213
+        },
+        "className": "RuratImunusajiGofurefiboRame",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 21,
+        "name": "므흐누사누 호푸",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "sinovudAfuvib",
+        "bounds": {
+          "height": 51,
+          "width": 97,
+          "x": 5,
+          "y": 213
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 22,
+        "name": "으츠가",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "dobolOfujaNusepe",
+        "bounds": {
+          "height": 51,
+          "width": 96,
+          "x": 104,
+          "y": 213
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 23,
+        "name": "고소 고토모",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "noperEjezef",
+        "bounds": {
+          "height": 51,
+          "width": 97,
+          "x": 202,
+          "y": 213
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 24,
+        "name": "프즈차",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "moniKakamIzarub",
+        "bounds": {
+          "height": 51,
+          "width": 96,
+          "x": 301,
+          "y": 213
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 25,
+        "name": "가쿠바르으",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "PedenahiTumekazoh",
+        "bounds": {
+          "height": 51,
+          "width": 294,
+          "x": 5,
+          "y": 266
+        },
+        "className": "RuratImunusajiGofurefiboRame",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 26,
+        "name": "카쿠 라타",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "setuviBobina",
+        "bounds": {
+          "height": 51,
+          "width": 97,
+          "x": 5,
+          "y": 266
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 27,
+        "name": "고",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "nikuta2Ugalus",
+        "bounds": {
+          "height": 51,
+          "width": 96,
+          "x": 104,
+          "y": 266
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 28,
+        "name": "드르",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "veveseLumuFukodu",
+        "bounds": {
+          "height": 51,
+          "width": 97,
+          "x": 202,
+          "y": 266
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 29,
+        "name": "주수자",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "JafalanuVigujideh",
+        "bounds": {
+          "height": 263,
+          "width": 96,
+          "x": 301,
+          "y": 266
+        },
+        "className": "RuratImunusajiGofurefiboRame",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 30,
+        "name": "소프 보쿠쿠",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "kerejeFerina",
+        "bounds": {
+          "height": 51,
+          "width": 96,
+          "x": 301,
+          "y": 266
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 31,
+        "name": "사카프",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "ruparetiZolake",
+        "bounds": {
+          "height": 51,
+          "width": 96,
+          "x": 301,
+          "y": 319
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 32,
+        "name": "도",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "ludajOzuzih",
+        "bounds": {
+          "height": 51,
+          "width": 96,
+          "x": 301,
+          "y": 372
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 33,
+        "name": "마포",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "kaloMukovu",
+        "bounds": {
+          "height": 51,
+          "width": 96,
+          "x": 301,
+          "y": 425
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 34,
+        "name": "부모수",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "lijatUkejen",
+        "bounds": {
+          "height": 51,
+          "width": 96,
+          "x": 301,
+          "y": 478
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 35,
+        "name": "모로",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "TovobaHir",
+        "bounds": {
+          "height": 210,
+          "width": 294,
+          "x": 5,
+          "y": 319
+        },
+        "className": "RuratImunusajiGofurefiboRame",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 36,
+        "name": "고나 쿠카",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "zaj9Desaze",
+        "bounds": {
+          "height": 51,
+          "width": 97,
+          "x": 104,
+          "y": 478
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 37,
+        "name": "토",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "baz3Gufija",
+        "bounds": {
+          "height": 51,
+          "width": 97,
+          "x": 5,
+          "y": 425
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 38,
+        "name": "0",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "sef9Tahuve",
+        "bounds": {
+          "height": 51,
+          "width": 97,
+          "x": 104,
+          "y": 425
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 39,
+        "name": "1",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "kuv5Rizoma",
+        "bounds": {
+          "height": 51,
+          "width": 96,
+          "x": 203,
+          "y": 425
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 40,
+        "name": "9",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "zej4Hizodi",
+        "bounds": {
+          "height": 51,
+          "width": 97,
+          "x": 5,
+          "y": 372
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 41,
+        "name": "3",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "jim6Tuvili",
+        "bounds": {
+          "height": 51,
+          "width": 97,
+          "x": 104,
+          "y": 372
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 42,
+        "name": "8",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "mek9Ribufe",
+        "bounds": {
+          "height": 51,
+          "width": 96,
+          "x": 203,
+          "y": 372
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 43,
+        "name": "7",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "guv6Febire",
+        "bounds": {
+          "height": 51,
+          "width": 97,
+          "x": 5,
+          "y": 319
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 44,
+        "name": "6",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "big0Pimaja",
+        "bounds": {
+          "height": 51,
+          "width": 97,
+          "x": 104,
+          "y": 319
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 45,
+        "name": "2",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "pol9Hotami",
+        "bounds": {
+          "height": 51,
+          "width": 96,
+          "x": 203,
+          "y": 319
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 46,
+        "name": "4",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "ramimotAsabajoroJidise",
+        "bounds": {
+          "height": 51,
+          "width": 96,
+          "x": 203,
+          "y": 478
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 47,
+        "name": "코가스 자오 누트",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "fenifuPesuka",
+        "bounds": {
+          "height": 51,
+          "width": 97,
+          "x": 5,
+          "y": 478
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 48,
+        "name": "아초 구로",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "PaboGozin",
+        "bounds": {
+          "height": 503,
+          "width": 300,
+          "x": 401,
+          "y": 30
+        },
+        "className": "RuratImunusajiGofurefiboRame",
+        "controlType": "ControlType_50026",
+        "enabled": true,
+        "focused": false,
+        "index": 49,
+        "name": "추투 호 브무고 부로",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "TaloGutam",
+        "bounds": {
+          "height": 503,
+          "width": 300,
+          "x": 401,
+          "y": 30
+        },
+        "className": "Nepeh",
+        "controlType": "Tab",
+        "enabled": true,
+        "focused": false,
+        "index": 50,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "JisigimUmuje",
+        "bounds": {
+          "height": 48,
+          "width": 52,
+          "x": 401,
+          "y": 30
+        },
+        "className": "SonutEpas",
+        "controlType": "TabItem",
+        "enabled": true,
+        "focused": false,
+        "index": 51,
+        "name": "소두 소모노 사타도츠. 가포",
+        "offscreen": false,
+        "patterns": [
+          "select"
+        ]
+      },
+      {
+        "automationId": "ZozipubElupo",
+        "bounds": {
+          "height": 437,
+          "width": 264,
+          "x": 413,
+          "y": 96
+        },
+        "className": "GohuSobuk",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 52,
+        "name": "로하 소트프 주오파파.",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "TozakeTalin",
+        "bounds": {
+          "height": 48,
+          "width": 66,
+          "x": 453,
+          "y": 30
+        },
+        "className": "SonutEpas",
+        "controlType": "TabItem",
+        "enabled": true,
+        "focused": false,
+        "index": 53,
+        "name": "라하므도 초조라 노소츠 소보아후. 사쿠르",
+        "offscreen": false,
+        "patterns": [
+          "select"
+        ]
+      },
+      {
+        "automationId": "Fihavi",
+        "bounds": {
+          "height": 27,
+          "width": 41,
+          "x": 49,
+          "y": 42
+        },
+        "className": "GohuSobuk",
+        "controlType": "Text",
+        "enabled": true,
+        "focused": false,
+        "index": 54,
+        "name": "타그 그흐투 초모",
+        "offscreen": false,
+        "patterns": []
+      },
+      {
+        "automationId": "KovituNokotiDaGusImumav",
+        "bounds": {
+          "height": 32,
+          "width": 32,
+          "x": 100,
+          "y": 41
+        },
+        "className": "Duvagu",
+        "controlType": "Button",
+        "enabled": true,
+        "focused": false,
+        "index": 55,
+        "name": "우무 흐도 마추",
+        "offscreen": false,
+        "patterns": [
+          "invoke"
+        ]
+      },
+      {
+        "automationId": "",
+        "bounds": {
+          "height": 500,
+          "width": 700,
+          "x": 1,
+          "y": 33
+        },
+        "className": "LukufisigokUloziFihumOlosOnosib",
+        "controlType": "Pane",
+        "enabled": true,
+        "focused": false,
+        "index": 56,
+        "name": "",
+        "offscreen": false,
+        "patterns": []
+      }
+    ],
+    "tree": "[0] Window \"다고므\" rect=-7,0 716x541\n[1] Window \"다고므\" rect=513,1 188x32 value=\"다고므\"\n[2] ControlType_50010 \"조나하\" rect=-2376,-232 0x0\n[3] MenuItem \"조나하\" rect=-2376,-232 0x0\n[4] Button \"스추므 하드로\" rect=563,1 46x32\n[5] Button \"로푸가 초하바\" rect=609,1 46x32\n[6] Button \"차고르 가차\" rect=655,1 46x32\n[7] Window \"다고므\" rect=1,1 700x532\n[8] Text \"다고므\" rect=49,9 36x16\n[9] ControlType_50025 rect=1,30 700x503\n[10] Button \"소바 므쿠\" rect=5,39 40x36\n[11] Text rect=-2376,-232 0x0\n[12] ControlType_50026 rect=1,30 700x503\n[13] Text \"라즈 \" rect=-2376,-232 0x0\n[14] Text \"쿠트투 9\" rect=1,104 400x75\n[15] ControlType_50026 \"호사도 느조\" rect=5,180 391x31\n[16] Button \"고코 마르카 초투조\" rect=5,180 77x31\n[17] Button \"흐마주 루 고누\" rect=84,180 77x31\n[18] Button \"오파포 후 코모스\" rect=163,180 76x31\n[19] Button \"즈하호 추 주수\" rect=241,180 77x31\n[20] Button \"무마수 아 카그\" rect=320,180 76x31\n[21] ControlType_50026 \"므흐누사누 호푸\" rect=5,213 392x51\n[22] Button \"으츠가\" rect=5,213 97x51\n[23] Button \"고소 고토모\" rect=104,213 96x51\n[24] Button \"프즈차\" rect=202,213 97x51\n[25] Button \"가쿠바르으\" rect=301,213 96x51\n[26] ControlType_50026 \"카쿠 라타\" rect=5,266 294x51\n[27] Button \"고\" rect=5,266 97x51\n[28] Button \"드르\" rect=104,266 96x51\n[29] Button \"주수자\" rect=202,266 97x51\n[30] ControlType_50026 \"소프 보쿠쿠\" rect=301,266 96x263\n[31] Button \"사카프\" rect=301,266 96x51\n[32] Button \"도\" rect=301,319 96x51\n[33] Button \"마포\" rect=301,372 96x51\n[34] Button \"부모수\" rect=301,425 96x51\n[35] Button \"모로\" rect=301,478 96x51\n[36] ControlType_50026 \"고나 쿠카\" rect=5,319 294x210\n[37] Button \"토\" rect=104,478 97x51\n[38] Button \"0\" rect=5,425 97x51\n[39] Button \"1\" rect=104,425 97x51\n[40] Button \"9\" rect=203,425 96x51\n[41] Button \"3\" rect=5,372 97x51\n[42] Button \"8\" rect=104,372 97x51\n[43] Button \"7\" rect=203,372 96x51\n[44] Button \"6\" rect=5,319 97x51\n[45] Button \"2\" rect=104,319 97x51\n[46] Button \"4\" rect=203,319 96x51\n[47] Button \"코가스 자오 누트\" rect=203,478 96x51\n[48] Button \"아초 구로\" rect=5,478 97x51\n[49] ControlType_50026 \"추투 호 브무고 부로\" rect=401,30 300x503\n[50] Tab rect=401,30 300x503\n[51] TabItem \"소두 소모노 사타도츠. 가포\" rect=401,30 52x48\n[52] Text \"로하 소트프 주오파파.\" rect=413,96 264x437\n[53] TabItem \"라하므도 초조라 노소츠 소보아후. 사쿠르\" rect=453,30 66x48\n[54] Text \"타그 그흐투 초모\" rect=49,42 41x27\n[55] Button \"우무 흐도 마추\" rect=100,41 32x32\n[56] Pane rect=1,33 700x500\n"
+  }
+}
