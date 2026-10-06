@@ -120,11 +120,11 @@ test("session state is persisted in the supplied runtime directory and can be cl
   }
 });
 
-test("setup guidance documents the active indicator and Esc emergency stop", () => {
+test("setup guidance documents the active indicator and double-Esc emergency stop", () => {
   for (const platform of ["win32", "linux"]) {
     const guidance = usageInstructions(platform).join("\n");
     assert.match(guidance, /blue inward-fading screen-edge border/);
-    assert.match(guidance, /Press Esc/);
+    assert.match(guidance, /Press Esc twice within 1 second/);
   }
 });
 
@@ -165,6 +165,6 @@ test("the skill entrypoint is runnable without a native binary for help", async 
     child.once("exit", code => code === 0 ? resolve(text) : reject(new Error(`exit ${code}: ${text}`)));
   });
   assert.match(String(output), /desktop-computer-use/);
-  assert.match(String(output), /Emergency stop: press Esc/);
+  assert.match(String(output), /Emergency stop: press Esc twice within 1 second/);
   assert.match(String(output), /blue inward-fading screen-edge border/);
 });

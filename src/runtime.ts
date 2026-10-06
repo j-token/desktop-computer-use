@@ -378,7 +378,7 @@ export function usageInstructions(platform = process.platform): string[] {
   const indicatorInstructions = [
     "Active sessions show a noninteractive top banner, high-contrast cursor ring, " +
     "and blue inward-fading screen-edge border.",
-    "Press Esc or run `dcu session stop` to stop the session and release held input."
+    "Press Esc twice within 1 second or run `dcu session stop` to stop the session and release held input."
   ];
   if (isWindows(platform)) {
     return [

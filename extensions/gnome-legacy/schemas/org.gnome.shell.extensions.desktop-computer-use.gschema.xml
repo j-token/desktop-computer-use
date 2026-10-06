@@ -3,9 +3,9 @@
   <schema id="org.gnome.shell.extensions.desktop-computer-use"
           path="/org/gnome/shell/extensions/desktop-computer-use/">
     <key name="desktop-computer-use-stop-accelerator" type="as">
-      <default>['Escape']</default>
+      <default>['Escape', '&lt;Shift&gt;Escape', '&lt;Control&gt;Escape', '&lt;Shift&gt;&lt;Control&gt;Escape', '&lt;Alt&gt;Escape', '&lt;Shift&gt;&lt;Alt&gt;Escape', '&lt;Control&gt;&lt;Alt&gt;Escape', '&lt;Shift&gt;&lt;Control&gt;&lt;Alt&gt;Escape', '&lt;Super&gt;Escape', '&lt;Shift&gt;&lt;Super&gt;Escape', '&lt;Control&gt;&lt;Super&gt;Escape', '&lt;Shift&gt;&lt;Control&gt;&lt;Super&gt;Escape', '&lt;Alt&gt;&lt;Super&gt;Escape', '&lt;Shift&gt;&lt;Alt&gt;&lt;Super&gt;Escape', '&lt;Control&gt;&lt;Alt&gt;&lt;Super&gt;Escape', '&lt;Shift&gt;&lt;Control&gt;&lt;Alt&gt;&lt;Super&gt;Escape']</default>
       <summary>Computer Use stop accelerator</summary>
-      <description>Stops an active computer use session and releases the indicator.</description>
+      <description>Pressing any of these twice within one second stops an active computer use session and releases the indicator. Every modifier combination is listed so held modifiers cannot block the stop.</description>
     </key>
   </schema>
 </schemalist>

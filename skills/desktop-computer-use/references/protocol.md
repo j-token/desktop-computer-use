@@ -14,10 +14,13 @@ supports them.
 Native method names remain kebab-case except `session.start`, `session.status`, `session.stop`,
 and `daemon.shutdown`. The daemon owns authorization, one active session, operation serialization,
 interrupt handling, and the 120-second idle lease. `session.start` only succeeds after the platform
-indicator and global `Esc` stop hotkey are ready. While active, the indicator provides a top banner,
-a high-contrast cursor ring, and a blue screen-edge border that fades inward; these visual actors
-must not take focus or intercept application input. `session.stop` is an emergency path and may be
-sent without a session ID; it must release held input before returning.
+indicator and global stop hotkey (`Esc` pressed twice within 1 second) are ready. While active, the
+indicator provides a top banner, a high-contrast cursor ring, and a blue screen-edge border that
+fades inward; these visual actors must not take focus or intercept application input. `session.stop`
+is an emergency path and may be sent without a session ID; it must release held input before
+returning. Escape sent by `press-key` or `hotkey` reaches the application and never counts toward
+the stop. On Linux, if the GNOME extension cannot release the stop hotkey first, the action fails
+with `stop_key_conflict` and nothing is injected.
 
 Each screenshot observation encodes two files from one frame: the original
 (`<observationId>-full.<ext>`) and a reduced image (`<observationId>.<ext>`, 0.5x when the source

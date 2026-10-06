@@ -602,7 +602,7 @@ Json WindowsBackend::execute(const std::string& method, const Json& params,
     if (method == "session.status") {
         return Json{{"active", sessionActive_.load()}, {"sessionId", sessionId_},
                     {"indicatorReady", indicator_.ready()},
-                    {"hotkey", "Escape"}, {"stopKey", "Escape"}};
+                    {"hotkey", "Escape x2"}, {"stopKey", "Escape x2"}};
     }
     if (method == "session.start") {
         if (sessionActive_.load()) throw Error("session_active", "A computer-use session is already active");
@@ -616,8 +616,8 @@ Json WindowsBackend::execute(const std::string& method, const Json& params,
         sessionActive_.store(true, std::memory_order_release);
         interrupted_.store(false, std::memory_order_release);
         return Json{{"ready", true}, {"sessionId", sessionId_},
-                    {"indicator", { {"ready", true}, {"hotkey", "Escape"},
-                                     {"stopKey", "Escape"},
+                    {"indicator", { {"ready", true}, {"hotkey", "Escape x2"},
+                                     {"stopKey", "Escape x2"},
                                      {"clickThrough", true}, {"cursorHighlight", true},
                                      {"edgeBorder", true} }}};
     }
@@ -1382,7 +1382,7 @@ Json WindowsBackend::doctor() const {
                 {"windowsGraphicsCapture", true},
                 {"d3d11", true},
                 {"wic", true},
-                {"stopKey", "Escape"},
+                {"stopKey", "Escape x2"},
                 {"edgeBorder", interactive},
                 {"indicator", interactive},
                 {"ready", interactive},
@@ -1395,7 +1395,7 @@ Json WindowsBackend::capabilities() const {
                                {"wgc", true}, {"jpeg", true}, {"png", true},
                                {"drag", true}, {"nativeApps", true}, {"games", true},
                                {"overlay", true}, {"hotkeyStop", true},
-                               {"stopKey", "Escape"}, {"edgeBorder", true}}},
+                               {"stopKey", "Escape x2"}, {"edgeBorder", true}}},
                 {"coordinateSpace", "reduced"},
                 {"defaults", {{"durationMs", 240}, {"steps", 12},
                                {"holdBeforeMs", 50}, {"holdAfterMs", 50},

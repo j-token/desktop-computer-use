@@ -76,7 +76,7 @@ const tools: ToolDefinition[] = [
     method: "session.start",
     description:
       "Start a visible computer-use session with a top banner, high-contrast cursor ring, " +
-      "and blue inward-fading screen-edge border; press Esc to stop it.",
+      "and blue inward-fading screen-edge border; press Esc twice within 1 second to stop it.",
     schema: {}
   },
   {

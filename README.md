@@ -11,7 +11,7 @@ The LLM already running the skill observes the desktop, chooses every action, an
 - A C++20 native daemon for desktop observation and input.
 - A TypeScript CLI and MCP server over an authenticated local NDJSON transport.
 - A harness-first skill in which the running LLM makes every decision.
-- Visible session indicators and an emergency stop with `Esc`.
+- Visible session indicators and an emergency stop with `Esc` pressed twice within 1 second.
 - Windows UI Automation and Linux accessibility integration for standard application controls.
 
 ## Quick start from source
@@ -77,7 +77,7 @@ LLM harness
               └─ Linux AT-SPI, portal/EIS, X11, and GNOME integration
 ```
 
-The native executable is the only component that injects desktop input. A session must be active before input is accepted. Each session shows a top banner, a high-contrast cursor marker, and a blue screen-edge indicator. Press `Esc` or run `dcu session stop` to stop the session and release held input.
+The native executable is the only component that injects desktop input. A session must be active before input is accepted. Each session shows a top banner, a high-contrast cursor marker, and a blue screen-edge indicator. Press `Esc` twice within 1 second or run `dcu session stop` to stop the session and release held input; a single `Esc` only shows a reminder on the banner.
 
 See [Architecture](docs/architecture.md) for component boundaries, state flow, and failure handling. The wire and recovery contract is in [the skill protocol reference](skills/desktop-computer-use/references/protocol.md).
 

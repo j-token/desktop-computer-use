@@ -17,7 +17,7 @@ node desktop-computer-use/scripts/dcu.mjs session start
 node desktop-computer-use/scripts/dcu.mjs session stop
 ```
 
-An active session shows an Esc banner, highlighted cursor, and blue edges fading inward. Press Esc to stop. Linux setup reports required packages and extension activation steps; it does not restart your login session. Wayland permission prompts must be approved in the graphical session.
+An active session shows an Esc banner, highlighted cursor, and blue edges fading inward. Press Esc twice within 1 second to stop. Linux setup reports required packages and extension activation steps; it does not restart your login session. Wayland permission prompts must be approved in the graphical session.
 
 See the [protocol](desktop-computer-use/references/protocol.md) and [third-party notices](desktop-computer-use/references/THIRD_PARTY_NOTICES.md). The optional `mcp serve` command uses the same backend and returns screenshot image content.
 

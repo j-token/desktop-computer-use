@@ -4,6 +4,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <functional>
 #include <memory>
@@ -164,6 +165,13 @@ public:
     }
     bool pointer(double x, double y) {
         return call_boolean("Pointer", g_variant_new("(dd)", x, y), 2000);
+    }
+    // Asks the extension to unregister its Escape stop accelerator for the
+    // given time so an injected Escape reaches the focused application and is
+    // not counted as the user's emergency stop. The reply arrives only after
+    // the binding has been removed.
+    bool suspend_stop_key(std::uint32_t milliseconds) {
+        return call_boolean("SuspendStopKey", g_variant_new("(u)", milliseconds), 2000);
     }
     Json get_overlay_regions() {
         auto regions = call_json("GetOverlayRegions", nullptr, 2000);

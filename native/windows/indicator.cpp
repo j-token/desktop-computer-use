@@ -18,8 +18,16 @@ constexpr UINT kEscapeMessage = WM_APP + 0x51;
 constexpr LONG_PTR kCursorWindowId = 100;
 constexpr int kEdgeThickness = 24;
 
+constexpr wchar_t kBannerText[] = L"Computer use active  |  Esc ×2 to stop";
+constexpr wchar_t kEscapeAgainText[] = L"Press Esc again to stop";
+
 std::atomic<SessionIndicator*> activeIndicator{nullptr};
 std::atomic_bool escapeDown{false};
+// Hook point for modifier toggles: while set, a physical Escape is still
+// counted toward the emergency stop but is not passed on to applications, so
+// a toggled Ctrl or Win cannot turn it into an OS shortcut. Set through
+// SessionIndicator::set_swallow_user_escape; nothing enables it yet.
+std::atomic_bool swallowUserEscape{false};
 
 struct Dib {
     HDC dc = nullptr;
@@ -190,18 +198,19 @@ LRESULT CALLBACK low_level_keyboard_proc(int code, WPARAM message, LPARAM data) 
             if (message == WM_KEYDOWN || message == WM_SYSKEYDOWN) {
                 if (!escapeDown.exchange(true, std::memory_order_acq_rel)) {
                     if (auto* indicator = activeIndicator.load(std::memory_order_acquire)) {
-                        indicator->post_escape_message();
+                        indicator->post_escape_message(keyboard->time);
                     }
                 }
             } else if (message == WM_KEYUP || message == WM_SYSKEYUP) {
                 escapeDown.store(false, std::memory_order_release);
             }
+            if (swallowUserEscape.load(std::memory_order_acquire)) return 1;
         }
     }
     return CallNextHookEx(nullptr, code, message, data);
 }
 
-void paint_banner(HWND hwnd) {
+void paint_banner(HWND hwnd, const std::wstring& label) {
     constexpr int width = 420;
     constexpr int height = 72;
     RECT virtualRect{
@@ -228,7 +237,6 @@ void paint_banner(HWND hwnd) {
                              L"Segoe UI");
     if (font) {
         HGDIOBJ oldFont = SelectObject(dib.dc, font);
-        const std::wstring label = L"Computer use active  |  Esc to stop";
         TextOutW(dib.dc, 18, 24, label.c_str(), static_cast<int>(label.size()));
         SelectObject(dib.dc, oldFont);
         DeleteObject(font);
@@ -292,7 +300,7 @@ LRESULT CALLBACK indicator_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
     case WM_MOUSEACTIVATE:
         return MA_NOACTIVATE;
     case kEscapeMessage:
-        if (indicator) indicator->handle_escape();
+        if (indicator) indicator->handle_escape(static_cast<std::uint32_t>(wParam));
         return 0;
     case WM_TIMER:
         if (wParam == kTimerId && GetWindowLongPtrW(hwnd, GWLP_ID) == 0) {
@@ -363,13 +371,33 @@ void SessionIndicator::stop() noexcept {
     ready_.store(false, std::memory_order_release);
 }
 
-void SessionIndicator::post_escape_message() noexcept {
+void SessionIndicator::post_escape_message(std::uint32_t eventTimeMs) noexcept {
     HWND hwnd = nullptr;
     {
         std::lock_guard lock(stateMutex_);
         hwnd = static_cast<HWND>(window_);
     }
-    if (hwnd) PostMessageW(hwnd, kEscapeMessage, 0, 0);
+    if (hwnd) PostMessageW(hwnd, kEscapeMessage, static_cast<WPARAM>(eventTimeMs), 0);
+}
+
+void SessionIndicator::show_transient_text(std::wstring text,
+                                           std::chrono::milliseconds duration) {
+    std::lock_guard lock(stateMutex_);
+    transientText_ = std::move(text);
+    transientUntil_ = std::chrono::steady_clock::now() + duration;
+}
+
+void SessionIndicator::set_swallow_user_escape(bool enabled) noexcept {
+    swallowUserEscape.store(enabled, std::memory_order_release);
+}
+
+std::wstring SessionIndicator::banner_text() {
+    std::lock_guard lock(stateMutex_);
+    if (!transientText_.empty() && std::chrono::steady_clock::now() < transientUntil_) {
+        return transientText_;
+    }
+    transientText_.clear();
+    return kBannerText;
 }
 
 void SessionIndicator::request_stop_async() noexcept {
@@ -453,7 +481,7 @@ void SessionIndicator::repaint() noexcept {
         for (void* value : edgeWindows_) edges.push_back(reinterpret_cast<HWND>(value));
     }
     try {
-        paint_banner(banner);
+        paint_banner(banner, banner_text());
         paint_cursor(cursor);
         for (std::size_t monitorIndex = 0; monitorIndex < monitors.size(); ++monitorIndex) {
             for (int side = 0; side < 4; ++side) {
@@ -478,13 +506,33 @@ void SessionIndicator::invoke_stop_callback() noexcept {
     }
 }
 
-void SessionIndicator::handle_escape() noexcept {
-    invoke_stop_callback();
-    request_stop_async();
+void SessionIndicator::handle_escape(std::uint32_t eventTimeMs) noexcept {
+    // Unsigned subtraction stays correct across the 49.7-day tick wrap.
+    if (escapeArmed_ && eventTimeMs - firstEscapeTimeMs_ <= kDoubleEscapeWindowMs) {
+        escapeArmed_ = false;
+        invoke_stop_callback();
+        request_stop_async();
+        return;
+    }
+    // A single press, or one after the window expired, only arms the stop.
+    escapeArmed_ = true;
+    firstEscapeTimeMs_ = eventTimeMs;
+    try {
+        show_transient_text(kEscapeAgainText,
+                            std::chrono::milliseconds(kDoubleEscapeWindowMs));
+    } catch (...) {
+        // The hint is cosmetic; the double-press window still applies.
+    }
+    repaint();
 }
 
 void SessionIndicator::thread_main(std::function<void()> onStop) {
     onStop_ = std::move(onStop);
+    escapeArmed_ = false;
+    {
+        std::lock_guard lock(stateMutex_);
+        transientText_.clear();
+    }
 
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     WNDCLASSEXW klass{};

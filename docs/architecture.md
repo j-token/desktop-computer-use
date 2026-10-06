@@ -20,7 +20,7 @@ Desktop Computer Use separates model reasoning from operating-system access. The
 4. The harness requests an observation. The backend returns window geometry, an observation ID, optional accessibility elements, and an optional screenshot path.
 5. The harness selects the next action itself.
 6. The native daemon validates the observation and target, delivers the action, and can attach a follow-up observation to the same response.
-7. `Esc`, `session stop`, idle expiry, client loss, or daemon shutdown ends the session and releases held input.
+7. Two `Esc` presses within 1 second, `session stop`, idle expiry, client loss, or daemon shutdown ends the session and releases held input.
 
 Each local connection carries one authenticated UTF-8 NDJSON request and one response. The protocol caps frames at 16 MiB. See [the protocol reference](../skills/desktop-computer-use/references/protocol.md) for the complete request, recovery, and unknown-outcome rules.
 

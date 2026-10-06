@@ -184,6 +184,8 @@ constexpr int kDefaultDragDurationMs = 240;
 constexpr int kDefaultDragSteps = 12;
 constexpr int kDefaultHoldBeforeMs = 50;
 constexpr int kDefaultHoldAfterMs = 50;
+// How long the GNOME extension releases Escape before an injected Escape press.
+constexpr std::uint32_t kStopKeySuspendMs = 300;
 constexpr int kIdleTimeoutSeconds = 120;
 constexpr std::size_t kMaxTreeNodes = 1200;
 constexpr std::size_t kMaxTreeDepth = 64;
@@ -264,6 +266,7 @@ private:
     void button_event(const std::string& button, bool pressed, Context& context);
     void scroll_event(int amount, const std::string& direction, Context& context);
     void key_event(const std::string& key, bool pressed, Context& context);
+    void suspend_stop_key_for_escape();
     void hotkey_event(const std::vector<std::string>& keys, Context& context);
     void type_text_impl(const std::string& text, Context& context);
     void release_inputs() noexcept;
@@ -554,7 +557,7 @@ Json LinuxBackend::doctor() const {
     result["ready"] = indicator_available &&
                        ((x11_ && DCU_HAVE_XTEST && DCU_HAVE_JPEG) ||
                         (wayland_ && DCU_HAVE_GIO && DCU_HAVE_PIPEWIRE));
-    result["stopKey"] = "Escape";
+    result["stopKey"] = "Escape x2";
     result["indicatorRequired"] = true;
     result["notes"] = Json::array();
     if (!wayland_ && !x11_) result["notes"].push_back("Run inside the logged-in GNOME graphical session; SSH alone is not a desktop session.");
@@ -607,8 +610,8 @@ Json LinuxBackend::capabilities() const {
         {"legacyNotifyFallback", wayland_ && DCU_HAVE_GIO},
     };
     result["indicatorRequired"] = true;
-    result["stopKey"] = "Escape";
-    result["hotkeyStop"] = "Escape";
+    result["stopKey"] = "Escape x2";
+    result["hotkeyStop"] = "Escape x2";
     result["supported"] = indicator_available &&
                            ((x11_ && DCU_HAVE_XTEST && DCU_HAVE_JPEG) ||
                             (wayland_ && DCU_HAVE_GIO && DCU_HAVE_PIPEWIRE));
@@ -1496,10 +1499,34 @@ std::uint32_t evdev_keycode(const std::string& raw) {
     return found == aliases.end() ? 0U : found->second;
 }
 
+void LinuxBackend::suspend_stop_key_for_escape() {
+    // GNOME's stop accelerator cannot tell injected input from the keyboard,
+    // so an injected Escape would be swallowed and counted toward the user's
+    // emergency stop. Refuse the action rather than risk either outcome.
+    std::string reason = "the GNOME extension is unavailable";
+#if DCU_HAVE_GIO
+    if (shell_bus_) {
+        try {
+            if (shell_bus_->suspend_stop_key(kStopKeySuspendMs)) return;
+            reason = "the GNOME extension reported no active session";
+        } catch (const std::exception& error) {
+            reason = error.what();
+        }
+    }
+#endif
+    throw Error("stop_key_conflict",
+                "Escape is the emergency stop key and could not be released to the application ("
+                + reason + "); run `dcu setup` to update the GNOME extension, then log in again "
+                "so GNOME Shell loads it");
+}
+
 void LinuxBackend::key_event(const std::string& key, bool pressed, Context& context) {
     if (pressed) check_context(context);
     const std::string canonical = canonical_key(key);
     const std::uint32_t keysym = common_keysym(canonical);
+    // Suspend immediately before injection so portal setup cannot consume the
+    // suspension window.
+    const bool injects_escape_press = pressed && canonical == "escape";
     if (wayland_) {
         portal_ready_for_input(context);
         if (eis_session_selected_) {
@@ -1508,11 +1535,13 @@ void LinuxBackend::key_event(const std::string& key, bool pressed, Context& cont
             }
             const std::uint32_t code = evdev_keycode(canonical);
             if (!code) throw Error("invalid_argument", "Unknown key: " + key);
+            if (injects_escape_press) suspend_stop_key_for_escape();
             eis_->key(code, pressed, context);
         } else if (eis_ && eis_->connected()) {
             throw Error("protocol_error", "Connected EIS transport is missing its session selection state");
         } else {
             if (!keysym) throw Error("invalid_argument", "Unknown key: " + key);
+            if (injects_escape_press) suspend_stop_key_for_escape();
             portal_notify_key(keysym, pressed, context);
         }
         mark_input_complete();
@@ -1524,6 +1553,7 @@ void LinuxBackend::key_event(const std::string& key, bool pressed, Context& cont
     if (symbol == NoSymbol) throw Error("invalid_argument", "Unknown key: " + key);
     const KeyCode code = XKeysymToKeycode(display_, symbol);
     if (!code) throw Error("invalid_argument", "Key has no X11 keycode: " + key);
+    if (injects_escape_press) suspend_stop_key_for_escape();
     XTestFakeKeyEvent(display_, code, pressed ? True : False, CurrentTime);
     XFlush(display_);
     mark_input_complete();

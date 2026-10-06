@@ -284,7 +284,7 @@ function helpText(): string {
     "`get-full-screenshot --observation-id ID` returns the original image; click from it with --coords full.",
     "Drag defaults: 240ms, 12 steps, 50ms hold before and after. Use --duration-ms/--steps to tune them.",
     "Active sessions show a top banner, high-contrast cursor ring, and blue inward-fading screen-edge border.",
-    "Emergency stop: press Esc or run `dcu session stop`."
+    "Emergency stop: press Esc twice within 1 second or run `dcu session stop`."
   ].join("\n");
 }
 

@@ -17,7 +17,7 @@ is not present.
 
 1. Run `dcu capabilities`, then `dcu session start` and wait for the visible “computer in use”
    indicator. While active, the indicator shows a top banner, a high-contrast cursor ring, and
-   a blue screen-edge border that fades inward. Stop with `dcu session stop` or press `Esc`.
+   a blue screen-edge border that fades inward. Stop with `dcu session stop` or press `Esc` twice within 1 second.
 2. Use `dcu list-apps`, `dcu list-windows --app <app>`, and
    `dcu get-app-state --app <app>` before choosing a target. The state response includes a fresh
    observation ID, the window rectangle, a screenshot path, and optional accessibility elements.
