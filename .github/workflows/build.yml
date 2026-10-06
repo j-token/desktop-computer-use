@@ -84,3 +84,29 @@ jobs:
           name: desktop-computer-use-skill
           path: dist/desktop-computer-use-skill
           if-no-files-found: error
+          # .claude-plugin/ and .mcp.json are dotfiles, which upload-artifact skips by default.
+          include-hidden-files: true
+  release:
+    # The release branch is the install source for the Claude Code plugin and
+    # `npx skills add`: it carries the built bundle and both native binaries,
+    # which the source branches never track.
+    needs: [package]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: desktop-computer-use-skill
+          path: release
+      - name: Publish the package to the release branch
+        working-directory: release
+        run: |
+          chmod +x skills/desktop-computer-use/bin/linux-x64/desktop-computer-use-native
+          git init -q -b release
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "release: ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" release

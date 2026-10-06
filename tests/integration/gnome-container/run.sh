@@ -56,7 +56,23 @@ sleep 0.25
 # The nested compositor must receive XTest input rather than the Xvfb root.
 nested_window_id=$(DISPLAY=:99 xdotool search --onlyvisible --pid "$shell_pid" | head -n 1)
 DISPLAY=:99 xdotool windowfocus --sync "$nested_window_id"
+# A single Escape only arms the stop.
 DISPLAY=:99 xdotool key --clearmodifiers Escape
+sleep 0.25
+check_call '(true,)' Heartbeat
+sleep 1.2
+# While the stop key is suspended, Escape reaches applications and is not counted.
+check_call '(true,)' SuspendStopKey 1500
+DISPLAY=:99 xdotool key --clearmodifiers Escape
+sleep 0.2
+DISPLAY=:99 xdotool key --clearmodifiers Escape
+sleep 0.25
+check_call '(true,)' Heartbeat
+sleep 1.5
+# Two Escapes within one second stop the session, even with a modifier held.
+DISPLAY=:99 xdotool key Escape
+sleep 0.2
+DISPLAY=:99 xdotool key shift+Escape
 sleep 0.25
 check_call '(false,)' Heartbeat
 check_call '[]' GetOverlayRegions

@@ -21,6 +21,21 @@ const client = new DcuClient();
 const session = await readSession(client.paths);
 if (!session) throw Error("Start a session first");
 const token = (await readFile(client.paths.tokenFile, "utf8")).trim();
+// Drag coordinates are reduced-screenshot pixels, so observe first and map the
+// fixture's window-local points through the returned action transform.
+const observed = await client.request("get-app-state", {
+  sessionId: session.sessionId,
+  windowId,
+  includeScreenshot: true,
+});
+const transform = observed.result?.screenshot?.actionTransform;
+if (!transform) throw Error(`Observation failed: ${JSON.stringify(observed)}`);
+const toPixel = (x, y) => [
+  x * transform.scaleX + transform.offsetX,
+  y * transform.scaleY + transform.offsetY,
+];
+const [fromX, fromY] = toPixel(148, 211);
+const [toX, toY] = toPixel(548, 211);
 const firstEventIndex = (await readFixtureEvents(logPath)).length;
 
 const socket = createConnection(client.paths.endpoint);
@@ -40,10 +55,11 @@ socket.write(
     params: {
       sessionId: session.sessionId,
       windowId,
-      fromX: 148,
-      fromY: 211,
-      toX: 548,
-      toY: 211,
+      observationId: observed.result.observationId,
+      fromX,
+      fromY,
+      toX,
+      toY,
       durationMs: 5000,
       steps: 100,
       holdBeforeMs: 300,

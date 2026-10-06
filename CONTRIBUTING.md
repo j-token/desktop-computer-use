@@ -16,7 +16,7 @@ Native build requirements and platform-specific commands are documented in [docs
 
 ## Choose the relevant checks
 
-- TypeScript, CLI, MCP, transport, or agent changes: run `npm run typecheck` and `npm test`.
+- TypeScript, CLI, MCP, or transport changes: run `npm run typecheck` and `npm test`.
 - Common or platform-native changes: configure and build with CMake, then run `ctest --test-dir build -C Release --output-on-failure`.
 - Packaging changes: run the package tests and assemble the relevant adapter-only or complete package.
 - Desktop behavior changes: run the smallest applicable harness under `tests/integration/` and record the environment, exact command, and observed outcome in the pull request.

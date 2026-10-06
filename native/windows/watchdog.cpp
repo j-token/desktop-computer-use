@@ -12,7 +12,8 @@
 namespace dcu::windows {
 namespace {
 
-constexpr std::uint32_t kVersion = 1;
+// Version 2 adds the space bit (16) to modifiers for toggled keys.
+constexpr std::uint32_t kVersion = 2;
 
 #pragma pack(push, 1)
 struct SharedInputState {
@@ -49,10 +50,11 @@ void release_tracked(std::uint32_t buttons, std::uint32_t modifiers,
         SendInput(1, &input, sizeof(INPUT));
     }
     struct Modifier { std::uint32_t bit; WORD key; };
-    for (const auto modifier : std::array<Modifier, 4>{{{1, VK_SHIFT},
+    for (const auto modifier : std::array<Modifier, 5>{{{1, VK_SHIFT},
                                                         {2, VK_CONTROL},
                                                         {4, VK_MENU},
-                                                        {8, VK_LWIN}}}) {
+                                                        {8, VK_LWIN},
+                                                        {16, VK_SPACE}}}) {
         if (!(modifiers & modifier.bit)) continue;
         INPUT input{};
         input.type = INPUT_KEYBOARD;

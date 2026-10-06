@@ -1,4 +1,5 @@
 #include "dcu/backend.hpp"
+#include "dcu/window_relations.hpp"
 
 #include <algorithm>
 #include <array>
@@ -102,6 +103,10 @@ struct WindowInfo {
     int width = 0;
     int height = 0;
     bool active = false;
+    // Transient-for parent of a dialog, when that parent is listed.
+    std::string owner_id;
+    // A modal dialog that blocks input to owner_id.
+    bool modal = false;
 };
 
 struct RgbaImage {
@@ -117,11 +122,31 @@ struct RgbaImage {
     bool cached_frame = false;
 };
 
+// One encoded screenshot. scale_x/scale_y map window-local coordinates to
+// this image's pixels: pixel = window * scale.
+struct ObservationImage {
+    std::string path;
+    int width = 0;
+    int height = 0;
+    double scale_x = 1.0;
+    double scale_y = 1.0;
+};
+
 struct ObservationRecord {
     std::string id;
     WindowInfo window;
     Clock::time_point created;
     std::uint64_t coordinate_revision = 0;
+    bool has_screenshot = false;
+    std::string mime;
+    ObservationImage reduced;
+    ObservationImage full;
+};
+
+// Screenshot pixel space selected for coordinate input.
+struct CoordinateTransform {
+    std::string space;
+    ObservationImage image;
 };
 
 #if DCU_HAVE_GIO
@@ -164,6 +189,8 @@ constexpr int kDefaultDragDurationMs = 240;
 constexpr int kDefaultDragSteps = 12;
 constexpr int kDefaultHoldBeforeMs = 50;
 constexpr int kDefaultHoldAfterMs = 50;
+// How long the GNOME extension releases Escape before an injected Escape press.
+constexpr std::uint32_t kStopKeySuspendMs = 300;
 constexpr int kIdleTimeoutSeconds = 120;
 constexpr std::size_t kMaxTreeNodes = 1200;
 constexpr std::size_t kMaxTreeDepth = 64;
@@ -205,6 +232,8 @@ public:
 
     Json execute(const std::string& method, const Json& params, Context& context) override;
     void interrupt() noexcept override;
+    void set_toggle(const std::string& key, bool down, Context& context) override;
+    void release_toggles() noexcept override;
 
 private:
     Json doctor() const;
@@ -227,12 +256,18 @@ private:
     std::vector<WindowInfo> enumerate_windows() const;
     std::vector<WindowInfo> extension_windows() const;
     WindowInfo select_window(const Json& params) const;
+    std::optional<WindowInfo> blocking_modal(const WindowInfo& target) const;
+    void reject_blocked_target(const Json& params) const;
     WindowInfo current_window(const WindowInfo& expected) const;
     void validate_observation(const Json& params, const WindowInfo& window);
+    void store_observation(ObservationRecord record);
+    void clear_observations() noexcept;
+    CoordinateTransform coordinate_transform(const Json& params, const WindowInfo& window) const;
+    Json full_screenshot(const Json& params);
     Json make_observation(const Json& params, Context& context);
     RgbaImage capture_window(const WindowInfo& window, Context& context);
-    std::string save_image(const RgbaImage& image, const Json& params, std::string* mime,
-                           int* output_width, int* output_height, double* scale);
+    void save_image(const RgbaImage& image, const std::string& path, const std::string& format,
+                    int quality, std::string* mime);
     Json accessibility_snapshot(const WindowInfo& window, Context& context);
 
     void activate(const WindowInfo& window);
@@ -240,9 +275,12 @@ private:
     void button_event(const std::string& button, bool pressed, Context& context);
     void scroll_event(int amount, const std::string& direction, Context& context);
     void key_event(const std::string& key, bool pressed, Context& context);
+    void suspend_stop_key_for_escape();
     void hotkey_event(const std::vector<std::string>& keys, Context& context);
     void type_text_impl(const std::string& text, Context& context);
     void release_inputs() noexcept;
+    void release_toggled_keys() noexcept;
+    void require_not_toggled(const std::string& key) const;
     void mark_input_complete() noexcept;
     std::string coordinate_signature() const;
     void refresh_coordinate_state();
@@ -267,6 +305,9 @@ private:
     std::atomic_bool heartbeat_stop_{false};
     std::string session_id_;
     Clock::time_point last_activity_{};
+    // Canonical names (shift, ctrl, alt, super, space) of keys held across
+    // requests. Only touched by serialized calls and the destructor.
+    std::set<std::string> toggled_;
     std::thread heartbeat_thread_;
     std::unordered_map<std::string, ObservationRecord> observations_;
     std::string image_directory_;
@@ -348,6 +389,29 @@ long x11_property_cardinal(Display* display, Window window, Atom atom) {
     return value;
 }
 
+bool x11_has_state(Display* display, Window window, const char* state_name) {
+    if (!display) return false;
+    const Atom state_atom = XInternAtom(display, "_NET_WM_STATE", False);
+    const Atom wanted = XInternAtom(display, state_name, False);
+    if (state_atom == None || wanted == None) return false;
+    Atom actual_type = None;
+    int actual_format = 0;
+    unsigned long item_count = 0;
+    unsigned long bytes_after = 0;
+    unsigned char* data = nullptr;
+    const int status = XGetWindowProperty(display, window, state_atom, 0, 64, False, XA_ATOM,
+                                          &actual_type, &actual_format, &item_count,
+                                          &bytes_after, &data);
+    if (status != Success || !data) return false;
+    bool found = false;
+    if (actual_format == 32) {
+        const auto* atoms = reinterpret_cast<Atom*>(data);
+        for (unsigned long index = 0; index < item_count && !found; ++index) found = atoms[index] == wanted;
+    }
+    XFree(data);
+    return found;
+}
+
 bool x11_is_viewable(Display* display, Window window) {
     XWindowAttributes attrs{};
     return display && XGetWindowAttributes(display, window, &attrs) != 0 &&
@@ -377,6 +441,12 @@ WindowInfo x11_window_info(Display* display, Window root, Window window, Window 
     }
     if (result.app.empty()) result.app = "unknown";
     result.active = window == active;
+    Window transient_for = 0;
+    if (XGetTransientForHint(display, window, &transient_for) && transient_for &&
+        transient_for != root && transient_for != window) {
+        result.owner_id = "x11:" + std::to_string(static_cast<unsigned long>(transient_for));
+        result.modal = x11_has_state(display, window, "_NET_WM_STATE_MODAL");
+    }
 
     XWindowAttributes attrs{};
     if (XGetWindowAttributes(display, window, &attrs)) {
@@ -530,7 +600,7 @@ Json LinuxBackend::doctor() const {
     result["ready"] = indicator_available &&
                        ((x11_ && DCU_HAVE_XTEST && DCU_HAVE_JPEG) ||
                         (wayland_ && DCU_HAVE_GIO && DCU_HAVE_PIPEWIRE));
-    result["stopKey"] = "Escape";
+    result["stopKey"] = "Escape x2";
     result["indicatorRequired"] = true;
     result["notes"] = Json::array();
     if (!wayland_ && !x11_) result["notes"].push_back("Run inside the logged-in GNOME graphical session; SSH alone is not a desktop session.");
@@ -567,7 +637,7 @@ Json LinuxBackend::capabilities() const {
         {"accessibility", DCU_HAVE_ATSPI != 0},
         {"jpeg", DCU_HAVE_JPEG != 0},
         {"png", DCU_HAVE_PNG != 0},
-        {"maxEdge", 1600},
+        {"maxEdge", 0},
         {"capturePersistent", true},
     };
     result["dragDefaults"] = {
@@ -583,12 +653,27 @@ Json LinuxBackend::capabilities() const {
         {"legacyNotifyFallback", wayland_ && DCU_HAVE_GIO},
     };
     result["indicatorRequired"] = true;
-    result["stopKey"] = "Escape";
-    result["hotkeyStop"] = "Escape";
+    result["stopKey"] = "Escape x2";
+    result["hotkeyStop"] = "Escape x2";
     result["supported"] = indicator_available &&
                            ((x11_ && DCU_HAVE_XTEST && DCU_HAVE_JPEG) ||
                             (wayland_ && DCU_HAVE_GIO && DCU_HAVE_PIPEWIRE));
     return result;
+}
+
+// A transient-for parent can be a group leader, an unmapped window, or a
+// filtered shell window; only a listed owner is a targetable id.
+void drop_unlisted_owners(std::vector<WindowInfo>& windows) {
+    for (auto& window : windows) {
+        if (window.owner_id.empty()) continue;
+        const bool listed = std::any_of(windows.begin(), windows.end(), [&](const WindowInfo& other) {
+            return other.id == window.owner_id;
+        });
+        if (!listed) {
+            window.owner_id.clear();
+            window.modal = false;
+        }
+    }
 }
 
 std::vector<WindowInfo> LinuxBackend::extension_windows() const {
@@ -609,8 +694,11 @@ std::vector<WindowInfo> LinuxBackend::extension_windows() const {
             window.width = item.value("width", 0);
             window.height = item.value("height", 0);
             window.active = item.value("active", false);
+            window.owner_id = item.value("ownerWindowId", "");
+            window.modal = !window.owner_id.empty() && item.value("modal", false);
             if (!window.id.empty() && window.width > 0 && window.height > 0) windows.push_back(std::move(window));
         }
+        drop_unlisted_owners(windows);
         return windows;
     } catch (...) {
         return {};
@@ -654,6 +742,7 @@ std::vector<WindowInfo> LinuxBackend::enumerate_windows() const {
     for (Window window : ids) {
         if (x11_is_viewable(display_, window)) result.push_back(x11_window_info(display_, root_window_, window, active));
     }
+    drop_unlisted_owners(result);
     return result;
 #else
     return {};
@@ -689,15 +778,39 @@ WindowInfo LinuxBackend::select_window(const Json& params) const {
     }
     if (!requested_app.empty()) {
         const std::string needle = lower(requested_app);
-        for (const auto& window : windows) {
-            if (lower(window.app) == needle || lower(window.title) == needle ||
-                (window.pid > 0 && needle == "pid:" + std::to_string(window.pid))) return window;
+        // An app selects its main window before its dialogs; an observation
+        // of the main window reports a blocking modal.
+        for (const bool owned : {false, true}) {
+            for (const auto& window : windows) {
+                if (window.owner_id.empty() == owned) continue;
+                if (lower(window.app) == needle || lower(window.title) == needle ||
+                    (window.pid > 0 && needle == "pid:" + std::to_string(window.pid))) return window;
+            }
         }
         throw Error("window_not_found", "app does not identify a visible window");
     }
     for (const auto& window : windows) if (window.active) return window;
     if (!windows.empty()) return windows.front();
     throw Error("window_not_found", "No visible desktop windows were found");
+}
+
+std::optional<WindowInfo> LinuxBackend::blocking_modal(const WindowInfo& target) const {
+    const auto windows = enumerate_windows();
+    std::vector<WindowRelation> relations;
+    relations.reserve(windows.size());
+    for (const auto& window : windows) relations.push_back({window.id, window.owner_id, window.modal});
+    const auto index = find_blocking_modal(relations, target.id);
+    if (!index) return std::nullopt;
+    return windows[*index];
+}
+
+void LinuxBackend::reject_blocked_target(const Json& params) const {
+    const WindowInfo target = select_window(params);
+    if (const auto modal = blocking_modal(target)) {
+        throw Error("modal_active",
+                    "Window " + target.id + " is blocked by modal dialog " + modal->id + " \"" +
+                        modal->title + "\"; observe and act on --window-id " + modal->id + " instead");
+    }
 }
 
 WindowInfo LinuxBackend::current_window(const WindowInfo& expected) const {
@@ -719,6 +832,90 @@ void LinuxBackend::validate_observation(const Json& params, const WindowInfo& wi
     if (found->second.coordinate_revision != coordinate_revision_) {
         throw Error("stale_observation", "Display geometry or capture mapping changed; observe again");
     }
+}
+
+namespace {
+void remove_observation_files(const ObservationRecord& record) noexcept {
+    for (const auto* path : {&record.reduced.path, &record.full.path}) {
+        if (!path->empty()) ::unlink(path->c_str());
+    }
+}
+
+Json action_transform(const ObservationImage& image) {
+    return Json{{"scaleX", image.scale_x}, {"scaleY", image.scale_y}, {"offsetX", 0}, {"offsetY", 0}};
+}
+} // namespace
+
+void LinuxBackend::store_observation(ObservationRecord record) {
+    const std::string id = record.id;
+    observations_[id] = std::move(record);
+    // Evict the oldest observations first; their screenshots go with them.
+    while (observations_.size() > 32) {
+        const auto oldest = std::min_element(
+            observations_.begin(), observations_.end(),
+            [](const auto& a, const auto& b) { return a.second.created < b.second.created; });
+        remove_observation_files(oldest->second);
+        observations_.erase(oldest);
+    }
+}
+
+void LinuxBackend::clear_observations() noexcept {
+    for (const auto& [_, record] : observations_) remove_observation_files(record);
+    observations_.clear();
+}
+
+CoordinateTransform LinuxBackend::coordinate_transform(const Json& params, const WindowInfo& window) const {
+    const bool full = string_value(params, "coords", "reduced") == "full";
+    const ObservationRecord* source = nullptr;
+    const std::string id = string_value(params, "observationId");
+    if (!id.empty()) {
+        // validate_observation has already matched this id to the window.
+        const auto found = observations_.find(id);
+        if (found == observations_.end()) throw Error("stale_observation", "Unknown observationId; observe again");
+        source = &found->second;
+    } else {
+        // Without an observationId, pixel coordinates refer to the most recent
+        // screenshot of this window.
+        for (const auto& [_, candidate] : observations_) {
+            if (candidate.has_screenshot && candidate.window.id == window.id &&
+                (!source || candidate.created > source->created)) {
+                source = &candidate;
+            }
+        }
+        if (source && (source->window.width != window.width || source->window.height != window.height ||
+                       source->coordinate_revision != coordinate_revision_)) {
+            throw Error("stale_observation", "Window geometry changed since the last screenshot; observe again");
+        }
+    }
+    if (!source || !source->has_screenshot) {
+        throw Error("observation_required", "Observe the window with a screenshot before clicking by coordinates");
+    }
+    return CoordinateTransform{full ? "full" : "reduced", full ? source->full : source->reduced};
+}
+
+Json LinuxBackend::full_screenshot(const Json& params) {
+    ensure_active(params);
+    refresh_coordinate_state();
+    const std::string id = string_value(params, "observationId");
+    if (id.empty()) throw Error("observation_required", "get-full-screenshot requires observationId");
+    const auto found = observations_.find(id);
+    if (found == observations_.end()) throw Error("stale_observation", "Unknown or expired observationId; observe again");
+    const auto& record = found->second;
+    const std::string window_id = string_value(params, "windowId");
+    if (!window_id.empty() && window_id != record.window.id) {
+        throw Error("stale_observation", "Observation belongs to a different window; observe again");
+    }
+    if (!record.has_screenshot || ::access(record.full.path.c_str(), R_OK) != 0) {
+        throw Error("stale_observation", "Observation has no full screenshot; observe again with a screenshot");
+    }
+    return Json{{"observationId", id},
+                {"screenshot", {{"path", record.full.path},
+                                {"mimeType", record.mime},
+                                {"width", record.full.width},
+                                {"height", record.full.height},
+                                {"variant", "full"},
+                                {"actionTransform", action_transform(record.full)}}},
+                {"notice", "To click a point read from this image, pass --coords full."}};
 }
 
 Json LinuxBackend::session_start(const Json& params, Context& context) {
@@ -833,7 +1030,7 @@ Json LinuxBackend::session_stop(const Json& params) {
     session_active_.store(false, std::memory_order_release);
     active_context_.store(nullptr, std::memory_order_release);
     interrupted_.store(false, std::memory_order_release);
-    observations_.clear();
+    clear_observations();
     return Json{{"stopped", true}, {"sessionId", old_session}};
 }
 
@@ -1388,10 +1585,34 @@ std::uint32_t evdev_keycode(const std::string& raw) {
     return found == aliases.end() ? 0U : found->second;
 }
 
+void LinuxBackend::suspend_stop_key_for_escape() {
+    // GNOME's stop accelerator cannot tell injected input from the keyboard,
+    // so an injected Escape would be swallowed and counted toward the user's
+    // emergency stop. Refuse the action rather than risk either outcome.
+    std::string reason = "the GNOME extension is unavailable";
+#if DCU_HAVE_GIO
+    if (shell_bus_) {
+        try {
+            if (shell_bus_->suspend_stop_key(kStopKeySuspendMs)) return;
+            reason = "the GNOME extension reported no active session";
+        } catch (const std::exception& error) {
+            reason = error.what();
+        }
+    }
+#endif
+    throw Error("stop_key_conflict",
+                "Escape is the emergency stop key and could not be released to the application ("
+                + reason + "); run `dcu setup` to update the GNOME extension, then log in again "
+                "so GNOME Shell loads it");
+}
+
 void LinuxBackend::key_event(const std::string& key, bool pressed, Context& context) {
     if (pressed) check_context(context);
     const std::string canonical = canonical_key(key);
     const std::uint32_t keysym = common_keysym(canonical);
+    // Suspend immediately before injection so portal setup cannot consume the
+    // suspension window.
+    const bool injects_escape_press = pressed && canonical == "escape";
     if (wayland_) {
         portal_ready_for_input(context);
         if (eis_session_selected_) {
@@ -1400,11 +1621,13 @@ void LinuxBackend::key_event(const std::string& key, bool pressed, Context& cont
             }
             const std::uint32_t code = evdev_keycode(canonical);
             if (!code) throw Error("invalid_argument", "Unknown key: " + key);
+            if (injects_escape_press) suspend_stop_key_for_escape();
             eis_->key(code, pressed, context);
         } else if (eis_ && eis_->connected()) {
             throw Error("protocol_error", "Connected EIS transport is missing its session selection state");
         } else {
             if (!keysym) throw Error("invalid_argument", "Unknown key: " + key);
+            if (injects_escape_press) suspend_stop_key_for_escape();
             portal_notify_key(keysym, pressed, context);
         }
         mark_input_complete();
@@ -1416,6 +1639,7 @@ void LinuxBackend::key_event(const std::string& key, bool pressed, Context& cont
     if (symbol == NoSymbol) throw Error("invalid_argument", "Unknown key: " + key);
     const KeyCode code = XKeysymToKeycode(display_, symbol);
     if (!code) throw Error("invalid_argument", "Key has no X11 keycode: " + key);
+    if (injects_escape_press) suspend_stop_key_for_escape();
     XTestFakeKeyEvent(display_, code, pressed ? True : False, CurrentTime);
     XFlush(display_);
     mark_input_complete();
@@ -1435,10 +1659,12 @@ void LinuxBackend::hotkey_event(const std::vector<std::string>& keys, Context& c
         else regular.push_back(key);
     }
     if (regular.size() != 1) throw Error("invalid_argument", "hotkey requires exactly one non-modifier key");
+    require_not_toggled(regular.front());
     std::vector<std::string> pressed;
     Context release_context;
     try {
         for (const auto& modifier : modifiers) {
+            if (toggled_.contains(modifier)) continue;
             key_event(modifier, true, context);
             pressed.push_back(modifier);
         }
@@ -1454,6 +1680,14 @@ void LinuxBackend::hotkey_event(const std::vector<std::string>& keys, Context& c
 }
 
 void LinuxBackend::type_text_impl(const std::string& text, Context& context) {
+    if (!toggled_.empty()) {
+        // Keycode typing is changed by any held key (Shift alters case, Ctrl,
+        // Alt and Super turn text into shortcuts).
+        std::string names;
+        for (const auto& key : toggled_) names += (names.empty() ? "" : ", ") + (key == "super" ? std::string("win") : key);
+        throw Error("toggles_active", "type-text is refused while " + names +
+                                          " is toggled on; release it with `dcu toggle off --all` first or use paste-text");
+    }
     for (unsigned char value : text) {
         check_context(context);
         if (value >= 0x20 && value <= 0x7e) {
@@ -1473,7 +1707,19 @@ void LinuxBackend::type_text_impl(const std::string& text, Context& context) {
 
 void LinuxBackend::release_inputs() noexcept {
     input_release_pending_.store(true, std::memory_order_release);
+    // EIS tracks and releases every key it pressed, toggled keys included.
     if (eis_) eis_->release();
+#if DCU_HAVE_GIO
+    if (wayland_ && remote_desktop_started_ && !eis_session_selected_) {
+        // The legacy Notify* transport keeps no key state of its own.
+        for (const auto& key : toggled_) {
+            try {
+                Context release_context;
+                portal_notify_key(common_keysym(key), false, release_context);
+            } catch (...) { }
+        }
+    }
+#endif
 #if DCU_HAVE_X11 && DCU_HAVE_XTEST
     if (display_ && !wayland_) {
         for (unsigned int button = 1; button <= 3; ++button) XTestFakeButtonEvent(display_, button, False, CurrentTime);
@@ -1482,9 +1728,64 @@ void LinuxBackend::release_inputs() noexcept {
             const KeyCode code = XKeysymToKeycode(display_, symbol);
             if (code) XTestFakeKeyEvent(display_, code, False, CurrentTime);
         }
+        if (toggled_.contains("space")) {
+            const KeyCode code = XKeysymToKeycode(display_, XK_space);
+            if (code) XTestFakeKeyEvent(display_, code, False, CurrentTime);
+        }
         XFlush(display_);
     }
 #endif
+    toggled_.clear();
+}
+
+void LinuxBackend::release_toggled_keys() noexcept {
+    for (const auto& key : toggled_) {
+        try {
+            Context release_context;
+            key_event(key, false, release_context);
+        } catch (...) { }
+    }
+    toggled_.clear();
+}
+
+void LinuxBackend::require_not_toggled(const std::string& key) const {
+    const std::string canonical = canonical_key(key);
+    if (toggled_.contains(canonical)) {
+        const std::string name = canonical == "super" ? "win" : canonical;
+        throw Error("toggles_active", name + " is toggled on; pressing it again would release it. "
+                                      "Use `dcu toggle off --key " + name + "` instead");
+    }
+}
+
+void LinuxBackend::set_toggle(const std::string& key, bool down, Context& context) {
+    if (!session_active_.load(std::memory_order_acquire)) {
+        throw Error("session_required", "Start a computer-use session before input actions");
+    }
+    if (interrupted_.load(std::memory_order_acquire)) throw Error("cancelled", "Session interrupted");
+    const std::string canonical = canonical_key(key);
+    if (!down) {
+        Context release_context;
+        key_event(canonical, false, release_context);
+        toggled_.erase(canonical);
+    } else {
+        // Track before the press so every release path includes the key.
+        toggled_.insert(canonical);
+        try {
+            key_event(canonical, true, context);
+        } catch (...) {
+            try {
+                Context release_context;
+                key_event(canonical, false, release_context);
+            } catch (...) { }
+            toggled_.erase(canonical);
+            throw;
+        }
+    }
+    last_activity_ = Clock::now();
+}
+
+void LinuxBackend::release_toggles() noexcept {
+    release_toggled_keys();
 }
 
 namespace {
@@ -1498,23 +1799,28 @@ void wait_checked(Context& context, int milliseconds) {
     }
 }
 
+// x/y are pixels of the selected screenshot; the transform converts them to
+// a window-local point.
 std::pair<int, int> point_from_json(const Json& params, const char* x_key, const char* y_key,
-                                    const WindowInfo& window) {
+                                    const WindowInfo& window, const CoordinateTransform& transform) {
     if (!params.contains(x_key) || !params.contains(y_key)) {
         throw Error("invalid_argument", std::string(x_key) + " and " + y_key + " are required");
     }
     const double x = number(params, x_key, 0.0);
     const double y = number(params, y_key, 0.0);
+    const auto& image = transform.image;
     if (!std::isfinite(x) || !std::isfinite(y) || x < 0 || y < 0 ||
-        x >= static_cast<double>(window.width) || y >= static_cast<double>(window.height)) {
-        throw Error("invalid_argument", "Input coordinates must be finite and inside the target window");
+        x >= static_cast<double>(image.width) || y >= static_cast<double>(image.height)) {
+        throw Error("invalid_argument", "Input coordinates must be finite and inside the " + transform.space +
+                                            " screenshot");
     }
-    const int rounded_x = static_cast<int>(std::lround(x));
-    const int rounded_y = static_cast<int>(std::lround(y));
-    if (rounded_x < 0 || rounded_y < 0 || rounded_x >= window.width || rounded_y >= window.height) {
-        throw Error("invalid_argument", "Input coordinates round outside the target window");
-    }
-    return {rounded_x, rounded_y};
+    const int local_x = std::clamp(static_cast<int>(std::lround(x / image.scale_x)), 0, std::max(0, window.width - 1));
+    const int local_y = std::clamp(static_cast<int>(std::lround(y / image.scale_y)), 0, std::max(0, window.height - 1));
+    return {local_x, local_y};
+}
+
+Json point_json(const std::pair<int, int>& point) {
+    return Json{{"x", point.first}, {"y", point.second}};
 }
 } // namespace
 
@@ -1523,6 +1829,8 @@ Json LinuxBackend::click(const Json& params, Context& context) {
     WindowInfo window = select_window(params);
     window = current_window(window);
     validate_observation(params, window);
+    std::optional<CoordinateTransform> transform;
+    if (!params.contains("elementIndex")) transform = coordinate_transform(params, window);
     activate(window);
     std::pair<int, int> local;
 #if DCU_HAVE_ATSPI
@@ -1538,7 +1846,8 @@ Json LinuxBackend::click(const Json& params, Context& context) {
     } else
 #endif
     {
-        local = point_from_json(params, "x", "y", window);
+        if (!transform) transform = coordinate_transform(params, window);
+        local = point_from_json(params, "x", "y", window, *transform);
     }
     const int x = window.x + local.first;
     const int y = window.y + local.second;
@@ -1548,6 +1857,8 @@ Json LinuxBackend::click(const Json& params, Context& context) {
     std::vector<std::string> held;
     try {
         for (const auto& modifier : keys) {
+            // A toggled key is already down and must stay down after the click.
+            if (toggled_.contains(canonical_key(modifier))) continue;
             key_event(modifier, true, context);
             held.push_back(modifier);
         }
@@ -1568,13 +1879,22 @@ Json LinuxBackend::click(const Json& params, Context& context) {
         throw;
     }
     mark_input_complete();
-    return action_result();
+    Json result = action_result();
+    if (transform) {
+        result["coordinateSpace"] = transform->space;
+        result["windowPoint"] = point_json(local);
+    }
+    return result;
 }
 
 Json LinuxBackend::drag(const Json& params, Context& context) {
     ensure_active(params);
     WindowInfo window = current_window(select_window(params));
     validate_observation(params, window);
+    std::optional<CoordinateTransform> transform;
+    if (!params.contains("fromElementIndex") && !params.contains("toElementIndex")) {
+        transform = coordinate_transform(params, window);
+    }
     activate(window);
     std::pair<int, int> from;
     std::pair<int, int> to;
@@ -1601,8 +1921,9 @@ Json LinuxBackend::drag(const Json& params, Context& context) {
     } else
 #endif
     {
-        from = point_from_json(params, "fromX", "fromY", window);
-        to = point_from_json(params, "toX", "toY", window);
+        transform = coordinate_transform(params, window);
+        from = point_from_json(params, "fromX", "fromY", window, *transform);
+        to = point_from_json(params, "toX", "toY", window, *transform);
     }
     const int duration = integer(params, "durationMs", kDefaultDragDurationMs);
     const int steps = integer(params, "steps", kDefaultDragSteps);
@@ -1613,8 +1934,23 @@ Json LinuxBackend::drag(const Json& params, Context& context) {
     }
     const std::string button = button_name(params);
     move_pointer(window.x + from.first, window.y + from.second, context, &window);
-    button_event(button, true, context);
     Context release_context;
+    // Modifiers are held for the whole drag. Declared before the button guard
+    // so the button is released first, then the modifiers.
+    std::vector<std::string> held_modifiers;
+    HeldButton modifier_guard([this, &held_modifiers, &release_context] {
+        for (auto it = held_modifiers.rbegin(); it != held_modifiers.rend(); ++it) {
+            try { key_event(*it, false, release_context); } catch (...) { }
+        }
+    }, true);
+    if (params.contains("modifiers")) {
+        for (const auto& modifier : key_list(Json{{"key", string_value(params, "modifiers")}})) {
+            if (toggled_.contains(canonical_key(modifier))) continue;
+            key_event(modifier, true, context);
+            held_modifiers.push_back(modifier);
+        }
+    }
+    button_event(button, true, context);
     HeldButton guard([this, button, &release_context] {
         try { button_event(button, false, release_context); } catch (...) { }
     }, true);
@@ -1632,17 +1968,25 @@ Json LinuxBackend::drag(const Json& params, Context& context) {
     wait_checked(context, hold_after);
     button_event(button, false, release_context);
     guard.dismiss();
+    modifier_guard.reset();
     input_release_pending_.store(false, std::memory_order_release);
     mark_input_complete();
-    return action_result();
+    Json result = action_result();
+    if (transform) {
+        result["coordinateSpace"] = transform->space;
+        result["windowFrom"] = point_json(from);
+        result["windowTo"] = point_json(to);
+    }
+    return result;
 }
 
 Json LinuxBackend::scroll(const Json& params, Context& context) {
     ensure_active(params);
     WindowInfo window = current_window(select_window(params));
     validate_observation(params, window);
+    const auto transform = coordinate_transform(params, window);
+    const auto point = point_from_json(params, "x", "y", window, transform);
     activate(window);
-    const auto point = point_from_json(params, "x", "y", window);
     move_pointer(window.x + point.first, window.y + point.second, context, &window);
     const std::string direction = lower(string_value(params, "direction"));
     if (direction != "up" && direction != "down" && direction != "left" && direction != "right") {
@@ -1650,7 +1994,10 @@ Json LinuxBackend::scroll(const Json& params, Context& context) {
     }
     scroll_event(std::max(1, integer(params, "amount", 3)), direction, context);
     mark_input_complete();
-    return action_result();
+    Json result = action_result();
+    result["coordinateSpace"] = transform.space;
+    result["windowPoint"] = point_json(point);
+    return result;
 }
 
 Json LinuxBackend::type_text(const Json& params, Context& context) {
@@ -1672,6 +2019,7 @@ Json LinuxBackend::press_key(const Json& params, Context& context) {
     activate(window);
     const std::string key = string_value(params, "key");
     if (key.empty()) throw Error("invalid_argument", "key is required");
+    require_not_toggled(key);
     key_event(key, true, context);
     Context release_context;
     key_event(key, false, release_context);
@@ -1858,18 +2206,33 @@ Json LinuxBackend::execute(const std::string& method, const Json& params, Contex
     if (method == "capabilities") return capabilities();
     if (method == "session.start") return session_start(params, context);
     if (method == "session.stop") return session_stop(params);
-    if (method == "list-windows") return list_windows(params);
-    if (method == "list-apps") return list_apps(params);
-    if (method == "get-app-state") return get_app_state(params, context);
-    if (method == "click") return click(params, context);
-    if (method == "drag") return drag(params, context);
-    if (method == "scroll") return scroll(params, context);
-    if (method == "type-text") return type_text(params, context);
-    if (method == "press-key") return press_key(params, context);
-    if (method == "hotkey") return hotkey(params, context);
-    if (method == "set-value") return set_value(params, context);
-    if (method == "paste-text") return paste_text(params, context);
-    throw Error("unsupported", "Unknown Linux backend method: " + method);
+    const auto run = [&]() -> Json {
+        if (method == "list-windows") return list_windows(params);
+        if (method == "list-apps") return list_apps(params);
+        if (method == "get-app-state") return get_app_state(params, context);
+        if (method == "get-full-screenshot") return full_screenshot(params);
+        if (method == "click" || method == "drag" || method == "scroll" || method == "type-text" ||
+            method == "press-key" || method == "hotkey" || method == "set-value" ||
+            method == "paste-text") {
+            // A modal parent ignores input, so it would only look delivered.
+            ensure_active(params);
+            reject_blocked_target(params);
+        }
+        if (method == "click") return click(params, context);
+        if (method == "drag") return drag(params, context);
+        if (method == "scroll") return scroll(params, context);
+        if (method == "type-text") return type_text(params, context);
+        if (method == "press-key") return press_key(params, context);
+        if (method == "hotkey") return hotkey(params, context);
+        if (method == "set-value") return set_value(params, context);
+        if (method == "paste-text") return paste_text(params, context);
+        throw Error("unsupported", "Unknown Linux backend method: " + method);
+    };
+    Json result = run();
+    // The idle timeout counts from the last successful request, as in the
+    // dispatcher, not from session start.
+    last_activity_ = Clock::now();
+    return result;
 }
 
 #if DCU_HAVE_PIPEWIRE && DCU_HAVE_GIO
@@ -2274,7 +2637,7 @@ void LinuxBackend::refresh_coordinate_state() {
     if (current == coordinate_signature_) return;
     coordinate_signature_ = current;
     ++coordinate_revision_;
-    observations_.clear();
+    clear_observations();
 }
 
 void LinuxBackend::mark_input_complete() noexcept {
@@ -2425,20 +2788,47 @@ RgbaImage LinuxBackend::capture_window(const WindowInfo& window, Context& contex
     throw Error("capture_unavailable", "No supported Linux capture backend is available");
 }
 
-std::string LinuxBackend::save_image(const RgbaImage& image, const Json& params, std::string* mime,
-                                     int* output_width, int* output_height, double* scale) {
-    std::string format = lower(string_value(params, "format", "jpeg"));
-    const int max_edge = integer(params, "maxEdge", 1600);
-    const int quality = integer(params, "quality", 85);
-    int width = image.width;
-    int height = image.height;
-    if (max_edge > 0 && std::max(width, height) > max_edge) {
-        const double factor = static_cast<double>(max_edge) / std::max(width, height);
-        width = std::max(1, static_cast<int>(std::lround(width * factor)));
-        height = std::max(1, static_cast<int>(std::lround(height * factor)));
+namespace {
+// Exact 2x2 box average. An odd trailing row or column is dropped, so output
+// pixel (x, y) covers source pixels [2x, 2x + 1] x [2y, 2y + 1].
+RgbaImage downscale_half(const RgbaImage& input) {
+    RgbaImage output;
+    output.width = std::max(1, input.width / 2);
+    output.height = std::max(1, input.height / 2);
+    output.rgba.assign(static_cast<std::size_t>(output.width) * output.height * 4, 0);
+    for (int y = 0; y < output.height; ++y) {
+        const int y0 = std::min(input.height - 1, y * 2);
+        const int y1 = std::min(input.height - 1, y * 2 + 1);
+        for (int x = 0; x < output.width; ++x) {
+            const int x0 = std::min(input.width - 1, x * 2);
+            const int x1 = std::min(input.width - 1, x * 2 + 1);
+            const std::size_t target = (static_cast<std::size_t>(y) * output.width + x) * 4;
+            for (int channel = 0; channel < 4; ++channel) {
+                const auto at = [&](int sx, int sy) {
+                    return static_cast<unsigned>(
+                        input.rgba[(static_cast<std::size_t>(sy) * input.width + sx) * 4 + channel]);
+                };
+                output.rgba[target + channel] = static_cast<std::uint8_t>(
+                    (at(x0, y0) + at(x1, y0) + at(x0, y1) + at(x1, y1) + 2) / 4);
+            }
+        }
     }
-    const std::string id = uuid();
-    std::string path = image_directory_ + "/" + id + "." + (format == "png" ? "png" : "jpg");
+    return output;
+}
+
+RgbaImage resize_image(const RgbaImage& input, int width, int height) {
+    RgbaImage output;
+    output.rgba = resize_rgba(input, width, height);
+    output.width = width;
+    output.height = height;
+    return output;
+}
+} // namespace
+
+void LinuxBackend::save_image(const RgbaImage& image, const std::string& path, const std::string& format,
+                              int quality, std::string* mime) {
+    const int width = image.width;
+    const int height = image.height;
     if (format == "png") {
 #if DCU_HAVE_PNG
         write_png_file(path, image, width, height);
@@ -2457,10 +2847,6 @@ std::string LinuxBackend::save_image(const RgbaImage& image, const Json& params,
         throw Error("invalid_argument", "format must be jpeg or png");
     }
     ::chmod(path.c_str(), 0600);
-    *output_width = width;
-    *output_height = height;
-    *scale = static_cast<double>(width) / std::max(1, image.width);
-    return path;
 }
 
 #if DCU_HAVE_ATSPI
@@ -2664,13 +3050,29 @@ Json LinuxBackend::make_observation(const Json& params, Context& context) {
     const bool include_screenshot = params.value("includeScreenshot", true);
     const bool include_text = params.value("includeText", false);
     const auto started = Clock::now();
-    Json observation{{"observationId", uuid()},
+    const std::string observation_id = uuid();
+    ObservationRecord record;
+    record.id = observation_id;
+    // Images written before a failure below are not cached, so delete them here.
+    struct PendingFiles {
+        const ObservationRecord& record;
+        bool armed = true;
+        ~PendingFiles() { if (armed) remove_observation_files(record); }
+    } pending{record};
+    Json observation{{"observationId", observation_id},
                      {"capturedAt", utc_now()},
                      {"window", window_json(window)},
                      {"coordinateSpace", "window"},
                      {"coordinateRevision", coordinate_revision_},
                      {"timings", Json::object()},
                      {"overlayRegions", Json::array()}};
+    if (const auto modal = blocking_modal(window)) {
+        observation["modal"] = {{"windowId", modal->id}, {"title", modal->title}, {"app", modal->app}};
+        observation["notice"] = "This window is blocked by modal dialog " + modal->id + " \"" +
+                                modal->title + "\". Its controls are not in this window's "
+                                "accessibility tree; observe and act on --window-id " +
+                                modal->id + " instead.";
+    }
     if (include_screenshot) {
         const auto capture_started = Clock::now();
         RgbaImage image = capture_window(window, context);
@@ -2678,16 +3080,59 @@ Json LinuxBackend::make_observation(const Json& params, Context& context) {
         if (image.captured_at.time_since_epoch().count() != 0) {
             observation["capturedAt"] = utc_now(image.captured_at);
         }
+        const std::string format = lower(string_value(params, "format", "jpeg"));
+        const int quality = integer(params, "quality", 85);
+        // maxEdge is an optional cap on the reduced image only; 0 means no cap.
+        const int max_edge = integer(params, "maxEdge", 0);
+        const std::string extension = format == "png" ? ".png" : ".jpg";
         std::string mime;
-        int output_width = 0;
-        int output_height = 0;
-        double scale = 1.0;
-        const std::string path = save_image(image, params, &mime, &output_width, &output_height, &scale);
-        observation["screenshot"] = {{"path", path},
+        // Capture already resamples to the logical window size, so image-to-window
+        // ratios are normally 1; they are kept so the transform stays exact.
+        const double window_scale_x = static_cast<double>(image.width) / std::max(1, window.width);
+        const double window_scale_y = static_cast<double>(image.height) / std::max(1, window.height);
+        record.full = {image_directory_ + "/" + observation_id + "-full" + extension,
+                       image.width, image.height, window_scale_x, window_scale_y};
+        save_image(image, record.full.path, format, quality, &mime);
+
+        // Reduced image: 0.5x above 1280x720 (2x2 box average), otherwise 1x,
+        // then optionally capped by maxEdge.
+        RgbaImage reduced_storage;
+        const RgbaImage* reduced = &image;
+        double factor_x = 1.0;
+        double factor_y = 1.0;
+        if (image.width > 1280 || image.height > 720) {
+            reduced_storage = downscale_half(image);
+            reduced = &reduced_storage;
+            factor_x = factor_y = 0.5;
+        }
+        const int longest = std::max(reduced->width, reduced->height);
+        if (max_edge > 0 && longest > max_edge) {
+            const double cap = static_cast<double>(max_edge) / longest;
+            const int width = std::max(1, static_cast<int>(std::lround(reduced->width * cap)));
+            const int height = std::max(1, static_cast<int>(std::lround(reduced->height * cap)));
+            factor_x *= static_cast<double>(width) / reduced->width;
+            factor_y *= static_cast<double>(height) / reduced->height;
+            reduced_storage = resize_image(*reduced, width, height);
+            reduced = &reduced_storage;
+        }
+        record.reduced = {image_directory_ + "/" + observation_id + extension,
+                          reduced->width, reduced->height,
+                          factor_x * window_scale_x, factor_y * window_scale_y};
+        save_image(*reduced, record.reduced.path, format, quality, &mime);
+        record.has_screenshot = true;
+        record.mime = mime;
+        observation["screenshot"] = {{"path", record.reduced.path},
                                       {"mimeType", mime},
-                                      {"width", output_width},
-                                      {"height", output_height},
-                                      {"scale", scale},
+                                      {"width", record.reduced.width},
+                                      {"height", record.reduced.height},
+                                      {"variant", "reduced"},
+                                      {"actionTransform", action_transform(record.reduced)},
+                                      {"fullAvailable", true},
+                                      {"fullWidth", record.full.width},
+                                      {"fullHeight", record.full.height},
+                                      {"scale", record.reduced.scale_x},
+                                      {"scaleX", record.reduced.scale_x},
+                                      {"scaleY", record.reduced.scale_y},
                                       {"sourceWidth", image.width},
                                       {"sourceHeight", image.height},
                                       {"frameSequence", image.frame_sequence},
@@ -2736,13 +3181,11 @@ Json LinuxBackend::make_observation(const Json& params, Context& context) {
         Clock::now() - started).count();
     refresh_coordinate_state();
     observation["coordinateRevision"] = coordinate_revision_;
-    ObservationRecord record;
-    record.id = observation.at("observationId").get<std::string>();
     record.window = window;
     record.created = Clock::now();
     record.coordinate_revision = coordinate_revision_;
-    observations_[record.id] = std::move(record);
-    while (observations_.size() > 32) observations_.erase(observations_.begin());
+    pending.armed = false;
+    store_observation(std::move(record));
     return observation;
 }
 
@@ -2890,7 +3333,7 @@ Json action_result() {
 }
 
 Json window_json(const WindowInfo& window) {
-    return Json{{"id", window.id},
+    Json result{{"id", window.id},
                 {"app", window.app},
                 {"title", window.title},
                 {"pid", window.pid},
@@ -2899,6 +3342,11 @@ Json window_json(const WindowInfo& window) {
                 {"width", window.width},
                 {"height", window.height},
                 {"active", window.active}};
+    if (!window.owner_id.empty()) {
+        result["ownerWindowId"] = window.owner_id;
+        result["modal"] = window.modal;
+    }
+    return result;
 }
 
 Json valid_overlay_regions(const Json& candidate) {

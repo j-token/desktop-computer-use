@@ -1,0 +1,18 @@
+{
+  "name": "desktop-computer-use",
+  "description": "Native desktop computer use for Claude Code on Windows and Linux",
+  "owner": {
+    "name": "j-token"
+  },
+  "plugins": [
+    {
+      "name": "desktop-computer-use",
+      "description": "Observe and operate native desktop applications through an authenticated local daemon",
+      "source": {
+        "source": "github",
+        "repo": "j-token/desktop-computer-use",
+        "ref": "release"
+      }
+    }
+  ]
+}

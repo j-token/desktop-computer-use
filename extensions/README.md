@@ -18,11 +18,19 @@ interface org.desktopcomputeruse.Shell
 banner, panel indicator, and high-contrast cursor actor are visible.
 `Heartbeat()` keeps the session alive; five seconds without one hides the UI
 and emits `Stopped("heartbeat-timeout")`. `Stop()` and the global
-`Esc` accelerator release the UI and emit `Stopped` as well.
+`Esc` accelerator, pressed twice within one second, release the UI and emit
+`Stopped` as well. A single `Esc` only shows a reminder on the banner for one
+second. The accelerator is bound with every Shift/Control/Alt/Super
+combination so held modifiers cannot block the stop, and auto-repeat is
+ignored. `SuspendStopKey(milliseconds)` removes the binding for at most two
+seconds so an `Esc` injected by the native backend reaches the application
+instead of counting toward the stop.
 
 The Escape binding is registered only while a computer-use session is active, so normal Escape behavior remains available after stop. Each monitor receives four nonreactive blue edge strips whose alpha fades inward across 18 logical pixels. The border, banner, and cursor marker never reserve screen space or accept clicks.
 `ListWindows()` returns JSON records with `id`, `title`, `app`, `pid`, `x`,
-`y`, `width`, and `height` in GNOME logical screen coordinates. Untitled
+`y`, `width`, and `height` in GNOME logical screen coordinates. A dialog
+that is transient for another window also carries `ownerWindowId` (the
+parent's ID) and `modal` (`true` for `Meta.WindowType.MODAL_DIALOG`). Untitled
 windows are retained so borderless/windowless games can still be bound by
 their stable Meta window ID. `Activate(windowId)` activates a matching Meta
 window. `Pointer(x, y)` updates the ring immediately while a 16 ms poll keeps

@@ -11,7 +11,20 @@
 
 namespace dcu::windows {
 
+// One encoded image of a captured frame. scaleX/scaleY map window-local
+// coordinates to this image's pixels: pixel = window * scale.
+struct CapturedImage {
+    std::string path;
+    int width = 0;
+    int height = 0;
+    double scaleX = 1.0;
+    double scaleY = 1.0;
+};
+
+// width/height/scale/scaleX/scaleY and path describe the reduced image.
 struct CaptureResult {
+    CapturedImage full;
+    CapturedImage reduced;
     std::string path;
     std::string mimeType;
     int width = 0;
@@ -40,9 +53,13 @@ public:
     WindowCapture(const WindowCapture&) = delete;
     WindowCapture& operator=(const WindowCapture&) = delete;
 
+    // Encodes one frame twice: the full-resolution original to fullPath and a
+    // reduced copy (0.5x above 1280x720, otherwise 1x, then capped by a
+    // positive maxEdge) to reducedPath.
     CaptureResult capture(void* hwnd, const RECT& windowRect,
-                          const std::string& path, const std::string& format,
-                          int quality, int maxEdge, Context& context);
+                          const std::string& fullPath, const std::string& reducedPath,
+                          const std::string& format, int quality, int maxEdge,
+                          Context& context);
 
     // Stops the persistent frame pool and releases its capture resources.
     // Called on session stop so a stopped session does not keep receiving

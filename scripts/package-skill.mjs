@@ -1,4 +1,4 @@
-import { chmod, cp, mkdir, rm, stat } from "node:fs/promises";
+import { chmod, cp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { basename, join, relative, resolve, sep } from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -135,21 +135,44 @@ if (!adaptersOnly) {
 await runCommand(process.execPath, [join(root, "scripts", "build-skill.mjs")]);
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
+// One self-contained skill directory serves both installers: `npx skills add`
+// copies only skills/desktop-computer-use/, and the Claude Code plugin at the
+// package root discovers the same skills/*/SKILL.md.
+const skillOutput = join(output, "skills", "desktop-computer-use");
 const skillSource = join(root, "skills", "desktop-computer-use");
-await cp(skillSource, join(output, "desktop-computer-use"), {
+await cp(skillSource, skillOutput, {
   recursive: true,
   filter(source) {
     const topLevel = relative(skillSource, source).split(sep)[0];
     if (topLevel === "bin" || topLevel === "extensions") return false;
     const name = basename(source).toLowerCase();
-    return name === ".env.example" || (name !== ".env" && !name.startsWith(".env."));
+    return name !== ".env" && !name.startsWith(".env.");
   }
 });
 await cp(join(root, "docs", "release-readme.md"), join(output, "README.md"));
+const { version, description } = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+await mkdir(join(output, ".claude-plugin"), { recursive: true });
+await writeFile(join(output, ".claude-plugin", "plugin.json"), `${JSON.stringify({
+  name: "desktop-computer-use",
+  version,
+  description,
+  author: { name: "j-token" },
+  repository: "https://github.com/j-token/desktop-computer-use"
+}, null, 2)}
+`);
+await writeFile(join(output, ".mcp.json"), `${JSON.stringify({
+  mcpServers: {
+    "desktop-computer-use": {
+      command: "node",
+      args: ["${CLAUDE_PLUGIN_ROOT}/skills/desktop-computer-use/scripts/dcu.mjs", "mcp", "serve"]
+    }
+  }
+}, null, 2)}
+`);
 if (!adaptersOnly) {
   for (const triplet of ["win32-x64", "linux-x64"]) {
     const { binary, source } = resolvedBinaries.get(triplet);
-    const destinationDirectory = join(output, "desktop-computer-use", "bin", triplet);
+    const destinationDirectory = join(skillOutput, "bin", triplet);
     await mkdir(destinationDirectory, { recursive: true });
     const destination = join(destinationDirectory, binary);
     await cp(source, destination);
@@ -158,7 +181,7 @@ if (!adaptersOnly) {
     }
   }
 }
-const packagedReferences = join(output, "desktop-computer-use", "references");
+const packagedReferences = join(skillOutput, "references");
 await mkdir(packagedReferences, { recursive: true });
 await cp(join(root, "THIRD_PARTY_NOTICES.md"), join(packagedReferences, "THIRD_PARTY_NOTICES.md"));
 await cp(
@@ -166,10 +189,10 @@ await cp(
   join(packagedReferences, "THIRD_PARTY_LICENSES.md")
 );
 if (!adaptersOnly) {
-  await mkdir(join(output, "desktop-computer-use", "extensions"), { recursive: true });
+  await mkdir(join(skillOutput, "extensions"), { recursive: true });
   for (const name of requiredExtensions) {
     const source = resolvedExtensions.get(name);
-    await cp(source, join(output, "desktop-computer-use", "extensions", name));
+    await cp(source, join(skillOutput, "extensions", name));
   }
 }
 console.log(`${adaptersOnly ? "Packaged adapter-only skill" : "Packaged complete skill"} at ${output}`);

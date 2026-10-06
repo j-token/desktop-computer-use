@@ -15,6 +15,23 @@ const INTERFACE_NAME = 'org.desktopcomputeruse.Shell';
 const HEARTBEAT_TIMEOUT_US = 5 * 1000 * 1000;
 const CURSOR_SIZE = 44;
 const SCREEN_BORDER_WIDTH = 18;
+const STOP_KEY = 'desktop-computer-use-stop-accelerator';
+// Every modifier combination is bound so a held or toggled modifier cannot
+// turn the user's Esc into an unmatched shortcut.
+const STOP_MODIFIERS = ['<Shift>', '<Control>', '<Alt>', '<Super>'];
+const STOP_ACCELERATORS = [];
+for (var mask = 0; mask < (1 << STOP_MODIFIERS.length); mask++) {
+    var accelerator = '';
+    for (var bit = 0; bit < STOP_MODIFIERS.length; bit++) {
+        if (mask & (1 << bit))
+            accelerator += STOP_MODIFIERS[bit];
+    }
+    STOP_ACCELERATORS.push(accelerator + 'Escape');
+}
+const DOUBLE_ESCAPE_WINDOW_MS = 1000;
+const MAX_STOP_KEY_SUSPEND_MS = 2000;
+const BANNER_TEXT = '컴퓨터 사용 중  ·  중지: Esc 두 번';
+const BANNER_HINT_TEXT = '한 번 더 Esc를 누르면 중지';
 
 const INTERFACE_XML = '<node>' +
     '<interface name="org.desktopcomputeruse.Shell">' +
@@ -30,6 +47,8 @@ const INTERFACE_XML = '<node>' +
     '<arg name="updated" type="b" direction="out"/></method>' +
     '<method name="GetPointer"><arg name="pointer" type="s" direction="out"/></method>' +
     '<method name="GetOverlayRegions"><arg name="regions" type="s" direction="out"/></method>' +
+    '<method name="SuspendStopKey"><arg name="milliseconds" type="u" direction="in"/>' +
+    '<arg name="suspended" type="b" direction="out"/></method>' +
     '<signal name="Stopped"><arg name="reason" type="s"/></signal>' +
     '</interface></node>';
 
@@ -55,11 +74,15 @@ var ShellService = class ShellService {
         this._exported = null;
         this._settings = null;
         this._banner = null;
+        this._bannerLabel = null;
         this._panelIndicator = null;
         this._cursor = null;
         this._lastPointer = {x: 0, y: 0};
         this._screenBorders = [];
         this._stopKeyRegistered = false;
+        this._stopKeyResumeSource = 0;
+        this._firstEscapeAt = 0;
+        this._bannerHintSource = 0;
     }
 
     enable() {
@@ -142,11 +165,12 @@ var ShellService = class ShellService {
             reactive: false,
             can_focus: false
         });
-        this._banner.add_child(new St.Label({
-            text: '컴퓨터 사용 중  ·  중지: Esc',
+        this._bannerLabel = new St.Label({
+            text: BANNER_TEXT,
             style_class: 'dcu-banner-label',
             y_align: Clutter.ActorAlign.CENTER
-        }));
+        });
+        this._banner.add_child(this._bannerLabel);
         Main.layoutManager.addChrome(this._banner, {
             affectsStruts: false,
             trackFullscreen: false
@@ -175,12 +199,16 @@ var ShellService = class ShellService {
             return true;
         try {
             // Migrate any saved shortcut from earlier extension versions.
-            if (!this._settings.set_strv('desktop-computer-use-stop-accelerator', ['Escape']))
+            var saved = this._settings.get_strv(STOP_KEY);
+            if (saved.join(',') !== STOP_ACCELERATORS.join(',') &&
+                !this._settings.set_strv(STOP_KEY, STOP_ACCELERATORS))
                 return false;
+            // Holding Esc must not count as a second press.
+            var flags = Meta.KeyBindingFlags.IGNORE_AUTOREPEAT !== undefined
+                ? Meta.KeyBindingFlags.IGNORE_AUTOREPEAT : Meta.KeyBindingFlags.NONE;
             const action = Main.wm.addKeybinding(
-                'desktop-computer-use-stop-accelerator', this._settings,
-                Meta.KeyBindingFlags.NONE, Shell.ActionMode.ALL,
-                () => this._stop('escape'));
+                STOP_KEY, this._settings, flags, Shell.ActionMode.ALL,
+                () => this._onStopKey());
             if (action === Meta.KeyBindingAction.NONE)
                 return false;
             this._stopKeyRegistered = true;
@@ -195,7 +223,57 @@ var ShellService = class ShellService {
         if (!this._stopKeyRegistered)
             return;
         this._stopKeyRegistered = false;
-        Main.wm.removeKeybinding('desktop-computer-use-stop-accelerator');
+        Main.wm.removeKeybinding(STOP_KEY);
+    }
+
+    _cancelStopKeyResume() {
+        if (this._stopKeyResumeSource) {
+            GLib.source_remove(this._stopKeyResumeSource);
+            this._stopKeyResumeSource = 0;
+        }
+    }
+
+    _onStopKey() {
+        if (!this._active)
+            return;
+        var now = GLib.get_monotonic_time();
+        if (this._firstEscapeAt && now - this._firstEscapeAt <= DOUBLE_ESCAPE_WINDOW_MS * 1000) {
+            this._stop('escape');
+            return;
+        }
+        // A single press, or one after the window expired, only arms the stop.
+        this._firstEscapeAt = now;
+        this._showStopHint();
+    }
+
+    _showStopHint() {
+        if (!this._bannerLabel)
+            return;
+        if (this._bannerHintSource)
+            GLib.source_remove(this._bannerHintSource);
+        this._bannerLabel.text = BANNER_HINT_TEXT;
+        this._positionBanner();
+        this._bannerHintSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, DOUBLE_ESCAPE_WINDOW_MS, () => {
+            this._bannerHintSource = 0;
+            this._restoreBannerText();
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
+    _restoreBannerText() {
+        if (!this._bannerLabel)
+            return;
+        this._bannerLabel.text = BANNER_TEXT;
+        this._positionBanner();
+    }
+
+    _clearStopHint() {
+        this._firstEscapeAt = 0;
+        if (this._bannerHintSource) {
+            GLib.source_remove(this._bannerHintSource);
+            this._bannerHintSource = 0;
+        }
+        this._restoreBannerText();
     }
 
     _clearScreenBorders() {
@@ -253,6 +331,7 @@ var ShellService = class ShellService {
             this._panelIndicator.destroy();
         this._cursor = null;
         this._banner = null;
+        this._bannerLabel = null;
         this._panelIndicator = null;
     }
 
@@ -270,6 +349,7 @@ var ShellService = class ShellService {
     }
 
     _showUi() {
+        this._cancelStopKeyResume();
         if (!this._registerStopKey())
             return false;
         for (const border of this._screenBorders)
@@ -293,7 +373,9 @@ var ShellService = class ShellService {
     }
 
     _hideUi() {
+        this._cancelStopKeyResume();
         this._unregisterStopKey();
+        this._clearStopHint();
         for (const border of this._screenBorders)
             border.visible = false;
         if (this._banner)
@@ -348,7 +430,8 @@ var ShellService = class ShellService {
             Activate: windowId => this.Activate(windowId),
             Pointer: (x, y) => this.Pointer(x, y),
             GetPointer: () => this.GetPointer(),
-            GetOverlayRegions: () => this.GetOverlayRegions()
+            GetOverlayRegions: () => this.GetOverlayRegions(),
+            SuspendStopKey: milliseconds => this.SuspendStopKey(milliseconds)
         };
         this._exported = Gio.DBusExportedObject.wrapJSObject(INTERFACE_XML, implementation);
         try {
@@ -419,7 +502,7 @@ var ShellService = class ShellService {
             bus: BUS_NAME,
             objectPath: OBJECT_PATH,
             interface: INTERFACE_NAME,
-            stopShortcut: 'Esc',
+            stopShortcut: 'Escape x2',
             cursor: 'high-contrast-ring-arrow'
         });
     }
@@ -488,6 +571,25 @@ var ShellService = class ShellService {
             regions.push({kind: entry.kind, x, y, width, height});
         }
         return JSON.stringify(regions);
+    }
+
+    // Releases Escape to applications so the native daemon can inject it
+    // without stopping the session; the binding returns after the delay.
+    SuspendStopKey(milliseconds) {
+        if (!this._active)
+            return false;
+        var requested = finiteNumber(milliseconds);
+        var delay = Math.min(Math.max(Math.round(requested === null ? 0 : requested), 0),
+            MAX_STOP_KEY_SUSPEND_MS);
+        this._cancelStopKeyResume();
+        this._unregisterStopKey();
+        this._stopKeyResumeSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, () => {
+            this._stopKeyResumeSource = 0;
+            if (this._active && !this._registerStopKey())
+                this._stop('stop-key-unavailable');
+            return GLib.SOURCE_REMOVE;
+        });
+        return true;
     }
 
     GetPointer() {
@@ -562,7 +664,7 @@ var ShellService = class ShellService {
             } catch (error) {
                 // Keep empty titles: they are useful for borderless/windowless games.
             }
-            windows.push({
+            var record = {
                 id: id,
                 title: title,
                 app: this._windowApp(window),
@@ -571,7 +673,18 @@ var ShellService = class ShellService {
                 y: Number(rect.y),
                 width: Number(rect.width),
                 height: Number(rect.height)
-            });
+            };
+            try {
+                // Dialogs are transient for their parent; a modal one blocks it.
+                var parent = window.get_transient_for();
+                if (parent) {
+                    record.ownerWindowId = this._windowId(parent);
+                    record.modal = type === Meta.WindowType.MODAL_DIALOG;
+                }
+            } catch (error) {
+                // Ownership is advisory; keep the window without it.
+            }
+            windows.push(record);
         }
         return windows;
     }
