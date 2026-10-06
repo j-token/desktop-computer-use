@@ -142,7 +142,7 @@ await cp(skillSource, join(output, "desktop-computer-use"), {
     const topLevel = relative(skillSource, source).split(sep)[0];
     if (topLevel === "bin" || topLevel === "extensions") return false;
     const name = basename(source).toLowerCase();
-    return name === ".env.example" || (name !== ".env" && !name.startsWith(".env."));
+    return name !== ".env" && !name.startsWith(".env.");
   }
 });
 await cp(join(root, "docs", "release-readme.md"), join(output, "README.md"));

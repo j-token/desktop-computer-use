@@ -16,10 +16,6 @@ test("CLI option conversion preserves paced drag defaults and aliases", () => {
   assert.equal(parsed.options.fromX, 10);
   assert.deepEqual(parseArgs(["get-app-state", "notepad"]).positional, ["notepad"]);
   assert.deepEqual(parseArgs(["session", "start"]).command, ["session", "start"]);
-  const config = parseArgs(["agent", "config", "--mode", "llm+jev", "--env-file", "settings.env"]);
-  assert.deepEqual(config.command, ["agent", "config"]);
-  assert.equal(config.options.mode, "llm+jev");
-  assert.equal(config.options.envFile, "settings.env");
 });
 
 test("MCP converts a private screenshot path into image content", async () => {

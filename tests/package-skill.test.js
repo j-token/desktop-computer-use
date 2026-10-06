@@ -55,7 +55,6 @@ test("adapter-only mode is explicit and omits native artifacts", async () => {
     const result = await runPackage(["--adapters-only", "--out", output]);
     assert.equal(result.code, 0, result.output);
     await stat(join(output, "desktop-computer-use", "scripts", "dcu.mjs"));
-    await stat(join(output, "desktop-computer-use", ".env.example"));
     await assert.rejects(() => stat(join(output, "desktop-computer-use", ".env")));
     await assert.rejects(() => stat(join(output, "desktop-computer-use", secretName)));
     await assert.rejects(() => stat(join(output, "desktop-computer-use", "bin")));

@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile, readdir, rename, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { normalizeLabel } from "../dist/agent/filter.js";
+import { normalizeLabel } from "../dist/labels.js";
 
 const HELP = `Usage: node scripts/sanitize-fixtures.mjs [options]
 
@@ -21,7 +21,7 @@ Each recording is also renamed to app-NN-asfound.json / app-NN-foreground.json s
 the filenames stop naming real applications. A file already carrying that name is
 left alone, so a second run changes nothing.
 
-Run npm run build first: the replacement has to agree with the filter's own
+Run npm run build first: the replacement has to agree with the shared
 normalizeLabel, and it is imported from dist rather than copied.
 
   --dir <path>   Fixture directory (default tests/fixtures/uia).

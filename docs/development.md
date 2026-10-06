@@ -77,30 +77,6 @@ node tests/mcp-native-smoke.mjs
 
 The smoke test owns an isolated runtime unless `DCU_RUNTIME_DIR` is already set. It starts and stops its session and daemon, captures the requested window through MCP, and validates the returned image bytes.
 
-## Configure agent development
-
-Copy the environment template and keep the resulting `.env` file local:
-
-```powershell
-Copy-Item skills/desktop-computer-use/.env.example skills/desktop-computer-use/.env
-```
-
-The preferred Jev variables are:
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `DCU_AGENT_MODE` | `llm` | Selects the harness workflow: `llm` or `llm+jev`. |
-| `DCU_JEV_API_KEY` | none | Enables Jev requests in hybrid mode. |
-| `DCU_JEV_BASE_URL` | `https://api.typesafe.ai/v1` | Selects the Jev endpoint. |
-| `DCU_JEV_MODEL` | `jev-latest` | Selects the Jev model. |
-| `DCU_JEV_TIMEOUT_MS` | `8000` | Sets the per-request timeout. |
-| `DCU_AGENT_TRACE_DIR` | runtime agent directory | Moves the NDJSON agent trace. |
-| `DCU_ENV_FILE` | skill-root `.env` | Selects another environment file. |
-
-The legacy `TYPESAFE_API_KEY` and `DCU_AGENT_BASE_URL`, `DCU_AGENT_MODEL`, and `DCU_AGENT_TIMEOUT_MS` names remain supported. A `DCU_JEV_*` value wins over its legacy alias even when the preferred value is empty or came from the selected file. For the same variable name, an existing process environment value wins over the file value.
-
-`agent config` is offline and never prints the key. `agent doctor` makes a small Jev request and reports the host, model, and latency without exposing the key.
-
 ## Package the skill
 
 Build both GNOME extension archives first:

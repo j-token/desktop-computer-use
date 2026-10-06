@@ -9,7 +9,7 @@ This guide describes reproducible checks. Raw desktop evidence is runtime data: 
 | Level | What it establishes | Command or location |
 |---|---|---|
 | TypeScript compile | Public and internal TypeScript types are consistent. | `npm run typecheck` |
-| Adapter suite | CLI, MCP, transport, agent, environment, and packaging behavior. | `npm test` |
+| Adapter suite | CLI, MCP, transport, and packaging behavior. | `npm test` |
 | Native contract suite | Authentication, sessions, dispatch, request validation, and supported platform contract tests. | CMake build followed by CTest |
 | Integration harness | Real transport, extension, capture, input, or cancellation behavior in a controlled environment. | `tests/integration/` |
 | Live desktop check | Visible behavior in the target OS session, including final state and cleanup. | Manual or harness-assisted procedure below |
