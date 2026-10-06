@@ -86,16 +86,6 @@ int json_int(const Json& params, const char* key, int fallback) {
     return it != params.end() && it->is_number_integer() ? it->get<int>() : fallback;
 }
 
-int json_coord(const Json& params, const char* key, int fallback, int limit) {
-    const auto it = params.find(key);
-    if (it == params.end() || !it->is_number()) return fallback;
-    const double value = it->get<double>();
-    if (!std::isfinite(value) || value < 0 || value > limit) {
-        throw Error("invalid_argument", std::string(key) + " is outside the target window");
-    }
-    return static_cast<int>(std::lround(value));
-}
-
 bool json_bool(const Json& params, const char* key, bool fallback) {
     const auto it = params.find(key);
     return it != params.end() && it->is_boolean() ? it->get<bool>() : fallback;
@@ -259,7 +249,7 @@ Json window_json(const WindowInfo& info) {
 }
 
 std::string private_capture_path(const std::string& observationId,
-                                 const std::string& format) {
+                                 const std::string& format, const char* suffix = "") {
     PWSTR known = nullptr;
     std::filesystem::path directory;
     if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_DEFAULT, nullptr,
@@ -275,8 +265,21 @@ std::string private_capture_path(const std::string& observationId,
     std::error_code error;
     std::filesystem::create_directories(directory, error);
     if (error) throw Error("capture_path", "Cannot create the private capture directory");
-    const std::string filename = observationId + (format == "png" ? ".png" : ".jpg");
-    return utf8((directory / std::filesystem::path(filename)).wstring());
+    const std::string filename = observationId + suffix + (format == "png" ? ".png" : ".jpg");
+    return utf8((directory / std::filesystem::path(wide(filename))).wstring());
+}
+
+void remove_capture_file(const std::string& path) noexcept {
+    if (path.empty()) return;
+    try {
+        std::error_code ignored;
+        std::filesystem::remove(std::filesystem::path(wide(path)), ignored);
+    } catch (...) {
+    }
+}
+
+Json action_transform(double scaleX, double scaleY) {
+    return Json{{"scaleX", scaleX}, {"scaleY", scaleY}, {"offsetX", 0}, {"offsetY", 0}};
 }
 
 DWORD modifier_mask(const std::vector<WORD>& keys) {
@@ -513,6 +516,21 @@ private:
         Clock::time_point created;
         Json window;
         std::vector<ElementRecord> elements;
+        // Present when the observation captured a screenshot. Each image's
+        // scale maps window-local coordinates to its pixels.
+        bool hasScreenshot = false;
+        std::string mimeType;
+        CapturedImage reduced;
+        CapturedImage full;
+    };
+
+    // Window-local point resolved from screenshot pixel coordinates.
+    struct CoordinateTransform {
+        std::string space;
+        double scaleX = 1.0;
+        double scaleY = 1.0;
+        int imageWidth = 0;
+        int imageHeight = 0;
     };
 
     struct ContextScope {
@@ -531,8 +549,12 @@ private:
     Observation& require_observation(const Json& params, HWND hwnd, const RECT& rect);
     ElementRecord& require_element(const Json& params, Observation& observation, const char* key);
     void purge_observations();
+    void clear_observations() noexcept;
+    CoordinateTransform coordinate_transform(const Json& params, const WindowInfo& target,
+                                             const Observation* observation);
     bool activate(HWND hwnd, Context& context) const;
     Json observe(const Json& params, Context& context);
+    Json full_screenshot(const Json& params);
     Json action_result();
     std::vector<WORD> modifiers(const Json& params) const;
     void click_at(HWND hwnd, POINT point, MouseButton button, const Json& params,
@@ -611,6 +633,7 @@ Json WindowsBackend::execute(const std::string& method, const Json& params,
     if (method == "list-apps") return list_apps();
     if (method == "list-windows") return list_windows(params);
     if (method == "get-app-state") return observe(params, context);
+    if (method == "get-full-screenshot") return full_screenshot(params);
     return handle_action(method, params, context);
 }
 
@@ -666,12 +689,74 @@ WindowInfo WindowsBackend::require_target_window(const Json& params) const {
 
 void WindowsBackend::purge_observations() {
     const auto now = Clock::now();
-    std::lock_guard lock(observationsMutex_);
-    for (auto it = observations_.begin(); it != observations_.end();) {
-        if (now - it->second.created > std::chrono::minutes(2)) it = observations_.erase(it);
-        else ++it;
+    std::vector<std::string> removed;
+    {
+        std::lock_guard lock(observationsMutex_);
+        const auto evict = [&](auto it) {
+            removed.push_back(it->second.reduced.path);
+            removed.push_back(it->second.full.path);
+            return observations_.erase(it);
+        };
+        for (auto it = observations_.begin(); it != observations_.end();) {
+            if (now - it->second.created > std::chrono::minutes(2)) it = evict(it);
+            else ++it;
+        }
+        while (observations_.size() > 32) {
+            const auto oldest = std::min_element(
+                observations_.begin(), observations_.end(),
+                [](const auto& a, const auto& b) { return a.second.created < b.second.created; });
+            evict(oldest);
+        }
     }
-    while (observations_.size() > 32) observations_.erase(observations_.begin());
+    for (const auto& path : removed) remove_capture_file(path);
+}
+
+void WindowsBackend::clear_observations() noexcept {
+    std::vector<std::string> removed;
+    {
+        std::lock_guard lock(observationsMutex_);
+        for (const auto& entry : observations_) {
+            removed.push_back(entry.second.reduced.path);
+            removed.push_back(entry.second.full.path);
+        }
+        observations_.clear();
+    }
+    for (const auto& path : removed) remove_capture_file(path);
+}
+
+WindowsBackend::CoordinateTransform WindowsBackend::coordinate_transform(
+    const Json& params, const WindowInfo& target, const Observation* observation) {
+    const bool full = json_string(params, "coords", "reduced") == "full";
+    const Observation* source = observation;
+    if (!source) purge_observations();
+    std::lock_guard lock(observationsMutex_);
+    if (!source) {
+        // Without an observationId, pixel coordinates refer to the most recent
+        // screenshot of this window.
+        for (const auto& entry : observations_) {
+            const auto& candidate = entry.second;
+            if (candidate.hasScreenshot && candidate.hwnd == target.hwnd &&
+                (!source || candidate.created > source->created)) {
+                source = &candidate;
+            }
+        }
+        if (!source) {
+            throw Error("observation_required",
+                        "Observe the window with a screenshot before clicking by coordinates");
+        }
+        const RECT& old = source->rect;
+        if (old.right - old.left != target.rect.right - target.rect.left ||
+            old.bottom - old.top != target.rect.bottom - target.rect.top) {
+            throw Error("stale_observation",
+                        "Window size changed since the last screenshot; observe again");
+        }
+    } else if (!source->hasScreenshot) {
+        throw Error("observation_required",
+                    "Observe the window with a screenshot before clicking by coordinates");
+    }
+    const auto& image = full ? source->full : source->reduced;
+    return CoordinateTransform{full ? "full" : "reduced", image.scaleX, image.scaleY,
+                               image.width, image.height};
 }
 
 WindowsBackend::Observation& WindowsBackend::require_observation(const Json& params, HWND hwnd,
@@ -773,7 +858,8 @@ Json WindowsBackend::observe(const Json& params, Context& context) {
                                    json_string(params, "observe") != "text";
     const std::string format = lower(json_string(params, "format", "jpeg")) == "png" ? "png" : "jpeg";
     const int quality = std::clamp(json_int(params, "quality", 85), 1, 100);
-    const int maxEdge = std::max(0, json_int(params, "maxEdge", 1600));
+    // maxEdge is an optional cap on the reduced image only; 0 means no cap.
+    const int maxEdge = std::max(0, json_int(params, "maxEdge", 0));
     const std::string id = guid_string();
     const auto started = Clock::now();
 
@@ -783,13 +869,27 @@ Json WindowsBackend::observe(const Json& params, Context& context) {
                 {"overlayRegions", Json::array()},
                 {"timings", Json::object()}};
     std::int64_t capturedAtUnixMs = 0;
+    Observation observation;
+    observation.id = id;
+    observation.hwnd = target.hwnd;
+    observation.rect = target.rect;
     if (includeScreenshot) {
         const auto captureStarted = Clock::now();
-        const auto path = private_capture_path(id, format);
-        const auto shot = capture_.capture(target.hwnd, target.rect, path, format, quality,
+        const auto shot = capture_.capture(target.hwnd, target.rect,
+                                           private_capture_path(id, format, "-full"),
+                                           private_capture_path(id, format), format, quality,
                                            maxEdge, context);
+        observation.hasScreenshot = true;
+        observation.mimeType = shot.mimeType;
+        observation.reduced = shot.reduced;
+        observation.full = shot.full;
         result["screenshot"] = Json{{"path", shot.path}, {"mimeType", shot.mimeType},
                                      {"width", shot.width}, {"height", shot.height},
+                                     {"variant", "reduced"},
+                                     {"actionTransform", action_transform(shot.scaleX, shot.scaleY)},
+                                     {"fullAvailable", true},
+                                     {"fullWidth", shot.full.width},
+                                     {"fullHeight", shot.full.height},
                                      {"scale", shot.scale}, {"backend", shot.backend},
                                      {"frameTimestamp100ns", shot.frameTimestamp100ns},
                                      {"freshFrame", shot.freshFrame},
@@ -804,17 +904,20 @@ Json WindowsBackend::observe(const Json& params, Context& context) {
     }
     result["capturedAt"] = iso8601_from_unix_ms(capturedAtUnixMs);
     result["observedAt"] = iso8601_now();
-    Observation observation;
-    observation.id = id;
-    observation.hwnd = target.hwnd;
-    observation.rect = target.rect;
     observation.created = Clock::now();
     observation.window = result["window"];
     if (observeText) {
         const auto accessibilityStarted = Clock::now();
-        const auto accessibility = uia_.build(target.hwnd, target.rect, context);
-        result["accessibility"] = accessibility.value;
-        observation.elements = accessibility.elements;
+        try {
+            const auto accessibility = uia_.build(target.hwnd, target.rect, context);
+            result["accessibility"] = accessibility.value;
+            observation.elements = accessibility.elements;
+        } catch (...) {
+            // The observation is not cached, so nothing else would delete its images.
+            remove_capture_file(observation.reduced.path);
+            remove_capture_file(observation.full.path);
+            throw;
+        }
         result["timings"]["accessibilityMs"] =
             std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - accessibilityStarted).count();
     }
@@ -826,6 +929,37 @@ Json WindowsBackend::observe(const Json& params, Context& context) {
         observations_[id] = std::move(observation);
     }
     return result;
+}
+
+Json WindowsBackend::full_screenshot(const Json& params) {
+    const auto id = json_string(params, "observationId");
+    if (id.empty()) throw Error("observation_required", "get-full-screenshot requires observationId");
+    purge_observations();
+    const auto target = target_window(params);
+    std::lock_guard lock(observationsMutex_);
+    const auto found = observations_.find(id);
+    if (found == observations_.end()) {
+        throw Error("stale_observation", "Observation is missing or expired; observe again");
+    }
+    const auto& observation = found->second;
+    if (target && target->hwnd != observation.hwnd) {
+        throw Error("stale_observation", "Observation belongs to a different window; observe again");
+    }
+    std::error_code error;
+    if (!observation.hasScreenshot ||
+        !std::filesystem::exists(std::filesystem::path(wide(observation.full.path)), error)) {
+        throw Error("stale_observation",
+                    "Observation has no full screenshot; observe again with a screenshot");
+    }
+    return Json{{"observationId", id},
+                {"screenshot", {{"path", observation.full.path},
+                                {"mimeType", observation.mimeType},
+                                {"width", observation.full.width},
+                                {"height", observation.full.height},
+                                {"variant", "full"},
+                                {"actionTransform", action_transform(observation.full.scaleX,
+                                                                     observation.full.scaleY)}}},
+                {"notice", "To click a point read from this image, pass --coords full."}};
 }
 
 Json WindowsBackend::action_result() {
@@ -1036,6 +1170,28 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
         const auto observationId = json_string(params, "observationId");
         Observation* observation = nullptr;
         if (!observationId.empty()) observation = &require_observation(params, target.hwnd, target.rect);
+        const int targetWidth = target.rect.right - target.rect.left;
+        const int targetHeight = target.rect.bottom - target.rect.top;
+        // x/y are screenshot pixels (reduced by default, full with coords=full).
+        // The observation's transform converts them to window-local points.
+        const auto windowPoint = [&](const char* xKey, const char* yKey,
+                                     const CoordinateTransform& transform) {
+            const auto read = [&](const char* key, int imageLimit, double scale, int windowLimit) {
+                const auto it = params.find(key);
+                if (it == params.end() || !it->is_number()) {
+                    throw Error("invalid_argument", std::string(key) + " is required");
+                }
+                const double value = it->get<double>();
+                if (!std::isfinite(value) || value < 0 || value > imageLimit) {
+                    throw Error("invalid_argument", std::string(key) + " is outside the " +
+                                                        transform.space + " screenshot");
+                }
+                return std::clamp(static_cast<int>(std::lround(value / scale)), 0, windowLimit);
+            };
+            return POINT{read(xKey, transform.imageWidth, transform.scaleX, targetWidth),
+                         read(yKey, transform.imageHeight, transform.scaleY, targetHeight)};
+        };
+        const auto pointJson = [](POINT point) { return Json{{"x", point.x}, {"y", point.y}}; };
 
         if (method == "click") {
             POINT point{};
@@ -1051,15 +1207,20 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
                     click_at(target.hwnd, point, mouse_button(json_string(params, "button")), params, context);
                 }
             } else {
-                const int width = target.rect.right - target.rect.left;
-                const int height = target.rect.bottom - target.rect.top;
-                point.x = target.rect.left + json_coord(params, "x", width / 2, width);
-                point.y = target.rect.top + json_coord(params, "y", height / 2, height);
+                const auto transform = coordinate_transform(params, target, observation);
+                const POINT local = windowPoint("x", "y", transform);
+                point.x = target.rect.left + local.x;
+                point.y = target.rect.top + local.y;
                 click_at(target.hwnd, point, mouse_button(json_string(params, "button")), params, context);
+                auto result = action_result();
+                result["coordinateSpace"] = transform.space;
+                result["windowPoint"] = pointJson(local);
+                return result;
             }
             return action_result();
         }
         if (method == "drag") {
+            std::optional<CoordinateTransform> transform;
             auto coordinate = [&](const char* xKey, const char* yKey, const char* elementKey) {
                 POINT point{};
                 const auto element = params.find(elementKey);
@@ -1067,32 +1228,40 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
                     if (!observation) throw Error("observation_required", "Element drag requires observationId");
                     auto& record = require_element(params, *observation, elementKey);
                     require_clickable_bounds(record);
-                    point.x = target.rect.left + (record.bounds.left + record.bounds.right) / 2;
-                    point.y = target.rect.top + (record.bounds.top + record.bounds.bottom) / 2;
+                    point.x = (record.bounds.left + record.bounds.right) / 2;
+                    point.y = (record.bounds.top + record.bounds.bottom) / 2;
                 } else {
-                    const int width = target.rect.right - target.rect.left;
-                    const int height = target.rect.bottom - target.rect.top;
-                    point.x = target.rect.left + json_coord(params, xKey, 0, width);
-                    point.y = target.rect.top + json_coord(params, yKey, 0, height);
+                    if (!transform) transform = coordinate_transform(params, target, observation);
+                    point = windowPoint(xKey, yKey, *transform);
                 }
                 return point;
             };
-            POINT from = coordinate("fromX", "fromY", "fromElementIndex");
-            POINT to = coordinate("toX", "toY", "toElementIndex");
+            const POINT localFrom = coordinate("fromX", "fromY", "fromElementIndex");
+            const POINT localTo = coordinate("toX", "toY", "toElementIndex");
+            const POINT from{target.rect.left + localFrom.x, target.rect.top + localFrom.y};
+            const POINT to{target.rect.left + localTo.x, target.rect.top + localTo.y};
             drag_at(target.hwnd, from, to, mouse_button(json_string(params, "button")),
                     std::max(0, json_int(params, "durationMs", 240)),
                     std::max(1, json_int(params, "steps", 12)),
                     std::max(0, json_int(params, "holdBeforeMs", 50)),
                     std::max(0, json_int(params, "holdAfterMs", 50)), context);
-            return action_result();
+            auto result = action_result();
+            if (transform) {
+                result["coordinateSpace"] = transform->space;
+                result["windowFrom"] = pointJson(localFrom);
+                result["windowTo"] = pointJson(localTo);
+            }
+            return result;
         }
         if (method == "scroll") {
+            POINT local{targetWidth / 2, targetHeight / 2};
+            std::optional<CoordinateTransform> transform;
+            if (params.contains("x") || params.contains("y")) {
+                transform = coordinate_transform(params, target, observation);
+                local = windowPoint("x", "y", *transform);
+            }
             activate(target.hwnd, context);
-            const int width = target.rect.right - target.rect.left;
-            const int height = target.rect.bottom - target.rect.top;
-            const int x = target.rect.left + json_coord(params, "x", width / 2, width);
-            const int y = target.rect.top + json_coord(params, "y", height / 2, height);
-            send_mouse_move(x, y);
+            send_mouse_move(target.rect.left + local.x, target.rect.top + local.y);
             const auto direction = lower(json_string(params, "direction", "down"));
             const int amount = std::clamp(json_int(params, "amount", 3), -100, 100);
             INPUT input{};
@@ -1105,7 +1274,10 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
                 input.mi.mouseData = static_cast<DWORD>((direction == "up" ? 1 : -1) * amount * WHEEL_DELTA);
             }
             send_input(input);
-            return action_result();
+            auto result = action_result();
+            if (transform) result["coordinateSpace"] = transform->space;
+            result["windowPoint"] = pointJson(local);
+            return result;
         }
         if (method == "type-text") {
             activate(target.hwnd, context);
@@ -1224,10 +1396,10 @@ Json WindowsBackend::capabilities() const {
                                {"drag", true}, {"nativeApps", true}, {"games", true},
                                {"overlay", true}, {"hotkeyStop", true},
                                {"stopKey", "Escape"}, {"edgeBorder", true}}},
-                {"coordinateSpace", "window"},
+                {"coordinateSpace", "reduced"},
                 {"defaults", {{"durationMs", 240}, {"steps", 12},
                                {"holdBeforeMs", 50}, {"holdAfterMs", 50},
-                               {"quality", 85}, {"maxEdge", 1600}}}};
+                               {"quality", 85}, {"maxEdge", 0}}}};
 }
 
 void WindowsBackend::stop_session() noexcept {
@@ -1237,9 +1409,9 @@ void WindowsBackend::stop_session() noexcept {
     if (auto* context = sessionContext_.load(std::memory_order_acquire)) context->cancelled.store(true);
     release_held_input();
     indicator_.stop();
+    clear_observations();
     {
         std::lock_guard lock(observationsMutex_);
-        observations_.clear();
         sessionId_.clear();
         sessionContext_.store(nullptr, std::memory_order_release);
     }

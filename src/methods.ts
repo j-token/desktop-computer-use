@@ -9,6 +9,7 @@ export const SESSIONLESS_METHODS: ReadonlySet<string> = new Set([
 
 export const WINDOW_TARGET_METHODS: ReadonlySet<string> = new Set([
   "get-app-state",
+  "get-full-screenshot",
   "click",
   "drag",
   "scroll",

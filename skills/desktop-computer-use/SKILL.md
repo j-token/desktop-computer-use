@@ -21,13 +21,14 @@ is not present.
 2. Use `dcu list-apps`, `dcu list-windows --app <app>`, and
    `dcu get-app-state --app <app>` before choosing a target. The state response includes a fresh
    observation ID, the window rectangle, a screenshot path, and optional accessibility elements.
-3. Use an element index only from the latest observation. Coordinates are window-local logical
-   action coordinates. Map a point from the latest screenshot with the returned action transform:
-   if `screenshot.actionTransform` is present, use `actionX = (pixelX - offsetX) / scaleX` and
-   `actionY = (pixelY - offsetY) / scaleY`. Otherwise use `scaleX`/`scaleY` when present, falling
-   back to `scale`; an omitted offset is zero. Never substitute the window's screen `x`/`y` for a
-   screenshot offset. Re-observe when the window rectangle, monitor scale, screenshot size, or
-   transform changes.
+3. Use an element index only from the latest observation. The observation's `screenshot` is a
+   reduced image (0.5x when the window is larger than 1280x720, otherwise original size). Pass
+   `--x`/`--y` exactly as read from that reduced screenshot; the daemon converts them using the
+   window's latest screenshot observation (or `--observation-id`), so do no scaling yourself. A
+   coordinate action without a screenshot observation of the window fails with
+   `observation_required`. When the reduced image is not detailed enough, run
+   `get-full-screenshot --observation-id ID` for the original and pass `--coords full` with points
+   read from it. Re-observe when the window rectangle or monitor scale changes.
 4. After every UI-changing action, inspect its returned observation when requested with
    `--observe screenshot|text|both`, or call `get-app-state` again before selecting another index.
 A delivered synthetic input is unverified unless a returned state proves the requested change.
@@ -47,9 +48,10 @@ indicator are ready.
 dcu doctor | capabilities
 dcu session start | status | stop
 dcu list-apps | list-windows --app APP | get-app-state --app APP [--include-text]
-dcu click --app APP (--element-index N | --x X --y Y)
-dcu drag --app APP (--from-element-index N --to-element-index N | --from-x X --from-y Y --to-x X --to-y Y)
-dcu scroll --app APP --x X --y Y --direction down [--amount 3]
+dcu get-full-screenshot --app APP --observation-id ID
+dcu click --app APP (--element-index N | --x X --y Y [--coords full])
+dcu drag --app APP (--from-element-index N --to-element-index N | --from-x X --from-y Y --to-x X --to-y Y [--coords full])
+dcu scroll --app APP --x X --y Y --direction down [--amount 3] [--coords full]
 dcu type-text --app APP --text TEXT
 dcu press-key --app APP --key KEY
 dcu hotkey --app APP --key MODIFIER+KEY

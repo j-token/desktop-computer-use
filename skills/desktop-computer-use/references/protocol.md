@@ -19,18 +19,26 @@ a high-contrast cursor ring, and a blue screen-edge border that fades inward; th
 must not take focus or intercept application input. `session.stop` is an emergency path and may be
 sent without a session ID; it must release held input before returning.
 
-Observation coordinates are window-local logical action coordinates. A screenshot may be scaled or
-cropped. Use the latest observation's explicit action transform when it is present:
-`actionX = (pixelX - offsetX) / scaleX` and `actionY = (pixelY - offsetY) / scaleY`. If the
-observation has no `actionTransform`, use `scaleX`/`scaleY` when present and otherwise `scale`; an
-omitted offset is zero. `window.x`/`window.y` describe the window's screen position and must not be
-used as screenshot offsets. An observation ID becomes stale when the window geometry, monitor scale,
-crop, or target state changes, and the native backend rejects stale element or coordinate use.
-Observation results may include `screenshot.path`, `mimeType`, `width`, `height`, `sourceWidth`,
-`sourceHeight`, `scale`, `scaleX`, `scaleY`, optional `offsetX`/`offsetY`, and an optional
-`actionTransform`, as well as an accessibility element list, timings, and overlay regions. MCP reads
-a native screenshot path into an image content block; the CLI leaves the absolute private path in
-JSON.
+Each screenshot observation encodes two files from one frame: the original
+(`<observationId>-full.<ext>`) and a reduced image (`<observationId>.<ext>`, 0.5x when the source
+exceeds 1280x720, otherwise 1x; `maxEdge` optionally caps only the reduced image). The result's
+`screenshot` describes only the reduced image: `path`, `mimeType`, `width`, `height`,
+`variant: "reduced"`, `actionTransform: {scaleX, scaleY, offsetX: 0, offsetY: 0}` (pixel =
+window-local point x scale + offset), `fullAvailable`, `fullWidth`, `fullHeight`, plus `scale`,
+`scaleX`, `scaleY`, `sourceWidth`, `sourceHeight`, and capture diagnostics.
+`get-full-screenshot` (`observationId` required) returns the cached original with
+`variant: "full"` and its own `actionTransform` without recapturing; an expired observation fails
+with `stale_observation`. Both files are deleted when the observation leaves the cache or the
+session stops.
+
+`click`, `drag`, and `scroll` `x`/`y` (and `fromX`/`fromY`/`toX`/`toY`) are pixels of the reduced
+screenshot; `coords: "full"` selects the original image instead. The daemon converts them with the
+`observationId` observation or, without one, the window's most recent screenshot observation, and
+fails with `observation_required` when there is none. Coordinate action results include
+`coordinateSpace` and the window-local point used (`windowPoint`, or `windowFrom`/`windowTo` for a
+drag). An observation ID becomes stale when the window geometry, monitor scale, or target state
+changes, and the native backend rejects stale element or coordinate use. MCP reads the screenshot
+path into an image content block; the CLI leaves the absolute private path in JSON.
 
 Actions return `delivered: true` only when the provider accepted the input sequence. Their
 verification state is `unverified` unless the follow-up observation asserts the intended state.

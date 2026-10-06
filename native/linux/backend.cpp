@@ -117,11 +117,31 @@ struct RgbaImage {
     bool cached_frame = false;
 };
 
+// One encoded screenshot. scale_x/scale_y map window-local coordinates to
+// this image's pixels: pixel = window * scale.
+struct ObservationImage {
+    std::string path;
+    int width = 0;
+    int height = 0;
+    double scale_x = 1.0;
+    double scale_y = 1.0;
+};
+
 struct ObservationRecord {
     std::string id;
     WindowInfo window;
     Clock::time_point created;
     std::uint64_t coordinate_revision = 0;
+    bool has_screenshot = false;
+    std::string mime;
+    ObservationImage reduced;
+    ObservationImage full;
+};
+
+// Screenshot pixel space selected for coordinate input.
+struct CoordinateTransform {
+    std::string space;
+    ObservationImage image;
 };
 
 #if DCU_HAVE_GIO
@@ -229,10 +249,14 @@ private:
     WindowInfo select_window(const Json& params) const;
     WindowInfo current_window(const WindowInfo& expected) const;
     void validate_observation(const Json& params, const WindowInfo& window);
+    void store_observation(ObservationRecord record);
+    void clear_observations() noexcept;
+    CoordinateTransform coordinate_transform(const Json& params, const WindowInfo& window) const;
+    Json full_screenshot(const Json& params);
     Json make_observation(const Json& params, Context& context);
     RgbaImage capture_window(const WindowInfo& window, Context& context);
-    std::string save_image(const RgbaImage& image, const Json& params, std::string* mime,
-                           int* output_width, int* output_height, double* scale);
+    void save_image(const RgbaImage& image, const std::string& path, const std::string& format,
+                    int quality, std::string* mime);
     Json accessibility_snapshot(const WindowInfo& window, Context& context);
 
     void activate(const WindowInfo& window);
@@ -567,7 +591,7 @@ Json LinuxBackend::capabilities() const {
         {"accessibility", DCU_HAVE_ATSPI != 0},
         {"jpeg", DCU_HAVE_JPEG != 0},
         {"png", DCU_HAVE_PNG != 0},
-        {"maxEdge", 1600},
+        {"maxEdge", 0},
         {"capturePersistent", true},
     };
     result["dragDefaults"] = {
@@ -721,6 +745,90 @@ void LinuxBackend::validate_observation(const Json& params, const WindowInfo& wi
     }
 }
 
+namespace {
+void remove_observation_files(const ObservationRecord& record) noexcept {
+    for (const auto* path : {&record.reduced.path, &record.full.path}) {
+        if (!path->empty()) ::unlink(path->c_str());
+    }
+}
+
+Json action_transform(const ObservationImage& image) {
+    return Json{{"scaleX", image.scale_x}, {"scaleY", image.scale_y}, {"offsetX", 0}, {"offsetY", 0}};
+}
+} // namespace
+
+void LinuxBackend::store_observation(ObservationRecord record) {
+    const std::string id = record.id;
+    observations_[id] = std::move(record);
+    // Evict the oldest observations first; their screenshots go with them.
+    while (observations_.size() > 32) {
+        const auto oldest = std::min_element(
+            observations_.begin(), observations_.end(),
+            [](const auto& a, const auto& b) { return a.second.created < b.second.created; });
+        remove_observation_files(oldest->second);
+        observations_.erase(oldest);
+    }
+}
+
+void LinuxBackend::clear_observations() noexcept {
+    for (const auto& [_, record] : observations_) remove_observation_files(record);
+    observations_.clear();
+}
+
+CoordinateTransform LinuxBackend::coordinate_transform(const Json& params, const WindowInfo& window) const {
+    const bool full = string_value(params, "coords", "reduced") == "full";
+    const ObservationRecord* source = nullptr;
+    const std::string id = string_value(params, "observationId");
+    if (!id.empty()) {
+        // validate_observation has already matched this id to the window.
+        const auto found = observations_.find(id);
+        if (found == observations_.end()) throw Error("stale_observation", "Unknown observationId; observe again");
+        source = &found->second;
+    } else {
+        // Without an observationId, pixel coordinates refer to the most recent
+        // screenshot of this window.
+        for (const auto& [_, candidate] : observations_) {
+            if (candidate.has_screenshot && candidate.window.id == window.id &&
+                (!source || candidate.created > source->created)) {
+                source = &candidate;
+            }
+        }
+        if (source && (source->window.width != window.width || source->window.height != window.height ||
+                       source->coordinate_revision != coordinate_revision_)) {
+            throw Error("stale_observation", "Window geometry changed since the last screenshot; observe again");
+        }
+    }
+    if (!source || !source->has_screenshot) {
+        throw Error("observation_required", "Observe the window with a screenshot before clicking by coordinates");
+    }
+    return CoordinateTransform{full ? "full" : "reduced", full ? source->full : source->reduced};
+}
+
+Json LinuxBackend::full_screenshot(const Json& params) {
+    ensure_active(params);
+    refresh_coordinate_state();
+    const std::string id = string_value(params, "observationId");
+    if (id.empty()) throw Error("observation_required", "get-full-screenshot requires observationId");
+    const auto found = observations_.find(id);
+    if (found == observations_.end()) throw Error("stale_observation", "Unknown or expired observationId; observe again");
+    const auto& record = found->second;
+    const std::string window_id = string_value(params, "windowId");
+    if (!window_id.empty() && window_id != record.window.id) {
+        throw Error("stale_observation", "Observation belongs to a different window; observe again");
+    }
+    if (!record.has_screenshot || ::access(record.full.path.c_str(), R_OK) != 0) {
+        throw Error("stale_observation", "Observation has no full screenshot; observe again with a screenshot");
+    }
+    return Json{{"observationId", id},
+                {"screenshot", {{"path", record.full.path},
+                                {"mimeType", record.mime},
+                                {"width", record.full.width},
+                                {"height", record.full.height},
+                                {"variant", "full"},
+                                {"actionTransform", action_transform(record.full)}}},
+                {"notice", "To click a point read from this image, pass --coords full."}};
+}
+
 Json LinuxBackend::session_start(const Json& params, Context& context) {
     if (session_active_.load(std::memory_order_acquire)) {
         return Json{{"sessionId", session_id_}, {"ready", true}, {"reused", true},
@@ -833,7 +941,7 @@ Json LinuxBackend::session_stop(const Json& params) {
     session_active_.store(false, std::memory_order_release);
     active_context_.store(nullptr, std::memory_order_release);
     interrupted_.store(false, std::memory_order_release);
-    observations_.clear();
+    clear_observations();
     return Json{{"stopped", true}, {"sessionId", old_session}};
 }
 
@@ -1498,23 +1606,28 @@ void wait_checked(Context& context, int milliseconds) {
     }
 }
 
+// x/y are pixels of the selected screenshot; the transform converts them to
+// a window-local point.
 std::pair<int, int> point_from_json(const Json& params, const char* x_key, const char* y_key,
-                                    const WindowInfo& window) {
+                                    const WindowInfo& window, const CoordinateTransform& transform) {
     if (!params.contains(x_key) || !params.contains(y_key)) {
         throw Error("invalid_argument", std::string(x_key) + " and " + y_key + " are required");
     }
     const double x = number(params, x_key, 0.0);
     const double y = number(params, y_key, 0.0);
+    const auto& image = transform.image;
     if (!std::isfinite(x) || !std::isfinite(y) || x < 0 || y < 0 ||
-        x >= static_cast<double>(window.width) || y >= static_cast<double>(window.height)) {
-        throw Error("invalid_argument", "Input coordinates must be finite and inside the target window");
+        x >= static_cast<double>(image.width) || y >= static_cast<double>(image.height)) {
+        throw Error("invalid_argument", "Input coordinates must be finite and inside the " + transform.space +
+                                            " screenshot");
     }
-    const int rounded_x = static_cast<int>(std::lround(x));
-    const int rounded_y = static_cast<int>(std::lround(y));
-    if (rounded_x < 0 || rounded_y < 0 || rounded_x >= window.width || rounded_y >= window.height) {
-        throw Error("invalid_argument", "Input coordinates round outside the target window");
-    }
-    return {rounded_x, rounded_y};
+    const int local_x = std::clamp(static_cast<int>(std::lround(x / image.scale_x)), 0, std::max(0, window.width - 1));
+    const int local_y = std::clamp(static_cast<int>(std::lround(y / image.scale_y)), 0, std::max(0, window.height - 1));
+    return {local_x, local_y};
+}
+
+Json point_json(const std::pair<int, int>& point) {
+    return Json{{"x", point.first}, {"y", point.second}};
 }
 } // namespace
 
@@ -1523,6 +1636,8 @@ Json LinuxBackend::click(const Json& params, Context& context) {
     WindowInfo window = select_window(params);
     window = current_window(window);
     validate_observation(params, window);
+    std::optional<CoordinateTransform> transform;
+    if (!params.contains("elementIndex")) transform = coordinate_transform(params, window);
     activate(window);
     std::pair<int, int> local;
 #if DCU_HAVE_ATSPI
@@ -1538,7 +1653,8 @@ Json LinuxBackend::click(const Json& params, Context& context) {
     } else
 #endif
     {
-        local = point_from_json(params, "x", "y", window);
+        if (!transform) transform = coordinate_transform(params, window);
+        local = point_from_json(params, "x", "y", window, *transform);
     }
     const int x = window.x + local.first;
     const int y = window.y + local.second;
@@ -1568,13 +1684,22 @@ Json LinuxBackend::click(const Json& params, Context& context) {
         throw;
     }
     mark_input_complete();
-    return action_result();
+    Json result = action_result();
+    if (transform) {
+        result["coordinateSpace"] = transform->space;
+        result["windowPoint"] = point_json(local);
+    }
+    return result;
 }
 
 Json LinuxBackend::drag(const Json& params, Context& context) {
     ensure_active(params);
     WindowInfo window = current_window(select_window(params));
     validate_observation(params, window);
+    std::optional<CoordinateTransform> transform;
+    if (!params.contains("fromElementIndex") && !params.contains("toElementIndex")) {
+        transform = coordinate_transform(params, window);
+    }
     activate(window);
     std::pair<int, int> from;
     std::pair<int, int> to;
@@ -1601,8 +1726,9 @@ Json LinuxBackend::drag(const Json& params, Context& context) {
     } else
 #endif
     {
-        from = point_from_json(params, "fromX", "fromY", window);
-        to = point_from_json(params, "toX", "toY", window);
+        transform = coordinate_transform(params, window);
+        from = point_from_json(params, "fromX", "fromY", window, *transform);
+        to = point_from_json(params, "toX", "toY", window, *transform);
     }
     const int duration = integer(params, "durationMs", kDefaultDragDurationMs);
     const int steps = integer(params, "steps", kDefaultDragSteps);
@@ -1634,15 +1760,22 @@ Json LinuxBackend::drag(const Json& params, Context& context) {
     guard.dismiss();
     input_release_pending_.store(false, std::memory_order_release);
     mark_input_complete();
-    return action_result();
+    Json result = action_result();
+    if (transform) {
+        result["coordinateSpace"] = transform->space;
+        result["windowFrom"] = point_json(from);
+        result["windowTo"] = point_json(to);
+    }
+    return result;
 }
 
 Json LinuxBackend::scroll(const Json& params, Context& context) {
     ensure_active(params);
     WindowInfo window = current_window(select_window(params));
     validate_observation(params, window);
+    const auto transform = coordinate_transform(params, window);
+    const auto point = point_from_json(params, "x", "y", window, transform);
     activate(window);
-    const auto point = point_from_json(params, "x", "y", window);
     move_pointer(window.x + point.first, window.y + point.second, context, &window);
     const std::string direction = lower(string_value(params, "direction"));
     if (direction != "up" && direction != "down" && direction != "left" && direction != "right") {
@@ -1650,7 +1783,10 @@ Json LinuxBackend::scroll(const Json& params, Context& context) {
     }
     scroll_event(std::max(1, integer(params, "amount", 3)), direction, context);
     mark_input_complete();
-    return action_result();
+    Json result = action_result();
+    result["coordinateSpace"] = transform.space;
+    result["windowPoint"] = point_json(point);
+    return result;
 }
 
 Json LinuxBackend::type_text(const Json& params, Context& context) {
@@ -1861,6 +1997,7 @@ Json LinuxBackend::execute(const std::string& method, const Json& params, Contex
     if (method == "list-windows") return list_windows(params);
     if (method == "list-apps") return list_apps(params);
     if (method == "get-app-state") return get_app_state(params, context);
+    if (method == "get-full-screenshot") return full_screenshot(params);
     if (method == "click") return click(params, context);
     if (method == "drag") return drag(params, context);
     if (method == "scroll") return scroll(params, context);
@@ -2274,7 +2411,7 @@ void LinuxBackend::refresh_coordinate_state() {
     if (current == coordinate_signature_) return;
     coordinate_signature_ = current;
     ++coordinate_revision_;
-    observations_.clear();
+    clear_observations();
 }
 
 void LinuxBackend::mark_input_complete() noexcept {
@@ -2425,20 +2562,47 @@ RgbaImage LinuxBackend::capture_window(const WindowInfo& window, Context& contex
     throw Error("capture_unavailable", "No supported Linux capture backend is available");
 }
 
-std::string LinuxBackend::save_image(const RgbaImage& image, const Json& params, std::string* mime,
-                                     int* output_width, int* output_height, double* scale) {
-    std::string format = lower(string_value(params, "format", "jpeg"));
-    const int max_edge = integer(params, "maxEdge", 1600);
-    const int quality = integer(params, "quality", 85);
-    int width = image.width;
-    int height = image.height;
-    if (max_edge > 0 && std::max(width, height) > max_edge) {
-        const double factor = static_cast<double>(max_edge) / std::max(width, height);
-        width = std::max(1, static_cast<int>(std::lround(width * factor)));
-        height = std::max(1, static_cast<int>(std::lround(height * factor)));
+namespace {
+// Exact 2x2 box average. An odd trailing row or column is dropped, so output
+// pixel (x, y) covers source pixels [2x, 2x + 1] x [2y, 2y + 1].
+RgbaImage downscale_half(const RgbaImage& input) {
+    RgbaImage output;
+    output.width = std::max(1, input.width / 2);
+    output.height = std::max(1, input.height / 2);
+    output.rgba.assign(static_cast<std::size_t>(output.width) * output.height * 4, 0);
+    for (int y = 0; y < output.height; ++y) {
+        const int y0 = std::min(input.height - 1, y * 2);
+        const int y1 = std::min(input.height - 1, y * 2 + 1);
+        for (int x = 0; x < output.width; ++x) {
+            const int x0 = std::min(input.width - 1, x * 2);
+            const int x1 = std::min(input.width - 1, x * 2 + 1);
+            const std::size_t target = (static_cast<std::size_t>(y) * output.width + x) * 4;
+            for (int channel = 0; channel < 4; ++channel) {
+                const auto at = [&](int sx, int sy) {
+                    return static_cast<unsigned>(
+                        input.rgba[(static_cast<std::size_t>(sy) * input.width + sx) * 4 + channel]);
+                };
+                output.rgba[target + channel] = static_cast<std::uint8_t>(
+                    (at(x0, y0) + at(x1, y0) + at(x0, y1) + at(x1, y1) + 2) / 4);
+            }
+        }
     }
-    const std::string id = uuid();
-    std::string path = image_directory_ + "/" + id + "." + (format == "png" ? "png" : "jpg");
+    return output;
+}
+
+RgbaImage resize_image(const RgbaImage& input, int width, int height) {
+    RgbaImage output;
+    output.rgba = resize_rgba(input, width, height);
+    output.width = width;
+    output.height = height;
+    return output;
+}
+} // namespace
+
+void LinuxBackend::save_image(const RgbaImage& image, const std::string& path, const std::string& format,
+                              int quality, std::string* mime) {
+    const int width = image.width;
+    const int height = image.height;
     if (format == "png") {
 #if DCU_HAVE_PNG
         write_png_file(path, image, width, height);
@@ -2457,10 +2621,6 @@ std::string LinuxBackend::save_image(const RgbaImage& image, const Json& params,
         throw Error("invalid_argument", "format must be jpeg or png");
     }
     ::chmod(path.c_str(), 0600);
-    *output_width = width;
-    *output_height = height;
-    *scale = static_cast<double>(width) / std::max(1, image.width);
-    return path;
 }
 
 #if DCU_HAVE_ATSPI
@@ -2664,7 +2824,16 @@ Json LinuxBackend::make_observation(const Json& params, Context& context) {
     const bool include_screenshot = params.value("includeScreenshot", true);
     const bool include_text = params.value("includeText", false);
     const auto started = Clock::now();
-    Json observation{{"observationId", uuid()},
+    const std::string observation_id = uuid();
+    ObservationRecord record;
+    record.id = observation_id;
+    // Images written before a failure below are not cached, so delete them here.
+    struct PendingFiles {
+        const ObservationRecord& record;
+        bool armed = true;
+        ~PendingFiles() { if (armed) remove_observation_files(record); }
+    } pending{record};
+    Json observation{{"observationId", observation_id},
                      {"capturedAt", utc_now()},
                      {"window", window_json(window)},
                      {"coordinateSpace", "window"},
@@ -2678,16 +2847,59 @@ Json LinuxBackend::make_observation(const Json& params, Context& context) {
         if (image.captured_at.time_since_epoch().count() != 0) {
             observation["capturedAt"] = utc_now(image.captured_at);
         }
+        const std::string format = lower(string_value(params, "format", "jpeg"));
+        const int quality = integer(params, "quality", 85);
+        // maxEdge is an optional cap on the reduced image only; 0 means no cap.
+        const int max_edge = integer(params, "maxEdge", 0);
+        const std::string extension = format == "png" ? ".png" : ".jpg";
         std::string mime;
-        int output_width = 0;
-        int output_height = 0;
-        double scale = 1.0;
-        const std::string path = save_image(image, params, &mime, &output_width, &output_height, &scale);
-        observation["screenshot"] = {{"path", path},
+        // Capture already resamples to the logical window size, so image-to-window
+        // ratios are normally 1; they are kept so the transform stays exact.
+        const double window_scale_x = static_cast<double>(image.width) / std::max(1, window.width);
+        const double window_scale_y = static_cast<double>(image.height) / std::max(1, window.height);
+        record.full = {image_directory_ + "/" + observation_id + "-full" + extension,
+                       image.width, image.height, window_scale_x, window_scale_y};
+        save_image(image, record.full.path, format, quality, &mime);
+
+        // Reduced image: 0.5x above 1280x720 (2x2 box average), otherwise 1x,
+        // then optionally capped by maxEdge.
+        RgbaImage reduced_storage;
+        const RgbaImage* reduced = &image;
+        double factor_x = 1.0;
+        double factor_y = 1.0;
+        if (image.width > 1280 || image.height > 720) {
+            reduced_storage = downscale_half(image);
+            reduced = &reduced_storage;
+            factor_x = factor_y = 0.5;
+        }
+        const int longest = std::max(reduced->width, reduced->height);
+        if (max_edge > 0 && longest > max_edge) {
+            const double cap = static_cast<double>(max_edge) / longest;
+            const int width = std::max(1, static_cast<int>(std::lround(reduced->width * cap)));
+            const int height = std::max(1, static_cast<int>(std::lround(reduced->height * cap)));
+            factor_x *= static_cast<double>(width) / reduced->width;
+            factor_y *= static_cast<double>(height) / reduced->height;
+            reduced_storage = resize_image(*reduced, width, height);
+            reduced = &reduced_storage;
+        }
+        record.reduced = {image_directory_ + "/" + observation_id + extension,
+                          reduced->width, reduced->height,
+                          factor_x * window_scale_x, factor_y * window_scale_y};
+        save_image(*reduced, record.reduced.path, format, quality, &mime);
+        record.has_screenshot = true;
+        record.mime = mime;
+        observation["screenshot"] = {{"path", record.reduced.path},
                                       {"mimeType", mime},
-                                      {"width", output_width},
-                                      {"height", output_height},
-                                      {"scale", scale},
+                                      {"width", record.reduced.width},
+                                      {"height", record.reduced.height},
+                                      {"variant", "reduced"},
+                                      {"actionTransform", action_transform(record.reduced)},
+                                      {"fullAvailable", true},
+                                      {"fullWidth", record.full.width},
+                                      {"fullHeight", record.full.height},
+                                      {"scale", record.reduced.scale_x},
+                                      {"scaleX", record.reduced.scale_x},
+                                      {"scaleY", record.reduced.scale_y},
                                       {"sourceWidth", image.width},
                                       {"sourceHeight", image.height},
                                       {"frameSequence", image.frame_sequence},
@@ -2736,13 +2948,11 @@ Json LinuxBackend::make_observation(const Json& params, Context& context) {
         Clock::now() - started).count();
     refresh_coordinate_state();
     observation["coordinateRevision"] = coordinate_revision_;
-    ObservationRecord record;
-    record.id = observation.at("observationId").get<std::string>();
     record.window = window;
     record.created = Clock::now();
     record.coordinate_revision = coordinate_revision_;
-    observations_[record.id] = std::move(record);
-    while (observations_.size() > 32) observations_.erase(observations_.begin());
+    pending.armed = false;
+    store_observation(std::move(record));
     return observation;
 }
 

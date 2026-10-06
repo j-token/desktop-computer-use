@@ -45,6 +45,63 @@ test("MCP emits an image for an observed action screenshot", async () => {
   }
 });
 
+test("MCP embeds only the reduced image of an observation and the full image of get-full-screenshot", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "dcu-mcp-"));
+  const reduced = join(directory, "obs.jpg");
+  const full = join(directory, "obs-full.jpg");
+  await writeFile(reduced, Buffer.from([0xff, 0xd8, 0xff]));
+  await writeFile(full, Buffer.from([0x89, 0x50, 0x4e]));
+  try {
+    const observed = await resultContent({
+      observationId: "obs",
+      screenshot: { path: reduced, mimeType: "image/jpeg", variant: "reduced", fullAvailable: true, fullWidth: 2560, fullHeight: 1440 }
+    });
+    const observedImages = observed.filter(item => item.type === "image");
+    assert.equal(observedImages.length, 1);
+    assert.equal(observedImages[0].data, "/9j/");
+    const fullContent = await resultContent({
+      observationId: "obs",
+      screenshot: { path: full, mimeType: "image/jpeg", variant: "full" },
+      notice: "To click a point read from this image, pass --coords full."
+    });
+    const fullImages = fullContent.filter(item => item.type === "image");
+    assert.equal(fullImages.length, 1);
+    assert.equal(fullImages[0].data, "iVBO");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+async function runCliProcess(args) {
+  const { spawn } = await import("node:child_process");
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, ["dist/cli.js", ...args], { cwd: process.cwd() });
+    let text = "";
+    child.stdout.on("data", chunk => { text += chunk; });
+    child.once("error", reject);
+    child.once("exit", code => resolve({ code, response: JSON.parse(text.trim().split("\n").at(-1)) }));
+  });
+}
+
+// Every case fails validation before a native request, so no daemon starts.
+test("CLI validates --coords before sending input", async () => {
+  const { code, response } = await runCliProcess(["click", "--session-id", "s", "--app", "x", "--x", "1", "--y", "1", "--coords", "window"]);
+  assert.equal(code, 1);
+  assert.equal(response.error.code, "invalid_argument");
+  assert.match(response.error.message, /coords must be reduced, full/);
+  assert.equal(parseArgs(["click", "--coords", "full"]).options.coords, "full");
+  const negative = await runCliProcess(["click", "--session-id", "s", "--app", "x", "--x", "-1", "--y", "1"]);
+  assert.equal(negative.response.error.code, "invalid_argument");
+});
+
+test("CLI get-full-screenshot requires a target window and an observation ID", async () => {
+  const missingId = await runCliProcess(["get-full-screenshot", "--session-id", "s", "--app", "x"]);
+  assert.equal(missingId.code, 1);
+  assert.match(missingId.response.error.message, /requires --observation-id/);
+  const missingWindow = await runCliProcess(["get-full-screenshot", "--session-id", "s", "--observation-id", "o"]);
+  assert.match(missingWindow.response.error.message, /requires --app or --window-id/);
+});
+
 test("session state is persisted in the supplied runtime directory and can be cleared", async () => {
   const directory = await mkdtemp(join(tmpdir(), "dcu-session-"));
   const paths = {

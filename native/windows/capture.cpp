@@ -24,6 +24,7 @@
 #include <cstdint>
 #include <mutex>
 #include <cstring>
+#include <filesystem>
 #include <vector>
 
 using Microsoft::WRL::ComPtr;
@@ -353,9 +354,11 @@ struct WindowCapture::Impl {
         return copied;
     }
 
+    // Encodes the BGRA frame at outputWidth x outputHeight; a size different
+    // from the frame is resampled with WIC Fant.
     bool encode(const std::vector<std::uint8_t>& pixels, int width, int height,
                 const std::string& path, const std::string& format, int quality,
-                int maxEdge, double& scale) {
+                int outputWidth, int outputHeight) {
         ensure_wic();
         ComPtr<IWICBitmap> source;
         const UINT bytes = static_cast<UINT>(pixels.size());
@@ -366,14 +369,7 @@ struct WindowCapture::Impl {
 
         IWICBitmapSource* image = source.Get();
         ComPtr<IWICBitmapScaler> scaler;
-        int outputWidth = width;
-        int outputHeight = height;
-        scale = 1.0;
-        if (maxEdge > 0 && std::max(width, height) > maxEdge) {
-            scale = static_cast<double>(maxEdge) /
-                    static_cast<double>(std::max(width, height));
-            outputWidth = std::max(1, static_cast<int>(std::lround(width * scale)));
-            outputHeight = std::max(1, static_cast<int>(std::lround(height * scale)));
+        if (outputWidth != width || outputHeight != height) {
             winrt::check_hresult(wic->CreateBitmapScaler(&scaler));
             winrt::check_hresult(scaler->Initialize(source.Get(), outputWidth, outputHeight,
                                                     WICBitmapInterpolationModeFant));
@@ -429,7 +425,8 @@ void WindowCapture::mark_input_complete() noexcept {
 bool WindowCapture::wgc_available() const noexcept { return impl_ && impl_->wgcReady; }
 
 CaptureResult WindowCapture::capture(void* rawHwnd, const RECT& windowRect,
-                                     const std::string& path,
+                                     const std::string& fullPath,
+                                     const std::string& reducedPath,
                                      const std::string& format, int quality,
                                      int maxEdge, Context& context) {
     if (!impl_ || !rawHwnd) throw Error("invalid_window", "A window handle is required");
@@ -506,20 +503,46 @@ CaptureResult WindowCapture::capture(void* rawHwnd, const RECT& windowRect,
     }
     if (freshFrame) capturedAtUnixMs = impl_->lastCapturedAtUnixMs;
     context.check();
-    double scale = 1.0;
-    if (!impl_->encode(pixels, sourceWidth, sourceHeight, path, format, quality, maxEdge,
-                       scale)) {
+    // The reduced image halves frames larger than 1280x720 and keeps smaller
+    // ones at 1x; a positive maxEdge further caps only the reduced image.
+    double factor = sourceWidth > 1280 || sourceHeight > 720 ? 0.5 : 1.0;
+    const int longestEdge = std::max(sourceWidth, sourceHeight);
+    if (maxEdge > 0 && longestEdge * factor > maxEdge) {
+        factor = static_cast<double>(maxEdge) / static_cast<double>(longestEdge);
+    }
+    const int reducedWidth = std::max(1, static_cast<int>(std::lround(sourceWidth * factor)));
+    const int reducedHeight = std::max(1, static_cast<int>(std::lround(sourceHeight * factor)));
+    if (!impl_->encode(pixels, sourceWidth, sourceHeight, fullPath, format, quality,
+                       sourceWidth, sourceHeight)) {
         throw Error("encode_failed", "WIC could not encode the screenshot");
     }
+    try {
+        context.check();
+        if (!impl_->encode(pixels, sourceWidth, sourceHeight, reducedPath, format, quality,
+                           reducedWidth, reducedHeight)) {
+            throw Error("encode_failed", "WIC could not encode the screenshot");
+        }
+    } catch (...) {
+        std::error_code ignored;
+        std::filesystem::remove(std::filesystem::path(wide(fullPath)), ignored);
+        throw;
+    }
     CaptureResult result;
-    result.path = path;
-    result.mimeType = format == "png" ? "image/png" : "image/jpeg";
-    result.width = std::max(1, static_cast<int>(std::lround(sourceWidth * scale)));
-    result.height = std::max(1, static_cast<int>(std::lround(sourceHeight * scale)));
     // WGC can report a frame size that differs from the Win32 outer rect by
-    // invisible resize borders. Include that ratio in the action transform.
-    result.scaleX = scale * static_cast<double>(sourceWidth) / width;
-    result.scaleY = scale * static_cast<double>(sourceHeight) / height;
+    // invisible resize borders. Each image's transform is its pixel size over
+    // the window rect, so that ratio is folded in.
+    result.full = {fullPath, sourceWidth, sourceHeight,
+                   static_cast<double>(sourceWidth) / width,
+                   static_cast<double>(sourceHeight) / height};
+    result.reduced = {reducedPath, reducedWidth, reducedHeight,
+                      static_cast<double>(reducedWidth) / width,
+                      static_cast<double>(reducedHeight) / height};
+    result.path = reducedPath;
+    result.mimeType = format == "png" ? "image/png" : "image/jpeg";
+    result.width = reducedWidth;
+    result.height = reducedHeight;
+    result.scaleX = result.reduced.scaleX;
+    result.scaleY = result.reduced.scaleY;
     result.scale = result.scaleX;
     result.backend = usedWgc ? "windows-graphics-capture" : "gdi-visible-desktop-fallback";
     result.frameTimestamp100ns = frameTimestamp100ns;

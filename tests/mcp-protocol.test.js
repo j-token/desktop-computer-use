@@ -33,6 +33,7 @@ test("MCP stdio server advertises the desktop tools", async () => {
     const names = response.result.tools.map(tool => tool.name);
     assert.ok(names.includes("dcu_drag"));
     assert.ok(names.includes("dcu_get_app_state"));
+    assert.ok(names.includes("dcu_get_full_screenshot"));
   } finally {
     clearTimeout(timer);
     child.kill();

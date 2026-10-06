@@ -24,6 +24,7 @@ const common = {
   fromY: optionalNumber,
   toX: optionalNumber,
   toY: optionalNumber,
+  coords: z.enum(["reduced", "full"]).optional(),
   button: z.enum(["left", "right", "middle"]).optional(),
   durationMs: optionalNumber,
   steps: optionalInteger,
@@ -105,13 +106,29 @@ const tools: ToolDefinition[] = [
   {
     name: "dcu_get_app_state",
     method: "get-app-state",
-    description: "Capture the latest target window state; screenshot is included by default.",
+    description:
+      "Capture the latest target window state; a reduced screenshot (0.5x above 1280x720) is included by default.",
     schema: { ...common }
+  },
+  {
+    name: "dcu_get_full_screenshot",
+    method: "get-full-screenshot",
+    description:
+      "Return the full-resolution original of an observation's screenshot without recapturing. " +
+      "Pass coords \"full\" when clicking a point read from this image.",
+    schema: {
+      sessionId: optionalString,
+      app: optionalString,
+      windowId: optionalString,
+      observationId: z.string()
+    }
   },
   {
     name: "dcu_click",
     method: "click",
-    description: "Click a semantic element or a window-local coordinate.",
+    description:
+      "Click a semantic element or a point read from the latest reduced screenshot " +
+      "(coords \"full\" for a get-full-screenshot image).",
     schema: { ...common }
   },
   {
@@ -123,7 +140,7 @@ const tools: ToolDefinition[] = [
   {
     name: "dcu_scroll",
     method: "scroll",
-    description: "Scroll at a semantic element or window-local coordinate.",
+    description: "Scroll at a point read from the latest reduced screenshot (coords \"full\" for a full image).",
     schema: { ...common }
   },
   {

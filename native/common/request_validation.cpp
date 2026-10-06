@@ -9,7 +9,7 @@ const std::set<std::string> inputActions{
 };
 const std::set<std::string> supportedMethods{
     "doctor", "capabilities", "session.start", "session.status", "session.stop", "daemon.shutdown",
-    "list-apps", "list-windows", "get-app-state", "click", "drag", "scroll", "type-text",
+    "list-apps", "list-windows", "get-app-state", "get-full-screenshot", "click", "drag", "scroll", "type-text",
     "press-key", "hotkey", "set-value", "paste-text"
 };
 void validate_number(const Json& params, const char* key, double minimum, double maximum,
@@ -47,12 +47,13 @@ void validate_params(const std::string& method, const Json& params) {
     validate_choice(params, "format", {"jpeg", "png"});
     validate_choice(params, "observe", {"none", "screenshot", "text", "both"});
     validate_choice(params, "direction", {"up", "down", "left", "right"});
+    validate_choice(params, "coords", {"reduced", "full"});
     const bool usesElementIndex = params.contains("elementIndex") ||
         params.contains("fromElementIndex") || params.contains("toElementIndex");
     if (usesElementIndex && !params.contains("observationId")) {
         throw Error("invalid_argument", "Element indexes require observationId");
     }
-    if (inputActions.contains(method) || method == "get-app-state") {
+    if (inputActions.contains(method) || method == "get-app-state" || method == "get-full-screenshot") {
         if (!params.contains("windowId") && !params.contains("app")) throw Error("invalid_argument", "Specify app or windowId");
     }
     if (method == "drag") {
@@ -67,6 +68,8 @@ void validate_params(const std::string& method, const Json& params) {
             throw Error("invalid_argument", "Drag requires both endpoints");
         }
     }
+    if (method == "get-full-screenshot" && !params.contains("observationId"))
+        throw Error("invalid_argument", "get-full-screenshot requires observationId");
     if (method == "click" && !params.contains("elementIndex") && !(params.contains("x") && params.contains("y")))
         throw Error("invalid_argument", "Click requires an element or x/y");
     if ((method == "type-text" || method == "paste-text") && !params.contains("text")) throw Error("invalid_argument", "text is required");

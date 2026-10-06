@@ -28,6 +28,7 @@ const OPTION_DEFS: Record<string, { key: string; type: "string" | "number" | "bo
   "from-y": { key: "fromY", type: "number" },
   "to-x": { key: "toX", type: "number" },
   "to-y": { key: "toY", type: "number" },
+  "coords": { key: "coords", type: "string" },
   "button": { key: "button", type: "string" },
   "mouse-button": { key: "button", type: "string" },
   "duration-ms": { key: "durationMs", type: "number" },
@@ -178,6 +179,7 @@ function validateCommon(params: JsonObject, method: string): void {
   validateChoice(params, "direction", ["up", "down", "left", "right"]);
   validateChoice(params, "observe", ["none", "screenshot", "text", "both"]);
   validateChoice(params, "format", ["jpeg", "png"]);
+  validateChoice(params, "coords", ["reduced", "full"]);
 
   const hasValidQuality = params.quality === undefined || (
     Number.isInteger(params.quality) &&
@@ -273,11 +275,13 @@ function helpText(): string {
     "Usage: dcu <command> [options]",
     "",
     "Commands: setup, doctor, capabilities, session start|status|stop, daemon shutdown,",
-    "  list-apps, list-windows, get-app-state,",
+    "  list-apps, list-windows, get-app-state, get-full-screenshot,",
     "  click, drag, scroll, type-text, press-key, hotkey, set-value, paste-text, mcp serve",
     "",
     "Actions use a saved session from `session start`; pass --session-id to override it.",
-    "Coordinates are window-local logical coordinates. Observations are returned as JSON with screenshot paths.",
+    "Observations are returned as JSON with a reduced screenshot path (0.5x above 1280x720).",
+    "x/y coordinates are pixels of the window's latest reduced screenshot (or --observation-id).",
+    "`get-full-screenshot --observation-id ID` returns the original image; click from it with --coords full.",
     "Drag defaults: 240ms, 12 steps, 50ms hold before and after. Use --duration-ms/--steps to tune them.",
     "Active sessions show a top banner, high-contrast cursor ring, and blue inward-fading screen-edge border.",
     "Emergency stop: press Esc or run `dcu session stop`."
@@ -299,6 +303,9 @@ function validateMethodParams(method: string, params: JsonObject): void {
   }
   if (appRequired(method) && typeof params.app !== "string" && typeof params.windowId !== "string") {
     throw new DcuError("invalid_argument", `${method} requires --app or --window-id`);
+  }
+  if (method === "get-full-screenshot" && typeof params.observationId !== "string") {
+    throw new DcuError("invalid_argument", "get-full-screenshot requires --observation-id");
   }
   if (method === "drag") {
     const byElements = params.fromElementIndex !== undefined || params.toElementIndex !== undefined;

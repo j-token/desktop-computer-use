@@ -205,3 +205,5 @@ SKILL.md:26     if `screenshot.actionTransform` is present, use `actionX = (pixe
 ```
 
 `src/`와 `native/` 전체를 `actionTransform` 문자열로 검색했지만 일치하는 코드가 없었다. 문서가 약속하는 필드를 실제로 채워 보내는 코드는 없다는 뜻이다. 이 결과는 이 문서 작성 시점의 `src/`, `native/` 상태를 대상으로 한 것이며, 위 결함 1·2·3과 달리 이번 세션 안에서 변경을 다시 확인하지는 않았다.
+
+> **해결됨:** 2단계 스크린샷 변경으로 Windows와 Linux 관찰 결과의 `screenshot`(축소본)과 `get-full-screenshot` 결과(원본)가 모두 `actionTransform`을 채운다. 좌표 입력은 daemon이 이 변환으로 창 좌표를 계산하므로, 위에 인용한 수동 계산 지침은 SKILL.md와 protocol.md에서 삭제했다.

@@ -58,6 +58,17 @@ int main() {
         parameters["elementIndex"] = 3;
         require(!sendRequest("click", parameters)["ok"], "element requires observation");
         parameters.erase("elementIndex"); parameters.erase("observe");
+        const int actionsBefore = backend.actions;
+        parameters["coords"] = "window";
+        require(!sendRequest("click", parameters)["ok"] && backend.actions == actionsBefore, "unknown coords rejected before input");
+        parameters["coords"] = "full";
+        require(sendRequest("click", parameters)["ok"], "full coords accepted");
+        parameters.erase("coords");
+        backend.failObservation = false;
+        const int capturesBefore = backend.captures;
+        require(!sendRequest("get-full-screenshot", {{"sessionId", session}, {"app", "test"}})["ok"], "full screenshot requires observation");
+        require(sendRequest("get-full-screenshot", {{"sessionId", session}, {"app", "test"}, {"observationId", "o"}, {"observe", "screenshot"}})["ok"], "full screenshot served");
+        require(backend.captures == capturesBefore, "full screenshot never recaptures");
         parameters["x"] = -1;
         require(!sendRequest("click", parameters)["ok"], "invalid coordinate rejected before input");
         parameters["x"] = 1;
