@@ -122,14 +122,16 @@ const tools: ToolDefinition[] = [
   {
     name: "dcu_list_windows",
     method: "list-windows",
-    description: "List windows, optionally filtered by application.",
+    description:
+      "List windows, optionally filtered by application. Dialogs carry ownerWindowId and modal.",
     schema: { sessionId: optionalString, app: optionalString }
   },
   {
     name: "dcu_get_app_state",
     method: "get-app-state",
     description:
-      "Capture the latest target window state; a reduced screenshot (0.5x above 1280x720) is included by default.",
+      "Capture the latest target window state; a reduced screenshot (0.5x above 1280x720) is included by default. " +
+      "If the result reports modal, observe and act on modal.windowId instead.",
     schema: { ...common }
   },
   {

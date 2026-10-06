@@ -59,6 +59,17 @@ pressing a toggled key as `press-key` or a hotkey base fails the same way. `clic
 `modifiers` (`shift`, `ctrl`, `alt`, `win` joined by `+`) held for that one action; a toggled
 modifier is neither pressed again nor released by it.
 
+`list-windows` and `list-apps` include visible dialogs owned by another window (Windows owned
+windows, Linux transient windows). Such a window carries `ownerWindowId`, the nearest listed
+owner, and `modal`, which is `true` while it blocks input to that owner (Windows: the owner is
+disabled; Linux: a modal-dialog window type or `_NET_WM_STATE_MODAL`). Windows records also carry
+`isEnabled`. `app` selects the main (unowned) window before its dialogs; `windowId` accepts a
+dialog's ID for observation, screenshots, accessibility, and input. When the target is blocked,
+`get-app-state` adds `modal: {windowId, title, app}` for the dialog receiving input (the deepest
+one when dialogs are nested) and a `notice`, and input methods fail with `modal_active` before
+sending anything, naming the dialog's window ID in the message. On Windows the target's
+screenshot and accessibility tree exclude the dialog because they are captured per window.
+
 Actions return `delivered: true` only when the provider accepted the input sequence. Their
 verification state is `unverified` unless the follow-up observation asserts the intended state.
 Transport errors after request bytes were written are terminal for that mutation: inspect fresh

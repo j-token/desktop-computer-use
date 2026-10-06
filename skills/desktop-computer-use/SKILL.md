@@ -32,6 +32,11 @@ is not present.
 4. After every UI-changing action, inspect its returned observation when requested with
    `--observe screenshot|text|both`, or call `get-app-state` again before selecting another index.
 A delivered synthetic input is unverified unless a returned state proves the requested change.
+5. Dialogs (message boxes, save/open pickers, browser permission or file prompts) are separate
+   windows. When an observation reports `modal` or an action fails with `modal_active`, observe
+   and act on that dialog's `--window-id`; `list-windows` shows dialogs with `ownerWindowId`. On
+   Windows the main window's screenshot does not include the dialog. Check `list-windows` for a
+   dialog before handing work back to the user.
 
 On Linux, run `dcu setup` when installing the skill. It selects the legacy archive for GNOME
 42–44 or the modern archive for GNOME 45–50, installs it under the current user's GNOME extension

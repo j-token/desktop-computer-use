@@ -72,6 +72,18 @@ test("MCP embeds only the reduced image of an observation and the full image of 
   }
 });
 
+test("MCP keeps the modal hint of an observation in its text content", async () => {
+  const content = await resultContent({
+    observationId: "obs",
+    window: { id: "hwnd:1", isEnabled: false },
+    modal: { windowId: "hwnd:2", title: "Save As", app: "notepad.exe" },
+    notice: "This window is blocked by modal dialog hwnd:2"
+  });
+  const text = JSON.parse(content[0].text);
+  assert.deepEqual(text.modal, { windowId: "hwnd:2", title: "Save As", app: "notepad.exe" });
+  assert.match(text.notice, /hwnd:2/);
+});
+
 async function runCliProcess(args) {
   const { spawn } = await import("node:child_process");
   return new Promise((resolve, reject) => {

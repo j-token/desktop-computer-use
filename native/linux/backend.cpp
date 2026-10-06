@@ -1,4 +1,5 @@
 #include "dcu/backend.hpp"
+#include "dcu/window_relations.hpp"
 
 #include <algorithm>
 #include <array>
@@ -102,6 +103,10 @@ struct WindowInfo {
     int width = 0;
     int height = 0;
     bool active = false;
+    // Transient-for parent of a dialog, when that parent is listed.
+    std::string owner_id;
+    // A modal dialog that blocks input to owner_id.
+    bool modal = false;
 };
 
 struct RgbaImage {
@@ -251,6 +256,8 @@ private:
     std::vector<WindowInfo> enumerate_windows() const;
     std::vector<WindowInfo> extension_windows() const;
     WindowInfo select_window(const Json& params) const;
+    std::optional<WindowInfo> blocking_modal(const WindowInfo& target) const;
+    void reject_blocked_target(const Json& params) const;
     WindowInfo current_window(const WindowInfo& expected) const;
     void validate_observation(const Json& params, const WindowInfo& window);
     void store_observation(ObservationRecord record);
@@ -382,6 +389,29 @@ long x11_property_cardinal(Display* display, Window window, Atom atom) {
     return value;
 }
 
+bool x11_has_state(Display* display, Window window, const char* state_name) {
+    if (!display) return false;
+    const Atom state_atom = XInternAtom(display, "_NET_WM_STATE", False);
+    const Atom wanted = XInternAtom(display, state_name, False);
+    if (state_atom == None || wanted == None) return false;
+    Atom actual_type = None;
+    int actual_format = 0;
+    unsigned long item_count = 0;
+    unsigned long bytes_after = 0;
+    unsigned char* data = nullptr;
+    const int status = XGetWindowProperty(display, window, state_atom, 0, 64, False, XA_ATOM,
+                                          &actual_type, &actual_format, &item_count,
+                                          &bytes_after, &data);
+    if (status != Success || !data) return false;
+    bool found = false;
+    if (actual_format == 32) {
+        const auto* atoms = reinterpret_cast<Atom*>(data);
+        for (unsigned long index = 0; index < item_count && !found; ++index) found = atoms[index] == wanted;
+    }
+    XFree(data);
+    return found;
+}
+
 bool x11_is_viewable(Display* display, Window window) {
     XWindowAttributes attrs{};
     return display && XGetWindowAttributes(display, window, &attrs) != 0 &&
@@ -411,6 +441,12 @@ WindowInfo x11_window_info(Display* display, Window root, Window window, Window 
     }
     if (result.app.empty()) result.app = "unknown";
     result.active = window == active;
+    Window transient_for = 0;
+    if (XGetTransientForHint(display, window, &transient_for) && transient_for &&
+        transient_for != root && transient_for != window) {
+        result.owner_id = "x11:" + std::to_string(static_cast<unsigned long>(transient_for));
+        result.modal = x11_has_state(display, window, "_NET_WM_STATE_MODAL");
+    }
 
     XWindowAttributes attrs{};
     if (XGetWindowAttributes(display, window, &attrs)) {
@@ -625,6 +661,21 @@ Json LinuxBackend::capabilities() const {
     return result;
 }
 
+// A transient-for parent can be a group leader, an unmapped window, or a
+// filtered shell window; only a listed owner is a targetable id.
+void drop_unlisted_owners(std::vector<WindowInfo>& windows) {
+    for (auto& window : windows) {
+        if (window.owner_id.empty()) continue;
+        const bool listed = std::any_of(windows.begin(), windows.end(), [&](const WindowInfo& other) {
+            return other.id == window.owner_id;
+        });
+        if (!listed) {
+            window.owner_id.clear();
+            window.modal = false;
+        }
+    }
+}
+
 std::vector<WindowInfo> LinuxBackend::extension_windows() const {
 #if DCU_HAVE_GIO
     if (!shell_bus_ || !shell_bus_->available()) return {};
@@ -643,8 +694,11 @@ std::vector<WindowInfo> LinuxBackend::extension_windows() const {
             window.width = item.value("width", 0);
             window.height = item.value("height", 0);
             window.active = item.value("active", false);
+            window.owner_id = item.value("ownerWindowId", "");
+            window.modal = !window.owner_id.empty() && item.value("modal", false);
             if (!window.id.empty() && window.width > 0 && window.height > 0) windows.push_back(std::move(window));
         }
+        drop_unlisted_owners(windows);
         return windows;
     } catch (...) {
         return {};
@@ -688,6 +742,7 @@ std::vector<WindowInfo> LinuxBackend::enumerate_windows() const {
     for (Window window : ids) {
         if (x11_is_viewable(display_, window)) result.push_back(x11_window_info(display_, root_window_, window, active));
     }
+    drop_unlisted_owners(result);
     return result;
 #else
     return {};
@@ -723,15 +778,39 @@ WindowInfo LinuxBackend::select_window(const Json& params) const {
     }
     if (!requested_app.empty()) {
         const std::string needle = lower(requested_app);
-        for (const auto& window : windows) {
-            if (lower(window.app) == needle || lower(window.title) == needle ||
-                (window.pid > 0 && needle == "pid:" + std::to_string(window.pid))) return window;
+        // An app selects its main window before its dialogs; an observation
+        // of the main window reports a blocking modal.
+        for (const bool owned : {false, true}) {
+            for (const auto& window : windows) {
+                if (window.owner_id.empty() == owned) continue;
+                if (lower(window.app) == needle || lower(window.title) == needle ||
+                    (window.pid > 0 && needle == "pid:" + std::to_string(window.pid))) return window;
+            }
         }
         throw Error("window_not_found", "app does not identify a visible window");
     }
     for (const auto& window : windows) if (window.active) return window;
     if (!windows.empty()) return windows.front();
     throw Error("window_not_found", "No visible desktop windows were found");
+}
+
+std::optional<WindowInfo> LinuxBackend::blocking_modal(const WindowInfo& target) const {
+    const auto windows = enumerate_windows();
+    std::vector<WindowRelation> relations;
+    relations.reserve(windows.size());
+    for (const auto& window : windows) relations.push_back({window.id, window.owner_id, window.modal});
+    const auto index = find_blocking_modal(relations, target.id);
+    if (!index) return std::nullopt;
+    return windows[*index];
+}
+
+void LinuxBackend::reject_blocked_target(const Json& params) const {
+    const WindowInfo target = select_window(params);
+    if (const auto modal = blocking_modal(target)) {
+        throw Error("modal_active",
+                    "Window " + target.id + " is blocked by modal dialog " + modal->id + " \"" +
+                        modal->title + "\"; observe and act on --window-id " + modal->id + " instead");
+    }
 }
 
 WindowInfo LinuxBackend::current_window(const WindowInfo& expected) const {
@@ -2132,6 +2211,13 @@ Json LinuxBackend::execute(const std::string& method, const Json& params, Contex
         if (method == "list-apps") return list_apps(params);
         if (method == "get-app-state") return get_app_state(params, context);
         if (method == "get-full-screenshot") return full_screenshot(params);
+        if (method == "click" || method == "drag" || method == "scroll" || method == "type-text" ||
+            method == "press-key" || method == "hotkey" || method == "set-value" ||
+            method == "paste-text") {
+            // A modal parent ignores input, so it would only look delivered.
+            ensure_active(params);
+            reject_blocked_target(params);
+        }
         if (method == "click") return click(params, context);
         if (method == "drag") return drag(params, context);
         if (method == "scroll") return scroll(params, context);
@@ -2980,6 +3066,13 @@ Json LinuxBackend::make_observation(const Json& params, Context& context) {
                      {"coordinateRevision", coordinate_revision_},
                      {"timings", Json::object()},
                      {"overlayRegions", Json::array()}};
+    if (const auto modal = blocking_modal(window)) {
+        observation["modal"] = {{"windowId", modal->id}, {"title", modal->title}, {"app", modal->app}};
+        observation["notice"] = "This window is blocked by modal dialog " + modal->id + " \"" +
+                                modal->title + "\". Its controls are not in this window's "
+                                "accessibility tree; observe and act on --window-id " +
+                                modal->id + " instead.";
+    }
     if (include_screenshot) {
         const auto capture_started = Clock::now();
         RgbaImage image = capture_window(window, context);
@@ -3240,7 +3333,7 @@ Json action_result() {
 }
 
 Json window_json(const WindowInfo& window) {
-    return Json{{"id", window.id},
+    Json result{{"id", window.id},
                 {"app", window.app},
                 {"title", window.title},
                 {"pid", window.pid},
@@ -3249,6 +3342,11 @@ Json window_json(const WindowInfo& window) {
                 {"width", window.width},
                 {"height", window.height},
                 {"active", window.active}};
+    if (!window.owner_id.empty()) {
+        result["ownerWindowId"] = window.owner_id;
+        result["modal"] = window.modal;
+    }
+    return result;
 }
 
 Json valid_overlay_regions(const Json& candidate) {

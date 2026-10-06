@@ -664,7 +664,7 @@ var ShellService = class ShellService {
             } catch (error) {
                 // Keep empty titles: they are useful for borderless/windowless games.
             }
-            windows.push({
+            var record = {
                 id: id,
                 title: title,
                 app: this._windowApp(window),
@@ -673,7 +673,18 @@ var ShellService = class ShellService {
                 y: Number(rect.y),
                 width: Number(rect.width),
                 height: Number(rect.height)
-            });
+            };
+            try {
+                // Dialogs are transient for their parent; a modal one blocks it.
+                var parent = window.get_transient_for();
+                if (parent) {
+                    record.ownerWindowId = this._windowId(parent);
+                    record.modal = type === Meta.WindowType.MODAL_DIALOG;
+                }
+            } catch (error) {
+                // Ownership is advisory; keep the window without it.
+            }
+            windows.push(record);
         }
         return windows;
     }

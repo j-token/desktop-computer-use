@@ -2,6 +2,7 @@
 #include "indicator.hpp"
 #include "uia.hpp"
 #include "watchdog.hpp"
+#include "dcu/window_relations.hpp"
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -153,13 +154,44 @@ struct WindowInfo {
     std::string title;
     RECT rect{};
     bool minimized = false;
+    bool enabled = true;
+    // Nearest visible owner. Dialogs (MessageBox, common file dialogs, app
+    // dialogs) are owned top-level windows; a hidden owner such as a
+    // framework parking window is skipped so the id stays targetable.
+    HWND owner = nullptr;
+    // The owner is disabled while this window is shown: a modal dialog.
+    bool modal = false;
 };
 
+// Owned windows also include tooltips, IME and console helper windows that a
+// user never interacts with; only activatable, uncloaked ones are listed.
+bool listed_owned_window(HWND hwnd) {
+    if (GetWindowLongPtrW(hwnd, GWL_EXSTYLE) & WS_EX_NOACTIVATE) return false;
+    DWORD cloaked = 0;
+    if (SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &cloaked, sizeof(cloaked))) &&
+        cloaked) {
+        return false;
+    }
+    wchar_t className[64]{};
+    const int length = GetClassNameW(hwnd, className, static_cast<int>(std::size(className)));
+    return !(length > 0 && std::wstring(className, static_cast<std::size_t>(length)) ==
+                               L"tooltips_class32");
+}
+
+HWND visible_owner(HWND hwnd) {
+    HWND owner = GetWindow(hwnd, GW_OWNER);
+    for (int depth = 0; owner && depth < 16; ++depth) {
+        if (IsWindowVisible(owner)) return owner;
+        owner = GetWindow(owner, GW_OWNER);
+    }
+    return nullptr;
+}
+
 std::optional<WindowInfo> inspect_window(HWND hwnd) {
-    if (!IsWindow(hwnd) || !IsWindowVisible(hwnd) || GetWindow(hwnd, GW_OWNER) ||
-        is_session_indicator_window(hwnd)) {
+    if (!IsWindow(hwnd) || !IsWindowVisible(hwnd) || is_session_indicator_window(hwnd)) {
         return std::nullopt;
     }
+    if (GetWindow(hwnd, GW_OWNER) && !listed_owned_window(hwnd)) return std::nullopt;
     DWORD pid = 0;
     GetWindowThreadProcessId(hwnd, &pid);
     if (!pid) return std::nullopt;
@@ -193,6 +225,9 @@ std::optional<WindowInfo> inspect_window(HWND hwnd) {
     info.title = utf8(title);
     info.rect = rect;
     info.minimized = IsIconic(hwnd) != FALSE;
+    info.enabled = IsWindowEnabled(hwnd) != FALSE;
+    info.owner = visible_owner(hwnd);
+    info.modal = info.owner && !IsWindowEnabled(info.owner);
     return info;
 }
 
@@ -235,7 +270,7 @@ bool foreground_matches(HWND hwnd) {
 }
 
 Json window_json(const WindowInfo& info) {
-    return Json{{"id", window_id(info.hwnd)},
+    Json result{{"id", window_id(info.hwnd)},
                 {"app", info.app},
                 {"pid", info.pid},
                 {"title", info.title},
@@ -245,7 +280,49 @@ Json window_json(const WindowInfo& info) {
                 {"height", std::max<LONG>(0, info.rect.bottom - info.rect.top)},
                 {"isMinimized", info.minimized},
                 {"isForeground", foreground_matches(info.hwnd)},
-                {"isOffscreen", false}};
+                {"isOffscreen", false},
+                {"isEnabled", info.enabled}};
+    if (info.owner) {
+        result["ownerWindowId"] = window_id(info.owner);
+        result["modal"] = info.modal;
+    }
+    return result;
+}
+
+// The dialog that receives input while `target` is disabled by a modal, or
+// nullopt.  Windows disables only the owner, so an enabled window cannot be
+// blocked and needs no enumeration.
+std::optional<WindowInfo> blocking_modal(const WindowInfo& target) {
+    if (IsWindowEnabled(target.hwnd)) return std::nullopt;
+    auto windows = enumerate_windows();
+    // An owner may also have enabled palettes; the dialog the user last
+    // activated is the modal one, so it is considered first.
+    const HWND lastActive = GetLastActivePopup(target.hwnd);
+    std::stable_partition(windows.begin(), windows.end(),
+                          [&](const WindowInfo& info) { return info.hwnd == lastActive; });
+    std::vector<WindowRelation> relations;
+    relations.reserve(windows.size());
+    for (const auto& info : windows) {
+        relations.push_back({window_id(info.hwnd), info.owner ? window_id(info.owner) : "",
+                             info.modal});
+    }
+    const auto index = find_blocking_modal(relations, window_id(target.hwnd));
+    if (!index) return std::nullopt;
+    return windows[*index];
+}
+
+Json modal_json(const WindowInfo& modal) {
+    return Json{{"windowId", window_id(modal.hwnd)}, {"title", modal.title}, {"app", modal.app}};
+}
+
+void reject_blocked_target(const WindowInfo& target) {
+    if (const auto modal = blocking_modal(target)) {
+        const auto id = window_id(modal->hwnd);
+        throw Error("modal_active",
+                    "Window " + window_id(target.hwnd) + " is blocked by modal dialog " + id +
+                        " \"" + modal->title + "\"; observe and act on --window-id " + id +
+                        " instead");
+    }
 }
 
 std::string private_capture_path(const std::string& observationId,
@@ -704,15 +781,22 @@ std::optional<WindowInfo> WindowsBackend::target_window(const Json& params) cons
         }
         return std::nullopt;
     }
+    // Owned dialogs precede their owner in Z-order; an app or pid selects the
+    // main window, and an observation of it reports a blocking modal.
+    const auto first = [&](const auto& matches) -> std::optional<WindowInfo> {
+        for (const auto& info : windows) if (!info.owner && matches(info)) return info;
+        for (const auto& info : windows) if (info.owner && matches(info)) return info;
+        return std::nullopt;
+    };
     const auto app = lower(json_string(params, "app"));
     if (!app.empty()) {
-        for (const auto& info : windows) {
-            if (app_name_matches(info, app)) return info;
+        if (auto info = first([&](const WindowInfo& info) { return app_name_matches(info, app); })) {
+            return info;
         }
         if (app.rfind("pid:", 0) == 0) {
             try {
                 const DWORD pid = static_cast<DWORD>(std::stoul(app.substr(4)));
-                for (const auto& info : windows) if (info.pid == pid) return info;
+                return first([&](const WindowInfo& info) { return info.pid == pid; });
             } catch (...) {
             }
         }
@@ -720,7 +804,7 @@ std::optional<WindowInfo> WindowsBackend::target_window(const Json& params) cons
     }
     const HWND foreground = GetForegroundWindow();
     for (const auto& info : windows) if (info.hwnd == foreground) return info;
-    return windows.empty() ? std::nullopt : std::optional<WindowInfo>(windows.front());
+    return first([](const WindowInfo&) { return true; });
 }
 
 WindowInfo WindowsBackend::require_target_window(const Json& params) const {
@@ -885,7 +969,10 @@ bool WindowsBackend::activate(HWND hwnd, Context& context) const {
 Json WindowsBackend::observe(const Json& params, Context& context) {
     purge_observations();
     auto target = require_target_window(params);
-    if (json_bool(params, "activate", false)) {
+    // A disabled owner cannot take focus, so activation is skipped and the
+    // observation points at the dialog that does.
+    const auto modal = blocking_modal(target);
+    if (!modal && json_bool(params, "activate", false)) {
         // Backgrounded UWP/WinUI windows collapse their UIA tree, so an opt-in
         // activation exists.  It restores the window and can move it, so the
         // rectangle every coordinate below is built from must be re-read.
@@ -909,6 +996,14 @@ Json WindowsBackend::observe(const Json& params, Context& context) {
                 {"window", window_json(target)},
                 {"overlayRegions", Json::array()},
                 {"timings", Json::object()}};
+    if (modal) {
+        const auto modalId = window_id(modal->hwnd);
+        result["modal"] = modal_json(*modal);
+        result["notice"] = "This window is blocked by modal dialog " + modalId + " \"" +
+                           modal->title + "\". The dialog is a separate window and is not in "
+                           "this screenshot or accessibility tree; observe and act on "
+                           "--window-id " + modalId + " instead.";
+    }
     std::int64_t capturedAtUnixMs = 0;
     Observation observation;
     observation.id = id;
@@ -1226,6 +1321,8 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
         method == "press-key" || method == "hotkey" || method == "set-value" ||
         method == "paste-text") {
         const auto target = require_target_window(params);
+        // Windows discards input to a disabled owner, so it would only look delivered.
+        reject_blocked_target(target);
         const auto observationId = json_string(params, "observationId");
         Observation* observation = nullptr;
         if (!observationId.empty()) observation = &require_observation(params, target.hwnd, target.rect);
