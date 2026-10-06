@@ -22,6 +22,7 @@ skills/desktop-computer-use/scripts/dcu.mjs
 *.pfx
 /.codex/
 /.agents/
+/.claude/
 
 # Raw desktop recordings may contain private text and session identifiers.
 /validation/

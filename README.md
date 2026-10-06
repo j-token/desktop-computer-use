@@ -48,9 +48,24 @@ node skills/desktop-computer-use/scripts/dcu.mjs doctor
 
 On single-configuration Linux generators, the executable is normally `build/desktop-computer-use-native`. Platform dependencies and full build commands are in [Development](docs/development.md).
 
-## Install the skill
+## Install
 
-For source-checkout development, build the bundle first and install the skill by copy:
+Both installers read the `release` branch, which CI rebuilds from `main` with the skill bundle, the Windows and Linux native binaries, and both GNOME extension archives.
+
+Claude Code, as a plugin (the skill plus an MCP server that returns screenshots as images):
+
+```text
+/plugin marketplace add j-token/desktop-computer-use
+/plugin install desktop-computer-use@desktop-computer-use
+```
+
+Other agents, as a skill:
+
+```powershell
+npx skills add https://github.com/j-token/desktop-computer-use/tree/release/skills/desktop-computer-use
+```
+
+For source-checkout development, build the bundle and install by copy:
 
 ```powershell
 npm ci
@@ -58,7 +73,7 @@ npm run build:all
 npx skills add . --skill desktop-computer-use --copy
 ```
 
-The source checkout does not track compiled native binaries. Build the daemon and set `DCU_NATIVE_PATH`, or assemble a complete package before installing. From the assembled package directory, use the same `npx skills add . --skill desktop-computer-use --copy` command; the package includes the Windows and Linux binaries and both GNOME extension archives.
+The source checkout does not track compiled native binaries. Build the daemon and set `DCU_NATIVE_PATH`, or run `npm run package:skill` with both binaries to assemble the same layout CI publishes.
 
 ## Architecture
 
@@ -113,7 +128,7 @@ Create an adapter-only skill package for CLI and MCP development:
 npm run package:skill -- --adapters-only
 ```
 
-A complete skill package also requires Windows and Linux native binaries plus both GNOME extension archives. See [Development](docs/development.md#package-the-skill) for the expected artifact layout and command.
+A complete package (the `release` branch layout: `.claude-plugin/plugin.json`, `.mcp.json`, and a self-contained `skills/desktop-computer-use/`) also requires Windows and Linux native binaries plus both GNOME extension archives. See [Development](docs/development.md#package-the-skill) for the expected artifact layout and command.
 
 ## Contributing
 
