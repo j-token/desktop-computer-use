@@ -1,11 +1,11 @@
 #include "dispatch.hpp"
 #include <iomanip>
+#include <set>
 #include <random>
 #include <sstream>
 
 namespace dcu {
 namespace {
-constexpr auto sessionIdleTimeout = std::chrono::seconds(120);
 constexpr std::int64_t operationTimeoutMilliseconds = 120000;
 
 std::int64_t monotonic_milliseconds() {
@@ -45,8 +45,17 @@ std::string create_session_id() {
     return identifier.str();
 }
 
-Json error_response(const Json& requestId, const std::string& code, const std::string& message) {
-    return {{"id", requestId}, {"ok", false}, {"error", {{"code", code}, {"message", message}}}};
+Json error_response(const Json& requestId, const std::string& code, const std::string& message,
+                    const Json& details = Json()) {
+    Json error{{"code", code}, {"message", message}};
+    if (details.is_object()) error["details"] = details;
+    return {{"id", requestId}, {"ok", false}, {"error", std::move(error)}};
+}
+
+std::string join_toggles(const std::set<std::string>& toggles) {
+    std::string text;
+    for (const auto& key : toggles) text += (text.empty() ? "" : ", ") + key;
+    return text;
 }
 } // namespace
 
@@ -57,6 +66,10 @@ Json Dispatcher::stop() {
         std::lock_guard lock(stateMutex_);
         stopping_ = active_;
         active_ = false;
+        // Every stop path (user Esc, idle expiry, operation timeout, client
+        // disconnect, shutdown) ends the toggles; interrupt() and the backend's
+        // session.stop release the physical keys.
+        toggles_.clear();
     }
     backend_.interrupt();
     return {{"stopped", true}};
@@ -67,6 +80,7 @@ void Dispatcher::finish_pending_stop() {
     // and the desktop lease remains held until backend cleanup completes.
     if (!stopRequested_.exchange(false)) return;
 
+    backend_.release_toggles();
     try {
         backend_.execute("session.stop", Json::object(), context_);
     } catch (...) {
@@ -106,6 +120,7 @@ Json Dispatcher::execute_serialized(const std::string& method, Json params) {
         if (active_) throw Error("session_busy", "An active session already owns this desktop");
         inputLease_.acquire();
         context_.cancelled = false;
+        toggles_.clear();
         params["sessionId"] = create_session_id();
     } else if (method != "doctor" && method != "capabilities") {
         std::lock_guard lock(stateMutex_);
@@ -118,7 +133,8 @@ Json Dispatcher::execute_serialized(const std::string& method, Json params) {
 
     operationStartedMilliseconds_ = monotonic_milliseconds();
     try {
-        Json result = backend_.execute(method, params, context_);
+        Json result = method.starts_with("toggle.") ? execute_toggle(method, params)
+                                                    : backend_.execute(method, params, context_);
         if (startsSession) {
             if (!result.is_object() || !result.value("ready", false)) {
                 throw Error("setup_required", "Provider did not confirm a ready usage indicator");
@@ -146,10 +162,53 @@ Json Dispatcher::execute_serialized(const std::string& method, Json params) {
     }
 }
 
+Json Dispatcher::execute_toggle(const std::string& method, const Json& params) {
+    // Caller owns operationMutex_ and has verified the active session.
+    if (method == "toggle.release-all") {
+        backend_.release_toggles();
+        std::lock_guard lock(stateMutex_);
+        Json released(toggles_);
+        toggles_.clear();
+        return {{"released", std::move(released)}};
+    }
+    const auto key = canonical_toggle_key(params["key"].get<std::string>());
+    const bool on = params["on"].get<bool>();
+    bool held = false;
+    {
+        std::lock_guard lock(stateMutex_);
+        held = toggles_.contains(key);
+    }
+    if (held != on) {
+        backend_.set_toggle(key, on, context_);
+        std::lock_guard lock(stateMutex_);
+        if (!on) {
+            toggles_.erase(key);
+        } else if (active_ && !context_.cancelled) {
+            toggles_.insert(key);
+        } else {
+            // A stop raced the press; its release paths own the key now.
+            throw Error("cancelled", "Session stopped");
+        }
+    }
+    return {{"key", key}, {"on", on}, {"changed", held != on}};
+}
+
+Json Dispatcher::toggle_details() {
+    std::lock_guard lock(stateMutex_);
+    Json details{{"toggles", Json(toggles_)}};
+    if (!toggles_.empty()) {
+        details["notice"] = "Toggle still on: " + join_toggles(toggles_) +
+                            ". Release with `dcu toggle off --all` before ending.";
+    }
+    return details;
+}
+
 Json Dispatcher::handle(const Json& request) {
     const Json requestId = request.is_object() ? request.value("id", Json(nullptr)) : Json(nullptr);
+    bool authenticated = false;
     try {
         authenticate_request(request, requestId, token_);
+        authenticated = true;
         if (!request.contains("method") || !request["method"].is_string()) {
             throw Error("invalid_argument", "method must be a string");
         }
@@ -159,6 +218,15 @@ Json Dispatcher::handle(const Json& request) {
 
         Json result;
         if (method == "session.stop" || method == "daemon.shutdown") {
+            {
+                // A cancelled session (Esc, lost indicator) is already ending
+                // and releasing its toggles; let the stop through.
+                std::lock_guard lock(stateMutex_);
+                if (!toggles_.empty() && !context_.cancelled) {
+                    throw Error("toggles_active", "Toggle still on: " + join_toggles(toggles_) +
+                                                      ". Run `dcu toggle off --all` before stopping the session.");
+                }
+            }
             result = stop();
             if (method == "daemon.shutdown") quitting = true;
         } else if (method == "session.status") {
@@ -166,24 +234,44 @@ Json Dispatcher::handle(const Json& request) {
             result = {
                 {"active", active_}, {"stopping", stopping_},
                 {"sessionId", active_ ? Json(sessionId_) : Json(nullptr)},
-                {"idleTimeoutMs", 120000}
+                {"idleTimeoutMs", idleTimeout_.count()}
             };
+        } else if (method == "toggle.status") {
+            std::lock_guard lock(stateMutex_);
+            result = {{"active", active_}};
         } else {
             result = execute_serialized(method, params);
         }
+        if (result.is_object()) {
+            auto details = toggle_details();
+            result["toggles"] = std::move(details["toggles"]);
+            if (details.contains("notice")) {
+                const auto notice = details["notice"].get<std::string>();
+                const auto existing = result.find("notice");
+                result["notice"] = existing != result.end() && existing->is_string()
+                    ? existing->get<std::string>() + " " + notice : notice;
+            }
+        }
         return {{"id", requestId}, {"ok", true}, {"result", result}};
     } catch (const Error& error) {
-        return error_response(requestId, error.code, error.what());
+        return error_response(requestId, error.code, error.what(), error_details(authenticated));
     } catch (const std::exception& error) {
-        return error_response(requestId, "provider_error", error.what());
+        return error_response(requestId, "provider_error", error.what(), error_details(authenticated));
     }
+}
+
+Json Dispatcher::error_details(bool authenticated) {
+    // Unauthenticated callers learn nothing about the desktop state.
+    if (!authenticated) return Json();
+    auto details = toggle_details();
+    return details.contains("notice") ? details : Json();
 }
 
 void Dispatcher::tick() {
     bool sessionExpired = false;
     {
         std::lock_guard lock(stateMutex_);
-        const bool idleExpired = std::chrono::steady_clock::now() - lastActivity_ > sessionIdleTimeout;
+        const bool idleExpired = std::chrono::steady_clock::now() - lastActivity_ > idleTimeout_;
         sessionExpired = active_ && (context_.cancelled || idleExpired);
     }
     const auto operationStarted = operationStartedMilliseconds_.load();

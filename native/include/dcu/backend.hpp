@@ -22,6 +22,11 @@ public:
     virtual ~Backend() = default;
     virtual Json execute(const std::string& method, const Json& params, Context& context) = 0;
     virtual void interrupt() noexcept = 0;
+    // Toggle keys stay held across requests: shift, ctrl, alt, win, space.
+    // Both calls are serialized like execute(). Every session end (interrupt,
+    // session.stop, destruction) must also release toggled keys.
+    virtual void set_toggle(const std::string& key, bool down, Context& context) = 0;
+    virtual void release_toggles() noexcept = 0;
 };
 std::unique_ptr<Backend> make_backend();
 #ifdef _WIN32

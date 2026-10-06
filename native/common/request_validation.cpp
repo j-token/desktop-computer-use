@@ -1,4 +1,5 @@
 #include "dispatch.hpp"
+#include <cctype>
 #include <cmath>
 #include <set>
 
@@ -10,8 +11,30 @@ const std::set<std::string> inputActions{
 const std::set<std::string> supportedMethods{
     "doctor", "capabilities", "session.start", "session.status", "session.stop", "daemon.shutdown",
     "list-apps", "list-windows", "get-app-state", "get-full-screenshot", "click", "drag", "scroll", "type-text",
-    "press-key", "hotkey", "set-value", "paste-text"
+    "press-key", "hotkey", "set-value", "paste-text", "toggle.set", "toggle.release-all", "toggle.status"
 };
+const std::set<std::string> clickModifiers{
+    "shift", "ctrl", "control", "alt", "option", "win", "meta", "super"
+};
+std::string lowercase(std::string value) {
+    for (auto& character : value) character = static_cast<char>(std::tolower(static_cast<unsigned char>(character)));
+    return value;
+}
+void validate_modifiers(const Json& params) {
+    if (!params.contains("modifiers")) return;
+    if (!params["modifiers"].is_string()) throw Error("invalid_argument", "modifiers must be a string such as shift+ctrl");
+    const auto& value = params["modifiers"].get_ref<const std::string&>();
+    std::size_t start = 0;
+    while (start <= value.size()) {
+        const auto end = value.find('+', start);
+        const auto part = lowercase(value.substr(start, end == std::string::npos ? std::string::npos : end - start));
+        if (!clickModifiers.contains(part)) {
+            throw Error("invalid_argument", "Unknown modifier: " + part + " (use shift, ctrl, alt, or win joined by +)");
+        }
+        if (end == std::string::npos) break;
+        start = end + 1;
+    }
+}
 void validate_number(const Json& params, const char* key, double minimum, double maximum,
                      bool requiresInteger = false) {
     if (!params.contains(key)) return;
@@ -48,6 +71,13 @@ void validate_params(const std::string& method, const Json& params) {
     validate_choice(params, "observe", {"none", "screenshot", "text", "both"});
     validate_choice(params, "direction", {"up", "down", "left", "right"});
     validate_choice(params, "coords", {"reduced", "full"});
+    validate_modifiers(params);
+    if (method == "toggle.set") {
+        if (!params.contains("key") || canonical_toggle_key(params["key"].get<std::string>()).empty()) {
+            throw Error("invalid_argument", "toggle key must be shift, ctrl, alt, win, or space");
+        }
+        if (!params.contains("on") || !params["on"].is_boolean()) throw Error("invalid_argument", "on must be boolean");
+    }
     const bool usesElementIndex = params.contains("elementIndex") ||
         params.contains("fromElementIndex") || params.contains("toElementIndex");
     if (usesElementIndex && !params.contains("observationId")) {
@@ -80,5 +110,13 @@ void validate_params(const std::string& method, const Json& params) {
 
 bool is_input_action(const std::string& method) {
     return inputActions.contains(method);
+}
+
+std::string canonical_toggle_key(const std::string& key) {
+    const auto name = lowercase(key);
+    if (name == "shift" || name == "ctrl" || name == "alt" || name == "win" || name == "space") return name;
+    if (name == "control") return "ctrl";
+    if (name == "super" || name == "meta") return "win";
+    return {};
 }
 } // namespace dcu

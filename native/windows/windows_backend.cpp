@@ -282,15 +282,46 @@ Json action_transform(double scaleX, double scaleY) {
     return Json{{"scaleX", scaleX}, {"scaleY", scaleY}, {"offsetX", 0}, {"offsetY", 0}};
 }
 
+// Bits shared with the input watchdog's modifiers field.
+constexpr DWORD kShiftBit = 1;
+constexpr DWORD kCtrlBit = 2;
+constexpr DWORD kAltBit = 4;
+constexpr DWORD kWinBit = 8;
+constexpr DWORD kSpaceBit = 16;
+constexpr std::array<std::pair<DWORD, WORD>, 5> kHeldKeyBits{{
+    {kShiftBit, VK_SHIFT}, {kCtrlBit, VK_CONTROL}, {kAltBit, VK_MENU}, {kWinBit, VK_LWIN},
+    {kSpaceBit, VK_SPACE}}};
+
+DWORD key_bit(WORD key) {
+    for (const auto& [bit, vk] : kHeldKeyBits) {
+        if (vk == key) return bit;
+    }
+    return 0;
+}
+
 DWORD modifier_mask(const std::vector<WORD>& keys) {
     DWORD value = 0;
-    for (const auto key : keys) {
-        if (key == VK_SHIFT) value |= 1;
-        else if (key == VK_CONTROL) value |= 2;
-        else if (key == VK_MENU) value |= 4;
-        else if (key == VK_LWIN) value |= 8;
-    }
+    for (const auto key : keys) value |= key_bit(key);
     return value;
+}
+
+// Toggle names are canonicalized by the dispatcher.
+WORD toggle_vk(const std::string& key) {
+    if (key == "shift") return VK_SHIFT;
+    if (key == "ctrl") return VK_CONTROL;
+    if (key == "alt") return VK_MENU;
+    if (key == "win") return VK_LWIN;
+    if (key == "space") return VK_SPACE;
+    return 0;
+}
+
+std::string toggle_names(DWORD mask) {
+    std::string names;
+    for (const auto& [bit, name] : {std::pair<DWORD, const char*>{kShiftBit, "shift"}, {kCtrlBit, "ctrl"},
+                                    {kAltBit, "alt"}, {kWinBit, "win"}, {kSpaceBit, "space"}}) {
+        if (mask & bit) names += (names.empty() ? "" : ", ") + std::string(name);
+    }
+    return names;
 }
 
 bool same_rect(const RECT& a, const RECT& b) {
@@ -423,7 +454,8 @@ WORD key_vk(const std::string& value) {
 bool extended_key(WORD key) {
     return key == VK_LEFT || key == VK_RIGHT || key == VK_UP || key == VK_DOWN ||
            key == VK_HOME || key == VK_END || key == VK_PRIOR || key == VK_NEXT ||
-           key == VK_INSERT || key == VK_DELETE || key == VK_DIVIDE || key == VK_NUMLOCK;
+           key == VK_INSERT || key == VK_DELETE || key == VK_DIVIDE || key == VK_NUMLOCK ||
+           key == VK_LWIN || key == VK_RWIN;
 }
 
 void send_input(INPUT& input, const char* errorCode = "input_failed") {
@@ -507,6 +539,8 @@ public:
 
     Json execute(const std::string& method, const Json& params, Context& context) override;
     void interrupt() noexcept override;
+    void set_toggle(const std::string& key, bool down, Context& context) override;
+    void release_toggles() noexcept override;
 
 private:
     struct Observation {
@@ -561,7 +595,10 @@ private:
                   Context& context);
     void drag_at(HWND hwnd, POINT from, POINT to, MouseButton button,
                  int duration, int steps, int holdBefore, int holdAfter,
-                 Context& context);
+                 const std::vector<WORD>& modifierKeys, Context& context);
+    std::vector<WORD> without_toggled(std::vector<WORD> keys) const;
+    void update_toggled(DWORD bit, bool on) noexcept;
+    void release_toggled_keys() noexcept;
     void send_chord(const std::string& chord, Context& context);
     void send_text(const std::string& text, Context& context);
     Json list_apps() const;
@@ -585,7 +622,11 @@ private:
     std::atomic_bool sessionActive_{false};
     std::string sessionId_;
     std::atomic<DWORD> heldButtons_{0};
+    // Modifiers held for the duration of one action. Toggled keys live in
+    // toggledKeys_ so a per-action store never clobbers them; the watchdog
+    // receives the union.
     std::atomic<DWORD> heldModifiers_{0};
+    std::atomic<DWORD> toggledKeys_{0};
     std::atomic<WORD> heldKey_{0};
     std::atomic<DWORD> heldKeyFlags_{0};
     InputWatchdog watchdog_;
@@ -1002,7 +1043,7 @@ void WindowsBackend::click_at(HWND hwnd, POINT point, MouseButton button,
                               const Json& params, Context& context) {
     activate(hwnd, context);
     send_mouse_move(point.x, point.y);
-    const auto modifierKeys = modifiers(params);
+    const auto modifierKeys = without_toggled(modifiers(params));
     heldModifiers_.store(modifier_mask(modifierKeys), std::memory_order_release);
     publish_input_state();
     const DWORD buttonBit = button_bit(button);
@@ -1032,13 +1073,26 @@ void WindowsBackend::click_at(HWND hwnd, POINT point, MouseButton button,
 
 void WindowsBackend::drag_at(HWND hwnd, POINT from, POINT to, MouseButton button,
                              int duration, int steps, int holdBefore, int holdAfter,
-                             Context& context) {
+                             const std::vector<WORD>& modifierKeys, Context& context) {
     activate(hwnd, context);
     send_mouse_move(from.x, from.y);
     context.check();
     if (!foreground_matches(hwnd)) {
         throw Error("focus_lost", "Target window lost foreground focus before drag");
     }
+    // Modifiers are held for the whole drag. Declared before the button
+    // guard so the button is released first, then the modifiers.
+    heldModifiers_.store(modifier_mask(modifierKeys), std::memory_order_release);
+    publish_input_state();
+    struct HeldModifiersReset {
+        WindowsBackend& owner;
+        ~HeldModifiersReset() noexcept {
+            owner.heldModifiers_.store(0, std::memory_order_release);
+            owner.publish_input_state();
+        }
+    } modifiersReset{*this};
+    ModifierGuard modifierGuard(modifierKeys);
+    context.check();
     const DWORD buttonBit = button_bit(button);
     heldButtons_.fetch_or(buttonBit, std::memory_order_release);
     publish_input_state();
@@ -1100,6 +1154,11 @@ void WindowsBackend::send_chord(const std::string& chord, Context& context) {
     }
     if (bases.size() != 1) throw Error("invalid_key", "A key chord needs one non-modifier key");
     const WORD base = key_vk(bases.front());
+    if (const DWORD toggled = key_bit(base) & toggledKeys_.load(std::memory_order_acquire)) {
+        throw Error("toggles_active", toggle_names(toggled) + " is toggled on; pressing it again would release it. "
+                                      "Use `dcu toggle off --key " + toggle_names(toggled) + "` instead");
+    }
+    modifierKeys = without_toggled(std::move(modifierKeys));
     heldModifiers_.store(modifier_mask(modifierKeys), std::memory_order_release);
     publish_input_state();
     bool baseDown = false;
@@ -1244,7 +1303,8 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
                     std::max(0, json_int(params, "durationMs", 240)),
                     std::max(1, json_int(params, "steps", 12)),
                     std::max(0, json_int(params, "holdBeforeMs", 50)),
-                    std::max(0, json_int(params, "holdAfterMs", 50)), context);
+                    std::max(0, json_int(params, "holdAfterMs", 50)),
+                    without_toggled(modifiers(params)), context);
             auto result = action_result();
             if (transform) {
                 result["coordinateSpace"] = transform->space;
@@ -1280,6 +1340,13 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
             return result;
         }
         if (method == "type-text") {
+            const DWORD shortcutToggles =
+                toggledKeys_.load(std::memory_order_acquire) & (kCtrlBit | kAltBit | kWinBit);
+            if (shortcutToggles) {
+                throw Error("toggles_active", "type-text is refused while " + toggle_names(shortcutToggles) +
+                                                  " is toggled on because the text would become shortcuts; "
+                                                  "release it with `dcu toggle off --key KEY` first");
+            }
             activate(target.hwnd, context);
             send_text(json_string(params, "text"), context);
             return action_result();
@@ -1428,7 +1495,8 @@ void WindowsBackend::on_stop_key() noexcept {
 
 void WindowsBackend::publish_input_state() noexcept {
     watchdog_.publish(heldButtons_.load(std::memory_order_acquire),
-                      heldModifiers_.load(std::memory_order_acquire),
+                      heldModifiers_.load(std::memory_order_acquire) |
+                          toggledKeys_.load(std::memory_order_acquire),
                       heldKey_.load(std::memory_order_acquire),
                       heldKeyFlags_.load(std::memory_order_acquire));
 }
@@ -1459,6 +1527,7 @@ void WindowsBackend::release_held_input() noexcept {
             }
         }
     }
+    release_toggled_keys();
     const WORD key = heldKey_.load(std::memory_order_acquire);
     const DWORD keyFlags = heldKeyFlags_.load(std::memory_order_acquire);
     if (key) {
@@ -1473,6 +1542,66 @@ void WindowsBackend::release_held_input() noexcept {
         }
     }
     publish_input_state();
+}
+
+std::vector<WORD> WindowsBackend::without_toggled(std::vector<WORD> keys) const {
+    // A toggled key is already down and must stay down after this action.
+    const DWORD toggled = toggledKeys_.load(std::memory_order_acquire);
+    std::erase_if(keys, [toggled](WORD key) { return (key_bit(key) & toggled) != 0; });
+    return keys;
+}
+
+void WindowsBackend::update_toggled(DWORD bit, bool on) noexcept {
+    const DWORD mask = on ? toggledKeys_.fetch_or(bit, std::memory_order_acq_rel) | bit
+                          : toggledKeys_.fetch_and(~bit, std::memory_order_acq_rel) & ~bit;
+    // While a key is toggled, the user's Escape still counts toward the stop
+    // but is not delivered, so Ctrl+Esc or Win+Esc cannot fire.
+    SessionIndicator::set_swallow_user_escape(mask != 0);
+    publish_input_state();
+}
+
+void WindowsBackend::release_toggled_keys() noexcept {
+    const DWORD toggled = toggledKeys_.load(std::memory_order_acquire);
+    for (const auto& [bit, key] : kHeldKeyBits) {
+        if (!(toggled & bit)) continue;
+        INPUT input{};
+        input.type = INPUT_KEYBOARD;
+        input.ki.wVk = key;
+        input.ki.dwFlags = KEYEVENTF_KEYUP | (extended_key(key) ? KEYEVENTF_EXTENDEDKEY : 0);
+        SendInput(1, &input, sizeof(INPUT));
+        // The state is dropped even if SendInput fails: the session is ending
+        // and the watchdog cannot do better than this release attempt.
+        update_toggled(bit, false);
+    }
+    if (!toggledKeys_.load(std::memory_order_acquire)) SessionIndicator::set_swallow_user_escape(false);
+}
+
+void WindowsBackend::set_toggle(const std::string& key, bool down, Context& context) {
+    if (!sessionActive_.load(std::memory_order_acquire)) {
+        throw Error("session_required", "Start a computer-use session first");
+    }
+    const WORD vk = toggle_vk(key);
+    if (!vk) throw Error("invalid_argument", "Unknown toggle key: " + key);
+    const DWORD bit = key_bit(vk);
+    if (!down) {
+        send_key(vk, false);
+        update_toggled(bit, false);
+        return;
+    }
+    context.check();
+    // Publish before the down event so a concurrent stop or a crash always
+    // knows to release the key.
+    update_toggled(bit, true);
+    try {
+        send_key(vk, true);
+    } catch (...) {
+        update_toggled(bit, false);
+        throw;
+    }
+}
+
+void WindowsBackend::release_toggles() noexcept {
+    release_toggled_keys();
 }
 
 void WindowsBackend::interrupt() noexcept {

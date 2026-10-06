@@ -47,8 +47,8 @@ public:
     void show_transient_text(std::wstring text, std::chrono::milliseconds duration);
     std::wstring banner_text();
 
-    // Hook for modifier toggles: while enabled, physical Escape still counts
-    // toward the stop but is not delivered to applications. Not used yet.
+    // Enabled while any modifier toggle is on: physical Escape still counts
+    // toward the stop but is not delivered to applications.
     static void set_swallow_user_escape(bool enabled) noexcept;
 
     bool running() const noexcept { return running_.load(std::memory_order_acquire); }

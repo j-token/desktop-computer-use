@@ -3,7 +3,12 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { DcuClient, errorToResponse } from "./client.js";
 import { DcuError } from "./errors.js";
-import { SESSIONLESS_METHODS, WINDOW_TARGET_METHODS } from "./methods.js";
+import {
+  SESSIONLESS_METHODS,
+  TOGGLE_KEY_ALIASES,
+  WINDOW_TARGET_METHODS,
+  isValidModifiers
+} from "./methods.js";
 import {
   clearSession,
   readSession,
@@ -49,6 +54,7 @@ const OPTION_DEFS: Record<string, { key: string; type: "string" | "number" | "bo
   "observe": { key: "observe", type: "string" },
   "session-id": { key: "sessionId", type: "string" },
   "modifiers": { key: "modifiers", type: "string" },
+  "all": { key: "all", type: "boolean" },
   "restore-window": { key: "restoreWindow", type: "boolean" },
   "activate": { key: "activate", type: "boolean" },
   "text-stdin": { key: "textStdin", type: "boolean" },
@@ -106,7 +112,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
       continue;
     }
     if (!token.startsWith("--")) {
-      const allowsSubcommand = command.length === 1 && ["session", "daemon", "mcp"].includes(command[0]);
+      const allowsSubcommand = command.length === 1 && ["session", "daemon", "mcp", "toggle"].includes(command[0]);
       if (command.length === 0 || allowsSubcommand) {
         command.push(token);
       } else {
@@ -180,6 +186,9 @@ function validateCommon(params: JsonObject, method: string): void {
   validateChoice(params, "observe", ["none", "screenshot", "text", "both"]);
   validateChoice(params, "format", ["jpeg", "png"]);
   validateChoice(params, "coords", ["reduced", "full"]);
+  if (params.modifiers !== undefined && !isValidModifiers(String(params.modifiers))) {
+    throw new DcuError("invalid_argument", "modifiers must join shift, ctrl, alt, or win with +");
+  }
 
   const hasValidQuality = params.quality === undefined || (
     Number.isInteger(params.quality) &&
@@ -232,7 +241,8 @@ function paramsFromOptions(options: Record<string, OptionValue>, method: string)
     "help",
     "timeoutMs",
     "textStdin",
-    "valueStdin"
+    "valueStdin",
+    "all"
   ]);
   for (const [key, value] of Object.entries(options)) {
     if (!excluded.has(key)) setIfDefined(params, key, value);
@@ -261,7 +271,28 @@ async function readStdinText(): Promise<string> {
   return Buffer.concat(chunks).toString("utf8");
 }
 
-function methodFor(command: string[]): string {
+function toggleMethod(action: string | undefined, options: Record<string, OptionValue>): string {
+  if (action === "status") return "toggle.status";
+  if (action !== "on" && action !== "off") {
+    throw new DcuError("invalid_argument", "Use `toggle on --key K`, `toggle off --key K`, `toggle off --all`, or `toggle status`");
+  }
+  if (options.all === true) {
+    if (action === "on" || options.key !== undefined) {
+      throw new DcuError("invalid_argument", "--all is only valid as `toggle off --all` without --key");
+    }
+    return "toggle.release-all";
+  }
+  if (typeof options.key !== "string") {
+    throw new DcuError("invalid_argument", `toggle ${action} requires --key shift|ctrl|alt|win|space`);
+  }
+  if (!TOGGLE_KEY_ALIASES.includes(options.key.toLowerCase())) {
+    throw new DcuError("invalid_argument", "--key must be shift, ctrl, alt, win, or space");
+  }
+  return "toggle.set";
+}
+
+export function methodFor(command: string[], options: Record<string, OptionValue> = {}): string {
+  if (command[0] === "toggle") return toggleMethod(command[1], options);
   if (command.length === 1) return command[0];
   if (command[0] === "session" && ["start", "status", "stop"].includes(command[1])) return `session.${command[1]}`;
   if (command[0] === "daemon" && command[1] === "shutdown") return "daemon.shutdown";
@@ -276,16 +307,29 @@ function helpText(): string {
     "",
     "Commands: setup, doctor, capabilities, session start|status|stop, daemon shutdown,",
     "  list-apps, list-windows, get-app-state, get-full-screenshot,",
-    "  click, drag, scroll, type-text, press-key, hotkey, set-value, paste-text, mcp serve",
+    "  click, drag, scroll, type-text, press-key, hotkey, set-value, paste-text,",
+    "  toggle on|off --key shift|ctrl|alt|win|space, toggle off --all, toggle status, mcp serve",
     "",
     "Actions use a saved session from `session start`; pass --session-id to override it.",
     "Observations are returned as JSON with a reduced screenshot path (0.5x above 1280x720).",
     "x/y coordinates are pixels of the window's latest reduced screenshot (or --observation-id).",
     "`get-full-screenshot --observation-id ID` returns the original image; click from it with --coords full.",
     "Drag defaults: 240ms, 12 steps, 50ms hold before and after. Use --duration-ms/--steps to tune them.",
+    "click and drag accept --modifiers shift+ctrl to hold keys for that one action.",
+    "`toggle on --key K` holds a key across actions; every result then lists `toggles` with a notice.",
+    "`session stop` fails with toggles_active while a toggle is on; run `toggle off --all` first.",
     "Active sessions show a top banner, high-contrast cursor ring, and blue inward-fading screen-edge border.",
     "Emergency stop: press Esc twice within 1 second or run `dcu session stop`."
   ].join("\n");
+}
+
+// Decides how a native response changes the saved session file. A refused
+// stop (for example toggles_active) keeps the session file.
+export function sessionFileAction(method: string, response: NativeResponse): "write" | "clear" | undefined {
+  if (!response.ok) return undefined;
+  if (method === "session.start") return "write";
+  if (method === "session.stop") return "clear";
+  return undefined;
 }
 
 function sessionRequired(method: string): boolean {
@@ -367,8 +411,9 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
       output({ id: null, ok: true, result: await runLocalSetup() }, Boolean(parsed.options.pretty));
       return 0;
     }
-    const method = methodFor(parsed.command);
+    const method = methodFor(parsed.command, parsed.options);
     const params = paramsFromOptions(parsed.options, method);
+    if (method === "toggle.set") params.on = parsed.command[1] === "on";
     const acceptsPositionalApp = method === "get-app-state" || method === "list-windows";
     if (acceptsPositionalApp && parsed.positional.length > 0 && params.app === undefined) {
       params.app = parsed.positional[0];
@@ -395,10 +440,11 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
       output({ id: null, ...errorToResponse(error) }, Boolean(parsed.options.pretty));
       return 1;
     }
-    if (response.ok && method === "session.start") {
+    const sessionFile = sessionFileAction(method, response);
+    if (sessionFile === "write") {
       const result = asRecord(response.result);
       if (typeof result.sessionId === "string") await writeSession(result.sessionId, paths);
-    } else if (response.ok && method === "session.stop") {
+    } else if (sessionFile === "clear") {
       await clearSession(paths);
     }
     output(response, Boolean(parsed.options.pretty));

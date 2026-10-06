@@ -34,6 +34,9 @@ test("MCP stdio server advertises the desktop tools", async () => {
     assert.ok(names.includes("dcu_drag"));
     assert.ok(names.includes("dcu_get_app_state"));
     assert.ok(names.includes("dcu_get_full_screenshot"));
+    const toggle = response.result.tools.find(tool => tool.name === "dcu_toggle");
+    assert.ok(toggle, "dcu_toggle is advertised");
+    assert.deepEqual(Object.keys(toggle.inputSchema.properties).sort(), ["all", "key", "on", "sessionId"]);
   } finally {
     clearTimeout(timer);
     child.kill();

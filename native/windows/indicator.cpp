@@ -26,7 +26,7 @@ std::atomic_bool escapeDown{false};
 // Hook point for modifier toggles: while set, a physical Escape is still
 // counted toward the emergency stop but is not passed on to applications, so
 // a toggled Ctrl or Win cannot turn it into an OS shortcut. Set through
-// SessionIndicator::set_swallow_user_escape; nothing enables it yet.
+// SessionIndicator::set_swallow_user_escape while any toggle is on.
 std::atomic_bool swallowUserEscape{false};
 
 struct Dib {

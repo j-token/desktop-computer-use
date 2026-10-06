@@ -3,13 +3,17 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { DcuClient } from "./client.js";
-import { SESSIONLESS_METHODS } from "./methods.js";
+import { MODIFIER_NAMES, SESSIONLESS_METHODS, TOGGLE_KEY_ALIASES } from "./methods.js";
 import { clearSession, readSession, writeSession } from "./runtime.js";
 import type { JsonObject, JsonValue } from "./types.js";
 
 const optionalString = z.string().optional();
 const optionalNumber = z.number().finite().optional();
 const optionalInteger = z.number().int().optional();
+const modifierName = `(?:${MODIFIER_NAMES.join("|")})`;
+const modifiers = z.string()
+  .regex(new RegExp(`^${modifierName}(?:\\+${modifierName})*$`, "i"), "Join shift, ctrl, alt, or win with +")
+  .optional();
 const common = {
   sessionId: optionalString,
   app: optionalString,
@@ -41,7 +45,7 @@ const common = {
   quality: optionalInteger,
   maxEdge: optionalNumber,
   observe: z.enum(["none", "screenshot", "text", "both"]).optional(),
-  modifiers: optionalString,
+  modifiers,
   restoreWindow: z.boolean().optional(),
   activate: z.boolean().optional()
 };
@@ -52,7 +56,25 @@ type ToolDefinition = {
   method: string;
   description: string;
   schema: ToolSchema;
+  // Picks the native method from the input when one tool covers several.
+  resolve?: (input: Record<string, unknown>) => { method: string; input: Record<string, unknown> };
 };
+
+function resolveToggle(input: Record<string, unknown>): { method: string; input: Record<string, unknown> } {
+  const { key, on, all, ...rest } = input;
+  if (all === true) {
+    if (key !== undefined || on === true) {
+      throw new Error("invalid_argument: all releases every toggle; omit key and on");
+    }
+    return { method: "toggle.release-all", input: rest };
+  }
+  if (key === undefined) {
+    if (on !== undefined) throw new Error("invalid_argument: key is required with on");
+    return { method: "toggle.status", input: rest };
+  }
+  if (typeof on !== "boolean") throw new Error("invalid_argument: on (true or false) is required with key");
+  return { method: "toggle.set", input: { ...rest, key, on } };
+}
 
 type McpContent =
   | { type: "text"; text: string }
@@ -134,7 +156,9 @@ const tools: ToolDefinition[] = [
   {
     name: "dcu_drag",
     method: "drag",
-    description: "Perform a paced native drag with button-down, interpolated moves, and button-up.",
+    description:
+      "Perform a paced native drag with button-down, interpolated moves, and button-up. " +
+      "modifiers such as \"shift\" or \"ctrl+alt\" are held for the whole drag.",
     schema: { ...common }
   },
   {
@@ -172,6 +196,22 @@ const tools: ToolDefinition[] = [
     method: "paste-text",
     description: "Paste text into the focused target.",
     schema: { ...common }
+  },
+  {
+    name: "dcu_toggle",
+    method: "toggle.status",
+    description:
+      "Hold or release a key across several actions (shift, ctrl, alt, win, space), e.g. shift for " +
+      "shift-click selection or space for space-drag panning. {key, on: true} holds, {key, on: false} " +
+      "releases one key, {all: true} releases every key, and {} reports the held keys. While a key is held, " +
+      "every result lists toggles with a notice and session stop fails with toggles_active.",
+    schema: {
+      sessionId: optionalString,
+      key: z.enum(TOGGLE_KEY_ALIASES as [string, ...string[]]).optional(),
+      on: z.boolean().optional(),
+      all: z.boolean().optional()
+    },
+    resolve: resolveToggle
   }
 ];
 
@@ -251,7 +291,11 @@ async function invoke(client: DcuClient, method: string, input: Record<string, u
     }
     return value;
   }
-  throw new Error(`${response.error?.code ?? "native_error"}: ${response.error?.message ?? "Native request failed"}`);
+  const details = response.error?.details;
+  throw new Error(
+    `${response.error?.code ?? "native_error"}: ${response.error?.message ?? "Native request failed"}` +
+    (details === undefined ? "" : `\n${jsonText(details)}`)
+  );
 }
 
 export async function runMcpServer(client = new DcuClient()): Promise<void> {
@@ -262,7 +306,10 @@ export async function runMcpServer(client = new DcuClient()): Promise<void> {
       { description: definition.description, inputSchema: definition.schema },
       async (input: Record<string, unknown>) => {
         try {
-          const value = await invoke(client, definition.method, input);
+          const resolved = definition.resolve
+            ? definition.resolve(input)
+            : { method: definition.method, input };
+          const value = await invoke(client, resolved.method, resolved.input);
           return { content: await resultContent(value) };
         } catch (error) {
           return {

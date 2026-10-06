@@ -227,6 +227,8 @@ public:
 
     Json execute(const std::string& method, const Json& params, Context& context) override;
     void interrupt() noexcept override;
+    void set_toggle(const std::string& key, bool down, Context& context) override;
+    void release_toggles() noexcept override;
 
 private:
     Json doctor() const;
@@ -270,6 +272,8 @@ private:
     void hotkey_event(const std::vector<std::string>& keys, Context& context);
     void type_text_impl(const std::string& text, Context& context);
     void release_inputs() noexcept;
+    void release_toggled_keys() noexcept;
+    void require_not_toggled(const std::string& key) const;
     void mark_input_complete() noexcept;
     std::string coordinate_signature() const;
     void refresh_coordinate_state();
@@ -294,6 +298,9 @@ private:
     std::atomic_bool heartbeat_stop_{false};
     std::string session_id_;
     Clock::time_point last_activity_{};
+    // Canonical names (shift, ctrl, alt, super, space) of keys held across
+    // requests. Only touched by serialized calls and the destructor.
+    std::set<std::string> toggled_;
     std::thread heartbeat_thread_;
     std::unordered_map<std::string, ObservationRecord> observations_;
     std::string image_directory_;
@@ -1573,10 +1580,12 @@ void LinuxBackend::hotkey_event(const std::vector<std::string>& keys, Context& c
         else regular.push_back(key);
     }
     if (regular.size() != 1) throw Error("invalid_argument", "hotkey requires exactly one non-modifier key");
+    require_not_toggled(regular.front());
     std::vector<std::string> pressed;
     Context release_context;
     try {
         for (const auto& modifier : modifiers) {
+            if (toggled_.contains(modifier)) continue;
             key_event(modifier, true, context);
             pressed.push_back(modifier);
         }
@@ -1592,6 +1601,14 @@ void LinuxBackend::hotkey_event(const std::vector<std::string>& keys, Context& c
 }
 
 void LinuxBackend::type_text_impl(const std::string& text, Context& context) {
+    if (!toggled_.empty()) {
+        // Keycode typing is changed by any held key (Shift alters case, Ctrl,
+        // Alt and Super turn text into shortcuts).
+        std::string names;
+        for (const auto& key : toggled_) names += (names.empty() ? "" : ", ") + (key == "super" ? std::string("win") : key);
+        throw Error("toggles_active", "type-text is refused while " + names +
+                                          " is toggled on; release it with `dcu toggle off --all` first or use paste-text");
+    }
     for (unsigned char value : text) {
         check_context(context);
         if (value >= 0x20 && value <= 0x7e) {
@@ -1611,7 +1628,19 @@ void LinuxBackend::type_text_impl(const std::string& text, Context& context) {
 
 void LinuxBackend::release_inputs() noexcept {
     input_release_pending_.store(true, std::memory_order_release);
+    // EIS tracks and releases every key it pressed, toggled keys included.
     if (eis_) eis_->release();
+#if DCU_HAVE_GIO
+    if (wayland_ && remote_desktop_started_ && !eis_session_selected_) {
+        // The legacy Notify* transport keeps no key state of its own.
+        for (const auto& key : toggled_) {
+            try {
+                Context release_context;
+                portal_notify_key(common_keysym(key), false, release_context);
+            } catch (...) { }
+        }
+    }
+#endif
 #if DCU_HAVE_X11 && DCU_HAVE_XTEST
     if (display_ && !wayland_) {
         for (unsigned int button = 1; button <= 3; ++button) XTestFakeButtonEvent(display_, button, False, CurrentTime);
@@ -1620,9 +1649,64 @@ void LinuxBackend::release_inputs() noexcept {
             const KeyCode code = XKeysymToKeycode(display_, symbol);
             if (code) XTestFakeKeyEvent(display_, code, False, CurrentTime);
         }
+        if (toggled_.contains("space")) {
+            const KeyCode code = XKeysymToKeycode(display_, XK_space);
+            if (code) XTestFakeKeyEvent(display_, code, False, CurrentTime);
+        }
         XFlush(display_);
     }
 #endif
+    toggled_.clear();
+}
+
+void LinuxBackend::release_toggled_keys() noexcept {
+    for (const auto& key : toggled_) {
+        try {
+            Context release_context;
+            key_event(key, false, release_context);
+        } catch (...) { }
+    }
+    toggled_.clear();
+}
+
+void LinuxBackend::require_not_toggled(const std::string& key) const {
+    const std::string canonical = canonical_key(key);
+    if (toggled_.contains(canonical)) {
+        const std::string name = canonical == "super" ? "win" : canonical;
+        throw Error("toggles_active", name + " is toggled on; pressing it again would release it. "
+                                      "Use `dcu toggle off --key " + name + "` instead");
+    }
+}
+
+void LinuxBackend::set_toggle(const std::string& key, bool down, Context& context) {
+    if (!session_active_.load(std::memory_order_acquire)) {
+        throw Error("session_required", "Start a computer-use session before input actions");
+    }
+    if (interrupted_.load(std::memory_order_acquire)) throw Error("cancelled", "Session interrupted");
+    const std::string canonical = canonical_key(key);
+    if (!down) {
+        Context release_context;
+        key_event(canonical, false, release_context);
+        toggled_.erase(canonical);
+    } else {
+        // Track before the press so every release path includes the key.
+        toggled_.insert(canonical);
+        try {
+            key_event(canonical, true, context);
+        } catch (...) {
+            try {
+                Context release_context;
+                key_event(canonical, false, release_context);
+            } catch (...) { }
+            toggled_.erase(canonical);
+            throw;
+        }
+    }
+    last_activity_ = Clock::now();
+}
+
+void LinuxBackend::release_toggles() noexcept {
+    release_toggled_keys();
 }
 
 namespace {
@@ -1694,6 +1778,8 @@ Json LinuxBackend::click(const Json& params, Context& context) {
     std::vector<std::string> held;
     try {
         for (const auto& modifier : keys) {
+            // A toggled key is already down and must stay down after the click.
+            if (toggled_.contains(canonical_key(modifier))) continue;
             key_event(modifier, true, context);
             held.push_back(modifier);
         }
@@ -1769,8 +1855,23 @@ Json LinuxBackend::drag(const Json& params, Context& context) {
     }
     const std::string button = button_name(params);
     move_pointer(window.x + from.first, window.y + from.second, context, &window);
-    button_event(button, true, context);
     Context release_context;
+    // Modifiers are held for the whole drag. Declared before the button guard
+    // so the button is released first, then the modifiers.
+    std::vector<std::string> held_modifiers;
+    HeldButton modifier_guard([this, &held_modifiers, &release_context] {
+        for (auto it = held_modifiers.rbegin(); it != held_modifiers.rend(); ++it) {
+            try { key_event(*it, false, release_context); } catch (...) { }
+        }
+    }, true);
+    if (params.contains("modifiers")) {
+        for (const auto& modifier : key_list(Json{{"key", string_value(params, "modifiers")}})) {
+            if (toggled_.contains(canonical_key(modifier))) continue;
+            key_event(modifier, true, context);
+            held_modifiers.push_back(modifier);
+        }
+    }
+    button_event(button, true, context);
     HeldButton guard([this, button, &release_context] {
         try { button_event(button, false, release_context); } catch (...) { }
     }, true);
@@ -1788,6 +1889,7 @@ Json LinuxBackend::drag(const Json& params, Context& context) {
     wait_checked(context, hold_after);
     button_event(button, false, release_context);
     guard.dismiss();
+    modifier_guard.reset();
     input_release_pending_.store(false, std::memory_order_release);
     mark_input_complete();
     Json result = action_result();
@@ -1838,6 +1940,7 @@ Json LinuxBackend::press_key(const Json& params, Context& context) {
     activate(window);
     const std::string key = string_value(params, "key");
     if (key.empty()) throw Error("invalid_argument", "key is required");
+    require_not_toggled(key);
     key_event(key, true, context);
     Context release_context;
     key_event(key, false, release_context);
@@ -2024,19 +2127,26 @@ Json LinuxBackend::execute(const std::string& method, const Json& params, Contex
     if (method == "capabilities") return capabilities();
     if (method == "session.start") return session_start(params, context);
     if (method == "session.stop") return session_stop(params);
-    if (method == "list-windows") return list_windows(params);
-    if (method == "list-apps") return list_apps(params);
-    if (method == "get-app-state") return get_app_state(params, context);
-    if (method == "get-full-screenshot") return full_screenshot(params);
-    if (method == "click") return click(params, context);
-    if (method == "drag") return drag(params, context);
-    if (method == "scroll") return scroll(params, context);
-    if (method == "type-text") return type_text(params, context);
-    if (method == "press-key") return press_key(params, context);
-    if (method == "hotkey") return hotkey(params, context);
-    if (method == "set-value") return set_value(params, context);
-    if (method == "paste-text") return paste_text(params, context);
-    throw Error("unsupported", "Unknown Linux backend method: " + method);
+    const auto run = [&]() -> Json {
+        if (method == "list-windows") return list_windows(params);
+        if (method == "list-apps") return list_apps(params);
+        if (method == "get-app-state") return get_app_state(params, context);
+        if (method == "get-full-screenshot") return full_screenshot(params);
+        if (method == "click") return click(params, context);
+        if (method == "drag") return drag(params, context);
+        if (method == "scroll") return scroll(params, context);
+        if (method == "type-text") return type_text(params, context);
+        if (method == "press-key") return press_key(params, context);
+        if (method == "hotkey") return hotkey(params, context);
+        if (method == "set-value") return set_value(params, context);
+        if (method == "paste-text") return paste_text(params, context);
+        throw Error("unsupported", "Unknown Linux backend method: " + method);
+    };
+    Json result = run();
+    // The idle timeout counts from the last successful request, as in the
+    // dispatcher, not from session start.
+    last_activity_ = Clock::now();
+    return result;
 }
 
 #if DCU_HAVE_PIPEWIRE && DCU_HAVE_GIO

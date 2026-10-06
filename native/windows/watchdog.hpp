@@ -7,8 +7,8 @@ namespace dcu::windows {
 
 // Called by the common executable's early --input-watchdog branch. The
 // watchdog opens the parent's named state mapping and releases only the
-// buttons, modifiers, and key recorded by the DCU process after the parent
-// exits.
+// buttons, modifiers (including toggled keys), and key recorded by the DCU
+// process after the parent exits.
 int run_input_watchdog(std::uint32_t parentPid, const std::string& mappingName) noexcept;
 
 class InputWatchdog final {

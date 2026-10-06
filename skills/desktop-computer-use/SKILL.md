@@ -49,14 +49,15 @@ dcu doctor | capabilities
 dcu session start | status | stop
 dcu list-apps | list-windows --app APP | get-app-state --app APP [--include-text]
 dcu get-full-screenshot --app APP --observation-id ID
-dcu click --app APP (--element-index N | --x X --y Y [--coords full])
-dcu drag --app APP (--from-element-index N --to-element-index N | --from-x X --from-y Y --to-x X --to-y Y [--coords full])
+dcu click --app APP (--element-index N | --x X --y Y [--coords full]) [--modifiers shift+ctrl]
+dcu drag --app APP (--from-element-index N --to-element-index N | --from-x X --from-y Y --to-x X --to-y Y [--coords full]) [--modifiers shift]
 dcu scroll --app APP --x X --y Y --direction down [--amount 3] [--coords full]
 dcu type-text --app APP --text TEXT
 dcu press-key --app APP --key KEY
 dcu hotkey --app APP --key MODIFIER+KEY
 dcu set-value --app APP --element-index N --value TEXT
 dcu paste-text --app APP --text TEXT
+dcu toggle on --key shift|ctrl|alt|win|space | toggle off --key KEY | toggle off --all | toggle status
 ```
 
 `drag` defaults to `--duration-ms 240 --steps 12 --hold-before-ms 50 --hold-after-ms 50`.
@@ -64,6 +65,26 @@ It emits each intermediate move immediately so native applications and games obs
 button-held drag. The daemon releases held buttons and modifiers when a drag is cancelled, a
 session stops, or the connection is lost. Never resend a mutation after a timeout until a fresh
 observation establishes whether it arrived.
+
+## Holding keys (toggles)
+
+When a key must stay held across several actions, toggle it. Examples are Photoshop shift-click
+to add to a selection, space-drag to pan, and a Ctrl or Alt modifier held over several clicks.
+
+1. Run `dcu toggle on --key shift` (keys: `shift`, `ctrl`, `alt`, `win`, `space`).
+2. Run the clicks and drags. While any key is held, every result, error included, lists
+   `toggles` (for example `["shift"]`) and a `notice` such as
+   `` Toggle still on: shift. Release with `dcu toggle off --all` before ending. ``
+3. Release as soon as the held-key work is done: `dcu toggle off --key shift`, or
+   `dcu toggle off --all`. `dcu toggle status` lists the held keys.
+
+`dcu session stop` fails with `toggles_active` (exit 1, session kept) until every toggle is
+released. `type-text` is refused with `toggles_active` while `ctrl`, `alt`, or `win` is toggled
+on Windows, and while any toggle is on Linux; use `paste-text` or release first. Pressing a toggled
+key itself (for example `press-key --key space` while space is toggled) is also refused. When the
+hold is for one click or drag only, prefer `--modifiers shift` (or `ctrl+alt`) on that action
+instead of a toggle. Esc pressed twice, the 120-second idle expiry, and a lost connection end the
+session and release every toggle.
 
 Use `--text-stdin` or `--value-stdin` for sensitive values. Use `--no-screenshot` only when the
 tree or action result is sufficient. Linux requires a logged-in desktop session; Wayland may ask

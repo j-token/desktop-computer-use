@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { parseArgs } from "../dist/cli.js";
+import { methodFor, parseArgs, sessionFileAction } from "../dist/cli.js";
 import { resultContent } from "../dist/mcp.js";
 import { clearSession, ensureRuntime, readSession, usageInstructions, writeSession } from "../dist/runtime.js";
 import { parseGnomeShellMajor, selectGnomeVariant } from "../dist/setup.js";
@@ -92,6 +92,49 @@ test("CLI validates --coords before sending input", async () => {
   assert.equal(parseArgs(["click", "--coords", "full"]).options.coords, "full");
   const negative = await runCliProcess(["click", "--session-id", "s", "--app", "x", "--x", "-1", "--y", "1"]);
   assert.equal(negative.response.error.code, "invalid_argument");
+});
+
+test("CLI maps toggle subcommands to native methods", () => {
+  const on = parseArgs(["toggle", "on", "--key", "shift"]);
+  assert.deepEqual(on.command, ["toggle", "on"]);
+  assert.equal(on.options.key, "shift");
+  assert.equal(methodFor(on.command, on.options), "toggle.set");
+  const off = parseArgs(["toggle", "off", "--key", "space"]);
+  assert.equal(methodFor(off.command, off.options), "toggle.set");
+  const all = parseArgs(["toggle", "off", "--all"]);
+  assert.equal(all.options.all, true);
+  assert.equal(methodFor(all.command, all.options), "toggle.release-all");
+  assert.equal(methodFor(["toggle", "status"], {}), "toggle.status");
+});
+
+test("CLI rejects malformed toggle and modifier requests before sending input", async () => {
+  const cases = [
+    [["toggle", "on", "--session-id", "s", "--key", "capslock"], /--key must be shift, ctrl, alt, win, or space/],
+    [["toggle", "on", "--session-id", "s"], /requires --key/],
+    [["toggle", "off", "--session-id", "s"], /requires --key/],
+    [["toggle", "on", "--session-id", "s", "--all"], /--all is only valid/],
+    [["toggle", "off", "--session-id", "s", "--all", "--key", "shift"], /--all is only valid/],
+    [["toggle", "hold", "--key", "shift"], /toggle on --key K/],
+    [["drag", "--session-id", "s", "--app", "x", "--from-x", "1", "--from-y", "1", "--to-x", "2", "--to-y", "2", "--modifiers", "shift+space"], /modifiers must join/]
+  ];
+  for (const [args, message] of cases) {
+    const { code, response } = await runCliProcess(args);
+    assert.equal(code, 1, args.join(" "));
+    assert.equal(response.error.code, "invalid_argument", args.join(" "));
+    assert.match(response.error.message, message);
+  }
+});
+
+test("a refused session stop keeps the saved session", () => {
+  const refused = {
+    id: "x",
+    ok: false,
+    error: { code: "toggles_active", message: "Toggle still on: shift", details: { toggles: ["shift"] } }
+  };
+  assert.equal(sessionFileAction("session.stop", refused), undefined);
+  assert.equal(sessionFileAction("session.stop", { id: "x", ok: true, result: { stopped: true } }), "clear");
+  assert.equal(sessionFileAction("session.start", { id: "x", ok: true, result: { sessionId: "s" } }), "write");
+  assert.equal(sessionFileAction("toggle.set", { id: "x", ok: true, result: {} }), undefined);
 });
 
 test("CLI get-full-screenshot requires a target window and an observation ID", async () => {
