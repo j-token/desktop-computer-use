@@ -176,6 +176,28 @@ public:
     const std::string& error() const { return error_; }
     GDBusConnection* connection() const { return connection_; }
 
+    std::string create_session(const std::string& requestToken, const std::string& sessionToken,
+                               Context* cancellation) {
+        GVariantBuilder options;
+        g_variant_builder_init(&options, G_VARIANT_TYPE_VARDICT);
+        g_variant_builder_add(&options, "{sv}", "handle_token", g_variant_new_string(requestToken.c_str()));
+        // The request and session have separate object paths. The portal
+        // requires a session token before it can begin user authorization.
+        g_variant_builder_add(&options, "{sv}", "session_handle_token", g_variant_new_string(sessionToken.c_str()));
+        std::string sessionHandle;
+        request_dict("org.freedesktop.portal.RemoteDesktop", "CreateSession",
+                     g_variant_new("(a{sv})", &options), cancellation,
+                     [&sessionHandle](GVariant* values) {
+                         portal_detail::Variant handle(g_variant_lookup_value(values, "session_handle", nullptr));
+                         if (handle && (g_variant_is_of_type(handle.get(), G_VARIANT_TYPE_STRING) ||
+                                        g_variant_is_of_type(handle.get(), G_VARIANT_TYPE_OBJECT_PATH))) {
+                             sessionHandle = g_variant_get_string(handle.get(), nullptr);
+                         }
+                     });
+        if (sessionHandle.empty()) throw Error("protocol_error", "RemoteDesktop returned no session handle");
+        return sessionHandle;
+    }
+
     void request_dict(const char* interfaceName, const char* method, GVariant* parameters,
                       Context* cancellation, const std::function<void(GVariant*)>& consume,
                       int timeoutMilliseconds = 30000) {
