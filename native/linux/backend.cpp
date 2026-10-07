@@ -1137,16 +1137,9 @@ bool LinuxBackend::portal_ready_for_input(Context& context) {
     std::unique_ptr<EisClient> new_eis;
     bool new_eis_selected = false;
     try {
-        const std::string token = "dcu_" + uuid();
-        GVariantBuilder create_options;
-        g_variant_builder_init(&create_options, G_VARIANT_TYPE_VARDICT);
-        g_variant_builder_add(&create_options, "{sv}", "handle_token", g_variant_new_string(token.c_str()));
-        portal_bus_->request_dict("org.freedesktop.portal.RemoteDesktop", "CreateSession",
-                                  g_variant_new("(a{sv})", &create_options), &context,
-                                  [&new_session](GVariant* values) {
-                                      new_session = variant_string(values, "session_handle");
-                                  });
-        if (new_session.empty()) throw Error("protocol_error", "RemoteDesktop returned no session handle");
+        const std::string request_token = "dcu_" + uuid();
+        const std::string session_token = "dcu_session_" + uuid();
+        new_session = portal_bus_->create_session(request_token, session_token, &context);
 
         GVariantBuilder select_options;
         g_variant_builder_init(&select_options, G_VARIANT_TYPE_VARDICT);

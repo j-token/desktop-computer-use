@@ -18,10 +18,36 @@ void emit_response(GDBusConnection* connection, const std::string& path) {
 }
 
 void handle_mock_request(GDBusConnection* connection, const gchar*, const gchar*,
-                         const gchar*, const gchar* method, GVariant*,
+                         const gchar*, const gchar* method, GVariant* parameters,
                          GDBusMethodInvocation* invocation, gpointer) {
     const auto path = "/org/freedesktop/portal/desktop/request/test/" +
                       std::to_string(++requestSequence);
+    if (std::string(method) == "CreateSession") {
+        dcu::GVariantRef options(g_variant_get_child_value(parameters, 0));
+        const gchar* requestToken = nullptr;
+        const gchar* sessionToken = nullptr;
+        if (!g_variant_lookup(options.get(), "session_handle_token", "&s", &sessionToken)) {
+            g_dbus_method_invocation_return_dbus_error(invocation,
+                "org.freedesktop.portal.Error.InvalidArgument", "Missing token");
+            return;
+        }
+        if (!g_variant_lookup(options.get(), "handle_token", "&s", &requestToken) ||
+            std::string(requestToken) != "dcu_request_test" ||
+            std::string(sessionToken) != "dcu_session_test") {
+            g_dbus_method_invocation_return_dbus_error(invocation,
+                "org.freedesktop.portal.Error.InvalidArgument", "Unexpected tokens");
+            return;
+        }
+        GVariantBuilder values;
+        g_variant_builder_init(&values, G_VARIANT_TYPE_VARDICT);
+        g_variant_builder_add(&values, "{sv}", "session_handle",
+            g_variant_new_string("/org/freedesktop/portal/desktop/session/test/dcu_session_test"));
+        g_dbus_connection_emit_signal(connection, nullptr, path.c_str(),
+            "org.freedesktop.portal.Request", "Response",
+            g_variant_new("(ua{sv})", 0, &values), nullptr);
+        g_dbus_method_invocation_return_value(invocation, g_variant_new("(o)", path.c_str()));
+        return;
+    }
     if (std::string(method) == "Immediate") {
         // Deliberately emit before the method reply to reproduce the subscription race.
         emit_response(connection, path);
@@ -57,12 +83,18 @@ int main() {
         "<node><interface name='org.desktopcomputeruse.Test'>"
         "<method name='Immediate'><arg type='o' direction='out'/></method>"
         "<method name='Delayed'><arg type='o' direction='out'/></method>"
+        "</interface><interface name='org.freedesktop.portal.RemoteDesktop'>"
+        "<method name='CreateSession'><arg type='a{sv}' direction='in'/>"
+        "<arg type='o' direction='out'/></method>"
         "</interface></node>";
     GDBusNodeInfo* node = g_dbus_node_info_new_for_xml(interfaceXml, nullptr);
     GDBusInterfaceVTable callbacks{};
     callbacks.method_call = handle_mock_request;
     const guint registration = g_dbus_connection_register_object(connection,
         "/org/freedesktop/portal/desktop", node->interfaces[0], &callbacks,
+        nullptr, nullptr, nullptr);
+    const guint remoteDesktopRegistration = g_dbus_connection_register_object(connection,
+        "/org/freedesktop/portal/desktop", node->interfaces[1], &callbacks,
         nullptr, nullptr, nullptr);
     GMainLoop* serviceLoop = g_main_loop_new(nullptr, FALSE);
     std::thread serviceThread([&] { g_main_loop_run(serviceLoop); });
@@ -99,6 +131,24 @@ int main() {
 
         dcu::PortalBus portal;
         dcu::Context cancellation;
+        GVariantBuilder missingTokenOptions;
+        g_variant_builder_init(&missingTokenOptions, G_VARIANT_TYPE_VARDICT);
+        g_variant_builder_add(&missingTokenOptions, "{sv}", "handle_token",
+                             g_variant_new_string("dcu_request_test"));
+        bool rejectedMissingToken = false;
+        try {
+            portal.request_dict("org.freedesktop.portal.RemoteDesktop", "CreateSession",
+                g_variant_new("(a{sv})", &missingTokenOptions), &cancellation,
+                [](GVariant*) {}, 1000);
+        } catch (const dcu::Error& error) {
+            rejectedMissingToken = error.code == "permission_required" &&
+                std::string(error.what()).find("Missing token") != std::string::npos;
+        }
+        if (!rejectedMissingToken) throw std::runtime_error("Missing session token was accepted");
+        const auto sessionHandle = portal.create_session("dcu_request_test", "dcu_session_test", &cancellation);
+        if (sessionHandle != "/org/freedesktop/portal/desktop/session/test/dcu_session_test") {
+            throw std::runtime_error("CreateSession did not return the authorized session handle");
+        }
         bool consumed = false;
         portal.request_dict("org.desktopcomputeruse.Test", "Immediate", nullptr,
             &cancellation, [&](GVariant* values) {
@@ -127,7 +177,7 @@ int main() {
         portal.request_dict("org.desktopcomputeruse.Test", "Immediate", nullptr,
                             &cancellation, [&](GVariant*) { consumed = true; }, 1000);
         if (!consumed) throw std::runtime_error("Request after cancellation failed");
-        std::cout << "GNOME stop signal, immediate response, and late response after cancellation passed\n";
+        std::cout << "CreateSession tokens, GNOME stop signal, immediate response, and late response after cancellation passed\n";
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';
         exitCode = 1;
@@ -137,6 +187,7 @@ int main() {
     serviceThread.join();
     g_main_loop_unref(serviceLoop);
     g_dbus_connection_unregister_object(connection, registration);
+    g_dbus_connection_unregister_object(connection, remoteDesktopRegistration);
     g_dbus_node_info_unref(node);
     g_object_unref(connection);
     g_test_dbus_down(testBus);
