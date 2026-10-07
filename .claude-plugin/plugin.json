@@ -1,0 +1,9 @@
+{
+  "name": "desktop-computer-use",
+  "version": "0.1.0",
+  "description": "Standalone native desktop computer-use CLI and skill",
+  "author": {
+    "name": "j-token"
+  },
+  "repository": "https://github.com/j-token/desktop-computer-use"
+}
