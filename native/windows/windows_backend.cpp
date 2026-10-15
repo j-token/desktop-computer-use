@@ -563,6 +563,35 @@ void send_mouse_move(int x, int y) {
     }
 }
 
+// SetCursorPos only repositions the cursor; pointer-based UI such as WinUI
+// sliders ignores it while a button is held. A drag moves with injected input.
+void send_mouse_move_input(int x, int y) {
+    // A DPI-unaware thread's absolute input lands a pixel off on most
+    // coordinates, so map and send it as per-monitor aware.
+    struct DpiScope {
+        DPI_AWARENESS_CONTEXT previous =
+            SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+        ~DpiScope() {
+            if (previous) SetThreadDpiAwarenessContext(previous);
+        }
+    } dpiScope;
+    const int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    const int top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    const int width = std::max(2, GetSystemMetrics(SM_CXVIRTUALSCREEN));
+    const int height = std::max(2, GetSystemMetrics(SM_CYVIRTUALSCREEN));
+    // Windows maps back by truncating, so round up to land on the same pixel.
+    const auto normalize = [](int offset, int extent) {
+        const long long clamped = std::clamp(offset, 0, extent - 1);
+        return static_cast<LONG>((clamped * 65535 + extent - 2) / (extent - 1));
+    };
+    INPUT input{};
+    input.type = INPUT_MOUSE;
+    input.mi.dx = normalize(x - left, width);
+    input.mi.dy = normalize(y - top, height);
+    input.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK;
+    send_input(input);
+}
+
 void sleep_context(Context& context, int milliseconds) {
     const auto deadline = Clock::now() + std::chrono::milliseconds(std::max(0, milliseconds));
     while (Clock::now() < deadline) {
@@ -1170,7 +1199,7 @@ void WindowsBackend::drag_at(HWND hwnd, POINT from, POINT to, MouseButton button
                              int duration, int steps, int holdBefore, int holdAfter,
                              const std::vector<WORD>& modifierKeys, Context& context) {
     activate(hwnd, context);
-    send_mouse_move(from.x, from.y);
+    send_mouse_move_input(from.x, from.y);
     context.check();
     if (!foreground_matches(hwnd)) {
         throw Error("focus_lost", "Target window lost foreground focus before drag");
@@ -1221,7 +1250,7 @@ void WindowsBackend::drag_at(HWND hwnd, POINT from, POINT to, MouseButton button
         const double fraction = static_cast<double>(step) / safeSteps;
         const int x = static_cast<int>(std::lround(from.x + (to.x - from.x) * fraction));
         const int y = static_cast<int>(std::lround(from.y + (to.y - from.y) * fraction));
-        send_mouse_move(x, y);
+        send_mouse_move_input(x, y);
         const int elapsed = static_cast<int>(std::lround(
             static_cast<double>(duration) * step / safeSteps));
         const int previous = static_cast<int>(std::lround(
