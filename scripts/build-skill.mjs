@@ -1,4 +1,4 @@
-import { chmod, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
@@ -7,14 +7,24 @@ const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const outfile = resolve(root, "skills/desktop-computer-use/scripts/dcu.mjs");
 const licenseReport = resolve(root, "skills/desktop-computer-use/references/THIRD_PARTY_LICENSES.md");
 const licenseFileNames = new Set(["LICENSE", "LICENSE.MD", "LICENSE.TXT", "COPYING", "NOTICE"]);
-await mkdir(dirname(outfile), { recursive: true });
+const outdir = dirname(outfile);
+await mkdir(outdir, { recursive: true });
+// 이전 빌드의 분할 청크를 지워 패키지에 낡은 파일이 섞이지 않게 합니다.
+for (const name of await readdir(outdir)) {
+  if (/^dcu(?:-.*)?\.m?js$/.test(name)) await rm(join(outdir, name));
+}
+// MCP SDK와 zod는 `mcp serve`에서만 동적으로 불러오므로 별도 청크로 나눠
+// 일반 CLI 호출마다 파싱하는 코드 양을 줄입니다.
 const buildResult = await build({
-  entryPoints: [resolve(root, "src/cli.ts")],
+  entryPoints: { dcu: resolve(root, "src/cli.ts") },
   bundle: true,
+  splitting: true,
   platform: "node",
   format: "esm",
   target: "node22",
-  outfile,
+  outdir,
+  chunkNames: "dcu-[name]-[hash]",
+  outExtension: { ".js": ".mjs" },
   legalComments: "eof",
   sourcemap: false,
   metafile: true,
