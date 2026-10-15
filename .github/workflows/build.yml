@@ -38,7 +38,11 @@ jobs:
             build/Release/desktop-computer-use-native.exe
           if-no-files-found: error
   adapters:
-    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -48,8 +52,11 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run bundle
+        if: runner.os == 'Linux'
       - run: bash extensions/package.sh
+        if: runner.os == 'Linux'
       - uses: actions/upload-artifact@v4
+        if: runner.os == 'Linux'
         with:
           name: skill-adapters
           path: |

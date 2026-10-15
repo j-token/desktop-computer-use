@@ -223,3 +223,109 @@ test("the skill entrypoint is runnable without a native binary for help", async 
   assert.match(String(output), /Emergency stop: press Esc twice within 1 second/);
   assert.match(String(output), /blue inward-fading screen-edge border/);
 });
+
+async function runNodeScript(nodeArgs, env = process.env, timeoutMs = 20000) {
+  const { spawn } = await import("node:child_process");
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, nodeArgs, { cwd: process.cwd(), env, stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    const timer = setTimeout(() => {
+      child.kill();
+      reject(new Error(`timed out after ${timeoutMs}ms: ${nodeArgs.join(" ")}\nstdout: ${stdout}\nstderr: ${stderr}`));
+    }, timeoutMs);
+    child.stdout.on("data", chunk => { stdout += chunk; });
+    child.stderr.on("data", chunk => { stderr += chunk; });
+    child.once("error", error => { clearTimeout(timer); reject(error); });
+    child.once("close", code => { clearTimeout(timer); resolve({ code, stdout, stderr }); });
+  });
+}
+
+// 스킬 설치의 junction(win32) 또는 symlink(linux)를 통해 번들을 실행할 때도
+// argv[1]의 링크 경로를 실제 파일 경로와 같은 진입점으로 인식해야 합니다.
+test("CLI entrypoints run when started through a linked directory", async () => {
+  const { resolve: resolvePath } = await import("node:path");
+  const { symlink } = await import("node:fs/promises");
+  const { createServer } = await import("node:net");
+  const directory = await mkdtemp(join(tmpdir(), "dcu-link-"));
+  const linkType = process.platform === "win32" ? "junction" : "dir";
+  const entries = [
+    ["dist", "cli.js"],
+    ["skills/desktop-computer-use/scripts", "dcu.mjs"]
+  ];
+  // 로컬 fixture가 데몬 대신 응답합니다. 존재하지 않는 native 경로를 지정하여
+  // 실제 데몬이나 GUI 세션을 실수로 시작하지 못하게 합니다.
+  const endpoint = process.platform === "win32"
+    ? `\\\\.\\pipe\\dcu-link-test-${process.pid}-${Date.now()}`
+    : join(directory, "fixture.sock");
+  const methods = [];
+  const server = createServer(socket => {
+    let text = "";
+    socket.on("data", chunk => {
+      text += chunk;
+      const newline = text.indexOf("\n");
+      if (newline < 0) return;
+      const request = JSON.parse(text.slice(0, newline));
+      methods.push(request.method);
+      socket.end(`${JSON.stringify({ id: request.id, ok: true, result: { fixture: true } })}\n`);
+    });
+  });
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(endpoint, resolve);
+  });
+  const fixtureEnv = {
+    ...process.env,
+    DCU_RUNTIME_DIR: join(directory, "runtime"),
+    DCU_ENDPOINT: endpoint,
+    DCU_NATIVE_PATH: join(directory, "missing-native")
+  };
+  try {
+    for (const [index, [target, file]] of entries.entries()) {
+      const link = join(directory, `link-${index}`);
+      await symlink(resolvePath(target), link, linkType);
+      const script = join(link, file);
+      for (const flags of [[], ["--preserve-symlinks-main"]]) {
+        const label = [...flags, script].join(" ");
+        const help = await runNodeScript([...flags, script, "--help"]);
+        assert.equal(help.code, 0, `${label} --help: ${help.stderr}`);
+        assert.match(help.stdout, /desktop-computer-use/, label);
+        assert.match(help.stdout, /capabilities/, label);
+        const bogus = await runNodeScript([...flags, script, "capabilities", "--bogus-option"]);
+        assert.equal(bogus.code, 1, `${label} capabilities --bogus-option: ${bogus.stdout}${bogus.stderr}`);
+        const response = JSON.parse(bogus.stdout.trim().split("\n").at(-1));
+        assert.equal(response.ok, false, label);
+        assert.equal(response.error.code, "invalid_argument", label);
+        assert.match(response.error.message, /Unknown option --bogus-option/, label);
+        const sent = methods.length;
+        const capabilities = await runNodeScript([...flags, script, "capabilities"], fixtureEnv);
+        assert.equal(capabilities.code, 0, `${label} capabilities: ${capabilities.stdout}${capabilities.stderr}`);
+        const success = JSON.parse(capabilities.stdout.trim().split("\n").at(-1));
+        assert.equal(success.ok, true, label);
+        assert.deepEqual(success.result, { fixture: true }, label);
+        assert.deepEqual(methods.slice(sent), ["capabilities"], label);
+      }
+    }
+  } finally {
+    await new Promise(resolve => server.close(() => resolve()));
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("importing the CLI from another entry script does not run it", async () => {
+  const { pathToFileURL } = await import("node:url");
+  const { resolve: resolvePath } = await import("node:path");
+  const directory = await mkdtemp(join(tmpdir(), "dcu-import-"));
+  try {
+    for (const target of ["dist/cli.js", "skills/desktop-computer-use/scripts/dcu.mjs"]) {
+      const entry = join(directory, "entry.mjs");
+      const url = pathToFileURL(resolvePath(target)).href;
+      await writeFile(entry, `await import(${JSON.stringify(url)});\nprocess.stdout.write("imported\\n");\n`);
+      const result = await runNodeScript([entry, "--help"]);
+      assert.equal(result.code, 0, `${target}: ${result.stderr}`);
+      assert.equal(result.stdout, "imported\n", target);
+    }
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
