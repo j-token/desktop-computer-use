@@ -45,6 +45,10 @@ jobs:
   build:
     needs: [validate]
     uses: ./.github/workflows/build.yml
+    # build.yml의 release·github-release job이 contents: write를 선언하므로 호출 쪽 상한을 맞춰야 한다.
+    # 두 job은 push 이벤트에서만 돌고, 나머지 job은 build.yml 최상위의 contents: read를 그대로 쓴다.
+    permissions:
+      contents: write
     with:
       ref: ${{ needs.validate.outputs.sha }}
   publish:
