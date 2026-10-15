@@ -459,11 +459,23 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 // Node는 기본적으로 main 모듈의 실제 경로를 사용하지만 argv[1]에는 링크 호출 경로가 남습니다.
 // --preserve-symlinks-main에서는 URL이 바로 일치하고, 그 외에는 양쪽 링크를 해석합니다.
 function isMainModule(): boolean {
-  const entry = process.argv[1];
-  if (!entry) return false;
-  if (import.meta.url === pathToFileURL(resolve(entry)).href) return true;
+  const entryArgument = process.argv[1];
+  if (!entryArgument) {
+    return false;
+  }
+
+  const entryPath = resolve(entryArgument);
+  const entryUrl = pathToFileURL(entryPath).href;
+  const moduleUrl = import.meta.url;
+  if (moduleUrl === entryUrl) {
+    return true;
+  }
+
   try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(resolve(entry));
+    const modulePath = fileURLToPath(moduleUrl);
+    const realModulePath = realpathSync(modulePath);
+    const realEntryPath = realpathSync(entryPath);
+    return realModulePath === realEntryPath;
   } catch {
     return false;
   }
