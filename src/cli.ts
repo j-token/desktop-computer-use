@@ -3,6 +3,7 @@ import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { DcuClient, errorToResponse } from "./client.js";
+import { compactResponse } from "./compact.js";
 import { DcuError } from "./errors.js";
 import {
   SESSIONLESS_METHODS,
@@ -63,6 +64,7 @@ const OPTION_DEFS: Record<string, { key: string; type: "string" | "number" | "bo
   "timeout-ms": { key: "timeoutMs", type: "number" },
   "json": { key: "json", type: "boolean" },
   "pretty": { key: "pretty", type: "boolean" },
+  "raw": { key: "raw", type: "boolean" },
   "help": { key: "help", type: "boolean" }
 };
 
@@ -239,6 +241,7 @@ function paramsFromOptions(options: Record<string, OptionValue>, method: string)
   const excluded = new Set([
     "json",
     "pretty",
+    "raw",
     "help",
     "timeoutMs",
     "textStdin",
@@ -320,6 +323,7 @@ function helpText(): string {
     "`toggle on --key K` holds a key across actions; every result then lists `toggles` with a notice.",
     "`session stop` fails with toggles_active while a toggle is on; run `toggle off --all` first.",
     "Active sessions show a top banner, high-contrast cursor ring, and blue inward-fading screen-edge border.",
+    "Output is compact JSON (element/window records as one line each); --raw prints the native response.",
     "Emergency stop: press Esc twice within 1 second or run `dcu session stop`."
   ].join("\n");
 }
@@ -392,8 +396,13 @@ function validateMethodParams(method: string, params: JsonObject): void {
   }
 }
 
-function output(value: unknown, pretty: boolean): void {
-  stdout.write(`${JSON.stringify(value, null, pretty ? 2 : 0)}\n`);
+// 기본 출력은 LLM 토큰을 줄인 압축 JSON이며, --raw는 네이티브 응답을 그대로 출력합니다.
+function output(
+  value: { ok: boolean; result?: unknown; error?: unknown },
+  options: { pretty?: OptionValue; raw?: OptionValue }
+): void {
+  const shaped = options.raw ? value : compactResponse(value);
+  stdout.write(`${JSON.stringify(shaped, null, options.pretty ? 2 : 0)}\n`);
 }
 
 export async function runCli(argv = process.argv.slice(2)): Promise<number> {
@@ -409,7 +418,7 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
       return 0;
     }
     if (parsed.command[0] === "setup") {
-      output({ id: null, ok: true, result: await runLocalSetup() }, Boolean(parsed.options.pretty));
+      output({ ok: true, result: await runLocalSetup() }, parsed.options);
       return 0;
     }
     const method = methodFor(parsed.command, parsed.options);
@@ -438,7 +447,7 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
     try {
       response = await client.request(method, params, { timeoutMs });
     } catch (error) {
-      output({ id: null, ...errorToResponse(error) }, Boolean(parsed.options.pretty));
+      output(errorToResponse(error), parsed.options);
       return 1;
     }
     const sessionFile = sessionFileAction(method, response);
@@ -448,10 +457,10 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
     } else if (sessionFile === "clear") {
       await clearSession(paths);
     }
-    output(response, Boolean(parsed.options.pretty));
+    output(response, parsed.options);
     return response.ok ? 0 : 1;
   } catch (error) {
-    output({ id: null, ...errorToResponse(error) }, false);
+    output(errorToResponse(error), {});
     return 1;
   }
 }

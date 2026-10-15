@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { compactResult } from "./compact.js";
 import { DcuClient } from "./client.js";
 import { MODIFIER_NAMES, SESSIONLESS_METHODS, TOGGLE_KEY_ALIASES } from "./methods.js";
 import { clearSession, readSession, writeSession } from "./runtime.js";
@@ -226,7 +227,7 @@ function asJsonObject(value: Record<string, unknown>): JsonObject {
 }
 
 function jsonText(value: unknown): string {
-  return JSON.stringify(value, null, 2);
+  return JSON.stringify(value);
 }
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
@@ -257,7 +258,8 @@ async function readScreenshot(screenshot: Record<string, unknown>): Promise<{ da
 }
 
 export async function resultContent(value: unknown): Promise<McpContent[]> {
-  const content: McpContent[] = [{ type: "text", text: jsonText(value) }];
+  // 이미지는 원본 값에서 읽고, 텍스트는 LLM 토큰을 줄인 압축 JSON으로 보냅니다.
+  const content: McpContent[] = [{ type: "text", text: JSON.stringify(compactResult(value)) }];
   const screenshot = findScreenshot(value);
   if (!screenshot) return content;
 
