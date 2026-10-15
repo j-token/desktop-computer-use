@@ -51,19 +51,26 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+  adapter-artifact:
+    needs: [adapters]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
       - run: npm run bundle
-        if: runner.os == 'Linux'
       - run: bash extensions/package.sh
-        if: runner.os == 'Linux'
       - uses: actions/upload-artifact@v4
-        if: runner.os == 'Linux'
         with:
           name: skill-adapters
           path: |
             skills/desktop-computer-use
             extensions/dist/*.zip
   package:
-    needs: [native, adapters]
+    needs: [native, adapter-artifact]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
