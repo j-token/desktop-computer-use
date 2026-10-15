@@ -3,6 +3,11 @@ project(desktop_computer_use VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+# Sources are UTF-8 without a BOM; without this MSVC reads them in the system
+# code page and garbles non-ASCII literals such as the indicator's "×".
+if(MSVC)
+  add_compile_options(/utf-8)
+endif()
 include(FetchContent)
 if(POLICY CMP0135)
   cmake_policy(SET CMP0135 NEW)
