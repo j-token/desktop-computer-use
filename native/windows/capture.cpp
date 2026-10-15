@@ -462,9 +462,22 @@ CaptureResult WindowCapture::capture(void* rawHwnd, const RECT& windowRect,
         int waitMilliseconds = 0;
         if (!impl_->hasLastFrame) waitMilliseconds = 1200;
         else if (minimumTimestamp != 0) waitMilliseconds = 100;
-        freshFrame = impl_->next_frame(context, frame, frameTimestamp100ns,
-                                       waitMilliseconds, minimumTimestamp) &&
-                     impl_->copy_frame(frame, pixels, sourceWidth, sourceHeight);
+        bool acquired = impl_->next_frame(context, frame, frameTimestamp100ns,
+                                          waitMilliseconds, minimumTimestamp);
+        if (!acquired && minimumTimestamp != 0) {
+            // WGC emits frames only when content changes, so an input that left
+            // the window unchanged never produces one. A new capture session
+            // always delivers an initial frame of the current content, captured
+            // after the input, so restarting keeps the post-input guarantee.
+            if (frame) frame.Close();
+            frame = nullptr;
+            impl_->reset_wgc();
+            if (impl_->ensure_wgc(hwnd, width, height)) {
+                acquired = impl_->next_frame(context, frame, frameTimestamp100ns, 1200,
+                                             minimumTimestamp);
+            }
+        }
+        freshFrame = acquired && impl_->copy_frame(frame, pixels, sourceWidth, sourceHeight);
         if (frame) frame.Close();
         if (freshFrame) {
             impl_->lastPixels = pixels;
