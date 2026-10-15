@@ -74,3 +74,21 @@ Actions return `delivered: true` only when the provider accepted the input seque
 verification state is `unverified` unless the follow-up observation asserts the intended state.
 Transport errors after request bytes were written are terminal for that mutation: inspect fresh
 state before deciding whether to act again.
+
+## CLI output
+
+The CLI prints compact JSON by default: the request `id`, timings, capture diagnostics, empty
+`toggles`, and the duplicate accessibility `tree` text are dropped; window records and
+accessibility elements become one-line strings; elements with no area, actions, or focus are
+omitted and counted in `hidden`. MCP text content uses the same shape. `--raw` prints the native
+response unchanged.
+
+## Linux setup
+
+`dcu setup` selects the legacy GNOME extension archive for GNOME 42–44 or the modern archive for
+GNOME 45–50, installs it under the current user's extension directory, compiles its schemas when
+`glib-compile-schemas` is available, and requests enablement without logging out. Missing commands
+or native libraries are reported with package names and an apt command; without passwordless sudo
+it reports the command for a root shell and leaves `installed` false. `dcu doctor` stays
+fail-closed until the native backend and indicator are ready. X11 actions may require XTest/AT-SPI
+packages; Wayland may ask for RemoteDesktop/ScreenCast portal approval.
