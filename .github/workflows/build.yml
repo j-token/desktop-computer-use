@@ -38,7 +38,11 @@ jobs:
             build/Release/desktop-computer-use-native.exe
           if-no-files-found: error
   adapters:
-    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,6 +51,16 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+  adapter-artifact:
+    needs: [adapters]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
       - run: npm run bundle
       - run: bash extensions/package.sh
       - uses: actions/upload-artifact@v4
@@ -56,7 +70,7 @@ jobs:
             skills/desktop-computer-use
             extensions/dist/*.zip
   package:
-    needs: [native, adapters]
+    needs: [native, adapter-artifact]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4

@@ -65,6 +65,10 @@ Run a focused Node test with the built-in test runner:
 node --test tests/cli.test.js
 ```
 
+CLI 회귀 테스트는 실제 경로뿐 아니라 디렉터리 링크를 통한 실행도 검증합니다. Windows에서는 관리자 권한 없이 생성할 수 있는 junction을, Linux에서는 디렉터리 symlink를 사용하여 컴파일된 CLI와 번들의 `--help` 출력 및 잘못된 옵션의 JSON 오류를 확인합니다. 격리된 로컬 fixture로 `capabilities`의 요청 전달과 정상 JSON 출력도 검증하며, 네이티브 데몬이나 GUI 세션은 시작하지 않습니다. CI는 Windows와 Linux 양쪽에서 어댑터 테스트를 실행합니다.
+
+`npx skills`가 만든 `.claude/skills` 등의 경로는 실제 설치 디렉터리를 가리키는 링크일 수 있습니다. Node는 기본적으로 main 모듈의 링크를 실제 경로로 해석하지만 `process.argv[1]`에는 호출 경로가 남습니다. CLI 진입점에서 이 경로들을 realpath로 해석하지 않고 URL 문자열만 비교하면 모든 명령이 출력 없이 종료 코드 `0`으로 끝날 수 있습니다. 이 증상이 발생하는 이전 설치본은 수정된 번들을 `npm run build:all`로 생성한 뒤 갱신해야 합니다.
+
 Native contract tests run through CTest as shown above. Reusable desktop and transport harnesses live under `tests/integration/`; follow [Validation](validation.md) before running anything that opens a window or sends input.
 
 The real MCP image smoke test needs a built native daemon and a visible target window:

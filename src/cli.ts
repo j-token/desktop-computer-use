@@ -1,6 +1,7 @@
 import { stdin, stdout } from "node:process";
+import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { DcuClient, errorToResponse } from "./client.js";
 import { DcuError } from "./errors.js";
 import {
@@ -455,7 +456,29 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+// Node는 기본적으로 main 모듈의 실제 경로를 사용하지만 argv[1]에는 링크 호출 경로가 남습니다.
+// --preserve-symlinks-main에서는 URL이 바로 일치하고, 그 외에는 양쪽 링크를 해석합니다.
+function isMainModule(): boolean {
+  if (!process.argv[1]) {
+    return false;
+  }
+
+  const entryPath = resolve(process.argv[1]);
+  const entryUrl = pathToFileURL(entryPath).href;
+  if (import.meta.url === entryUrl) {
+    return true;
+  }
+
+  try {
+    const realModulePath = realpathSync(fileURLToPath(import.meta.url));
+    const realEntryPath = realpathSync(entryPath);
+    return realModulePath === realEntryPath;
+  } catch {
+    return false;
+  }
+}
+
+if (isMainModule()) {
   runCli().then(code => {
     process.exitCode = code;
   });
