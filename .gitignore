@@ -10,7 +10,7 @@ artifacts/
 *.log
 orca-research/
 skills/desktop-computer-use/bin/
-skills/desktop-computer-use/scripts/dcu.mjs
+skills/desktop-computer-use/scripts/dcu*.mjs
 
 # Local credentials and agent configuration.
 .env

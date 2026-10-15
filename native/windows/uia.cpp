@@ -72,6 +72,27 @@ std::string control_type_name(int type) {
     case UIA_TreeControlTypeId: return "Tree";
     case UIA_TreeItemControlTypeId: return "TreeItem";
     case UIA_WindowControlTypeId: return "Window";
+    case UIA_CalendarControlTypeId: return "Calendar";
+    case UIA_MenuBarControlTypeId: return "MenuBar";
+    case UIA_ProgressBarControlTypeId: return "ProgressBar";
+    case UIA_SpinnerControlTypeId: return "Spinner";
+    case UIA_StatusBarControlTypeId: return "StatusBar";
+    case UIA_ToolBarControlTypeId: return "ToolBar";
+    case UIA_ToolTipControlTypeId: return "ToolTip";
+    case UIA_CustomControlTypeId: return "Custom";
+    case UIA_GroupControlTypeId: return "Group";
+    case UIA_ThumbControlTypeId: return "Thumb";
+    case UIA_DataGridControlTypeId: return "DataGrid";
+    case UIA_DataItemControlTypeId: return "DataItem";
+    case UIA_DocumentControlTypeId: return "Document";
+    case UIA_SplitButtonControlTypeId: return "SplitButton";
+    case UIA_HeaderControlTypeId: return "Header";
+    case UIA_HeaderItemControlTypeId: return "HeaderItem";
+    case UIA_TableControlTypeId: return "Table";
+    case UIA_TitleBarControlTypeId: return "TitleBar";
+    case UIA_SeparatorControlTypeId: return "Separator";
+    case UIA_SemanticZoomControlTypeId: return "SemanticZoom";
+    case UIA_AppBarControlTypeId: return "AppBar";
     default: return "ControlType_" + std::to_string(type);
     }
 }
