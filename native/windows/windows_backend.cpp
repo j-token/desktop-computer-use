@@ -311,6 +311,27 @@ std::optional<WindowInfo> blocking_modal(const WindowInfo& target) {
     return windows[*index];
 }
 
+// Owned popups such as Chrome's permission and download bubbles leave the
+// owner enabled, so blocking_modal misses them, and the per-window capture
+// leaves them out of the owner's screenshot.
+std::vector<WindowInfo> modeless_owned_windows(HWND owner) {
+    struct Search {
+        HWND owner;
+        std::vector<WindowInfo> found;
+    } search{owner, {}};
+    EnumWindows(
+        [](HWND hwnd, LPARAM raw) -> BOOL {
+            auto* search = reinterpret_cast<Search*>(raw);
+            if (visible_owner(hwnd) != search->owner) return TRUE;
+            if (const auto info = inspect_window(hwnd); info && !info->modal) {
+                search->found.push_back(*info);
+            }
+            return TRUE;
+        },
+        reinterpret_cast<LPARAM>(&search));
+    return search.found;
+}
+
 Json modal_json(const WindowInfo& modal) {
     return Json{{"windowId", window_id(modal.hwnd)}, {"title", modal.title}, {"app", modal.app}};
 }
@@ -1032,6 +1053,20 @@ Json WindowsBackend::observe(const Json& params, Context& context) {
                            modal->title + "\". The dialog is a separate window and is not in "
                            "this screenshot or accessibility tree; observe and act on "
                            "--window-id " + modalId + " instead.";
+    }
+    // A modal disables the owner, which makes every window it owns modal, so
+    // modeless popups exist only when no modal is reported.
+    const auto popups = modal ? std::vector<WindowInfo>{} : modeless_owned_windows(target.hwnd);
+    if (!popups.empty()) {
+        Json records = Json::array();
+        std::string names;
+        for (const auto& popup : popups) {
+            records.push_back(window_json(popup));
+            names += (names.empty() ? "" : ", ") + window_id(popup.hwnd) + " \"" + popup.title + "\"";
+        }
+        result["ownedWindows"] = std::move(records);
+        result["notice"] = "Owned windows " + names + " are separate windows and may be missing "
+                           "from this window's screenshot; observe --window-id to read or act on them.";
     }
     std::int64_t capturedAtUnixMs = 0;
     Observation observation;

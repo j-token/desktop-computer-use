@@ -132,7 +132,8 @@ const tools: ToolDefinition[] = [
     method: "get-app-state",
     description:
       "Capture the latest target window state; a reduced screenshot (0.5x above 1280x720) is included by default. " +
-      "If the result reports modal, observe and act on modal.windowId instead.",
+      "If the result reports modal, observe and act on modal.windowId instead. " +
+      "ownedWindows lists popups such as browser permission bubbles that the screenshot excludes.",
     schema: { ...common }
   },
   {

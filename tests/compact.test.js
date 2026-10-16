@@ -70,6 +70,18 @@ test("compact lists windows and apps as one line per window", () => {
   });
 });
 
+test("compact lists an observation's owned popups as one line per window", () => {
+  const bubble = { id: "hwnd:3", app: "chrome.exe", title: "Permission", x: 5, y: 6, width: 30, height: 20,
+    isForeground: false, isEnabled: true, ownerWindowId: "hwnd:1", modal: false };
+
+  const result = compactResult({ observationId: "o", ownedWindows: [bubble] });
+
+  assert.deepEqual(result, {
+    observationId: "o",
+    ownedWindows: ["hwnd:3 \"Permission\" app=chrome.exe 5,6 30x20 owner=hwnd:1"]
+  });
+});
+
 test("compact understands Linux AT-SPI element records", () => {
   assert.equal(
     elementLine({ index: 4, controlType: "push button", name: "Open", value: "", isSelected: true,

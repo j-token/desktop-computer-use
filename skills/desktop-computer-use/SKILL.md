@@ -47,6 +47,12 @@ daemon converts them. Without a screenshot observation, coordinate actions fail 
 Dialogs are separate windows. On `modal` in a state or a `modal_active` error, act on the dialog's
 `--window-id` (from the notice or `list-windows`). On Windows the owner's screenshot excludes it.
 
+Popups that do not block the owner, such as browser permission and download bubbles, appear in a
+Windows state as `ownedWindows` with a notice; the screenshot usually excludes them too. When an action
+seems to do nothing (a download click saves no file, a page shows no change), check `ownedWindows`
+and the elements for such a prompt before reporting failure. Ask the user before allowing a
+permission.
+
 ## Commands
 
 ```text
