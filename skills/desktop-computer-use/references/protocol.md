@@ -49,7 +49,15 @@ fails with `element_not_actionable`. When a scrollable container is under the po
 `scroll` waits up to one second for its scroll position to change and settle before returning and
 reports `layoutSettled`; `false` means it did not move or settle (end of page), so observe again
 before acting on element bounds. Without such a container the field is absent and the scroll
-returns at once. An observation ID becomes stale when the window geometry, monitor scale, or target state
+returns at once. On Windows every input action watches its window's UI Automation layout,
+structure, and scroll events from just before the input, and the first accessibility observation
+of that window afterwards (an attached `observe: "text"`/`"both"` or a later `get-app-state` with
+text) waits for them: with none within 0.7 seconds of the input it reads the tree at once;
+otherwise it waits until they stop for 0.6 seconds, up to 2.5 seconds after the input, and
+reports `layoutSettled` (`false` when the page kept changing, so
+observe again before acting on its bounds). This catches inputs that animate or scroll the page,
+whose new locations Chrome publishes up to about half a second late. Screenshot-only observations
+never wait. An observation ID becomes stale when the window geometry, monitor scale, or target state
 changes, and the native backend rejects stale element or coordinate use. MCP reads the screenshot
 path into an image content block; the CLI leaves the absolute private path in JSON.
 

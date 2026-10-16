@@ -25,9 +25,11 @@
 #include <ctime>
 #include <filesystem>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace dcu::windows {
@@ -745,6 +747,17 @@ private:
     // receives the union.
     std::atomic<DWORD> heldModifiers_{0};
     std::atomic<DWORD> toggledKeys_{0};
+    // Layout changes an input caused, which the next accessibility observation
+    // of that window waits for unless a scroll already confirmed them. The
+    // watcher is armed before the input so no event the input causes is
+    // missed, and becomes pending once the input completes.
+    struct PendingLayout {
+        std::unique_ptr<UiaChangeWatcher> watcher;
+        HWND hwnd = nullptr;
+        Clock::time_point inputAt;
+    };
+    std::optional<PendingLayout> armedLayout_;
+    std::optional<PendingLayout> pendingLayout_;
     std::atomic<WORD> heldKey_{0};
     std::atomic<DWORD> heldKeyFlags_{0};
     InputWatchdog watchdog_;
@@ -967,6 +980,32 @@ POINT visible_element_center(const UiaSnapshotBuilder& uia, const ElementRecord&
 // scroll position of the container under the pointer has changed and held still
 // lets the next observation see the scrolled page. A scroll that moves nothing
 // (the end of the page) waits out the timeout and reports false.
+// An input that animates or scrolls the page (an accordion, an anchor jump)
+// leaves the accessibility tree on the old layout for a while; Chrome raises
+// layout events about 0.35 seconds after the input and then in batches about
+// half a second apart. No event within the first window means the input
+// changed nothing that is still pending; otherwise the tree is read once the
+// events stop for longer than a batch interval.
+bool wait_for_layout_to_settle(const UiaChangeWatcher& watcher, Clock::time_point inputAt,
+                               Context& context) {
+    constexpr auto firstChangeWindow = std::chrono::milliseconds(700);
+    constexpr auto quietPeriod = std::chrono::milliseconds(600);
+    constexpr auto maximumWait = std::chrono::milliseconds(2500);
+    constexpr int pollMilliseconds = 20;
+    while (true) {
+        const auto now = Clock::now();
+        // The watcher is armed before activation, whose own focus events
+        // must not stand in for the layout changes of the input itself.
+        auto lastChange = watcher.last_change();
+        if (lastChange && *lastChange < inputAt) lastChange.reset();
+        if (lastChange ? now - *lastChange >= quietPeriod : now - inputAt >= firstChangeWindow) {
+            return true;
+        }
+        if (now - inputAt >= maximumWait) return false;
+        sleep_context(context, pollMilliseconds);
+    }
+}
+
 bool wait_for_scroll_to_settle(const UiaSnapshotBuilder& uia,
                                IUIAutomationScrollPattern* container,
                                const ScrollPosition& before, Context& context) {
@@ -1113,6 +1152,19 @@ Json WindowsBackend::observe(const Json& params, Context& context) {
         result["notice"] = "Owned windows " + names + " are separate windows and may be missing "
                            "from this window's screenshot; observe --window-id to read or act on them.";
     }
+    // Waiting comes before the screenshot so both describe the same layout. A
+    // screenshot-only observation shows the pixels as they are and never waits.
+    if (observeText && pendingLayout_ && pendingLayout_->hwnd == target.hwnd) {
+        auto pending = std::exchange(pendingLayout_, std::nullopt);
+        if (pending->watcher->watching()) {
+            const auto settleStarted = Clock::now();
+            result["layoutSettled"] =
+                wait_for_layout_to_settle(*pending->watcher, pending->inputAt, context);
+            pending.reset();
+            result["timings"]["settleMs"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                Clock::now() - settleStarted).count();
+        }
+    }
     std::int64_t capturedAtUnixMs = 0;
     Observation observation;
     observation.id = id;
@@ -1212,6 +1264,10 @@ Json WindowsBackend::action_result() {
     // action completed. Capture keeps this watermark independently of the
     // serialized dispatcher so a follow-up observe can wait for a new frame.
     capture_.mark_input_complete();
+    if (armedLayout_) {
+        armedLayout_->inputAt = Clock::now();
+        pendingLayout_ = std::exchange(armedLayout_, std::nullopt);
+    }
     return Json{{"delivered", true}, {"verification", {{"state", "unverified"}}}};
 }
 
@@ -1432,6 +1488,13 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
         const auto target = require_target_window(params);
         // Windows discards input to a disabled owner, so it would only look delivered.
         reject_blocked_target(target);
+        pendingLayout_.reset();
+        armedLayout_ = PendingLayout{std::make_unique<UiaChangeWatcher>(target.hwnd), target.hwnd, {}};
+        // An input that fails leaves nothing pending.
+        struct Disarm {
+            std::optional<PendingLayout>& armed;
+            ~Disarm() { armed.reset(); }
+        } disarm{armedLayout_};
         const auto observationId = json_string(params, "observationId");
         Observation* observation = nullptr;
         if (!observationId.empty()) observation = &require_observation(params, target.hwnd, target.rect);
@@ -1553,7 +1616,11 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
             auto result = action_result();
             if (transform) result["coordinateSpace"] = transform->space;
             result["windowPoint"] = pointJson(local);
-            if (layoutSettled) result["layoutSettled"] = *layoutSettled;
+            if (layoutSettled) {
+                // The scroll already watched its container for up to a second.
+                pendingLayout_.reset();
+                result["layoutSettled"] = *layoutSettled;
+            }
             return result;
         }
         if (method == "type-text") {
@@ -1694,6 +1761,7 @@ void WindowsBackend::stop_session() noexcept {
     release_held_input();
     indicator_.stop();
     clear_observations();
+    pendingLayout_.reset();
     {
         std::lock_guard lock(observationsMutex_);
         sessionId_.clear();
