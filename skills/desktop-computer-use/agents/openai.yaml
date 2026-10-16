@@ -1,0 +1,4 @@
+interface:
+  display_name: Desktop Computer Use
+  short_description: Operate visible native apps and games with paced native input
+  default_prompt: Use $desktop-computer-use to inspect and operate a visible desktop application.
