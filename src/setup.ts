@@ -4,6 +4,7 @@ import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve, sep } from "node:path";
 import { DcuError } from "./errors.js";
 import {
+  endpointForToken,
   ensureRuntime,
   ensureToken,
   resolveNativePath,
@@ -627,7 +628,7 @@ function setupRuntimeResult(
 export async function runLocalSetup(): Promise<JsonObject> {
   const paths = resolveRuntimePaths();
   await ensureRuntime(paths);
-  await ensureToken(paths);
+  const token = await ensureToken(paths);
 
   const skillRoot = resolveSkillRoot();
   let nativePath: string | undefined;
@@ -641,7 +642,7 @@ export async function runLocalSetup(): Promise<JsonObject> {
   const result: JsonObject = {
     platform: process.platform,
     runtimeDirectory: paths.directory,
-    endpoint: paths.endpoint,
+    endpoint: endpointForToken(paths, token),
     tokenFile: paths.tokenFile,
     nativePath: nativePath ?? null,
     nativeAvailable: Boolean(nativePath),

@@ -3,7 +3,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { performance } from "node:perf_hooks";
 import { DcuClient } from "../../dist/client.js";
-import { readSession } from "../../dist/runtime.js";
+import { endpointForToken, readSession } from "../../dist/runtime.js";
 import { readFixtureEvents, waitForFixtureEvent } from "./fixture-events.mjs";
 
 const [mode, windowId, logPath, outputPath, daemonPid] = process.argv.slice(2);
@@ -38,7 +38,7 @@ const [fromX, fromY] = toPixel(148, 211);
 const [toX, toY] = toPixel(548, 211);
 const firstEventIndex = (await readFixtureEvents(logPath)).length;
 
-const socket = createConnection(client.paths.endpoint);
+const socket = createConnection(endpointForToken(client.paths, token));
 let reply = "";
 socket.on("data", (chunk) => (reply += chunk));
 // Connection failure is expected; fixture button events determine the result.

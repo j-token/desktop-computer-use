@@ -5,7 +5,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { methodFor, parseArgs, sessionFileAction } from "../dist/cli.js";
 import { resultContent } from "../dist/mcp.js";
-import { clearSession, ensureRuntime, readSession, usageInstructions, writeSession } from "../dist/runtime.js";
+import {
+  clearSession,
+  endpointForToken,
+  ensureRuntime,
+  readSession,
+  resolveRuntimePaths,
+  usageInstructions,
+  writeSession
+} from "../dist/runtime.js";
 import { parseGnomeShellMajor, selectGnomeVariant } from "../dist/setup.js";
 
 test("CLI option conversion preserves paced drag defaults and aliases", () => {
@@ -173,6 +181,29 @@ test("session state is persisted in the supplied runtime directory and can be cl
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("Windows default pipe differs per token when package virtualization splits the token file", () => {
+  const env = { LOCALAPPDATA: "C:\\Users\\tester\\AppData\\Local", USERNAME: "tester" };
+  const paths = resolveRuntimePaths(env, "win32");
+
+  const hostEndpoint = endpointForToken(paths, "a".repeat(64));
+  const packagedEndpoint = endpointForToken(paths, "b".repeat(64));
+
+  assert.notEqual(hostEndpoint, packagedEndpoint);
+  assert.ok(hostEndpoint.startsWith(`${paths.endpoint}-`));
+  assert.equal(hostEndpoint, endpointForToken(paths, "a".repeat(64)));
+});
+
+test("explicit and Unix endpoints are used as given regardless of the token", () => {
+  const explicit = resolveRuntimePaths(
+    { LOCALAPPDATA: "C:\\Users\\tester\\AppData\\Local", DCU_ENDPOINT: "\\\\.\\pipe\\custom" },
+    "win32"
+  );
+  const unix = resolveRuntimePaths({ XDG_RUNTIME_DIR: "/run/user/1000" }, "linux");
+
+  assert.equal(endpointForToken(explicit, "a".repeat(64)), "\\\\.\\pipe\\custom");
+  assert.equal(endpointForToken(unix, "a".repeat(64)), unix.endpoint);
 });
 
 test("setup guidance documents the active indicator and double-Esc emergency stop", () => {

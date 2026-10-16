@@ -4,7 +4,8 @@ The CLI and native helper use one UTF-8 NDJSON request and response per local co
 maximum encoded line is 16 MiB. Linux uses a user-private Unix socket; Windows uses a per-user
 named pipe. The token file and current session file live beside the Linux socket or in the
 Windows local application data directory and are created with user-only permissions where the OS
-supports them.
+supports them. The default Windows pipe name ends with a fingerprint of the token, so a packaged
+host that virtualizes local application data (for example Codex Desktop) gets its own daemon.
 
 ```json
 {"id":"uuid","token":"local-secret","method":"get-app-state","params":{"sessionId":"s","app":"notepad"}}
