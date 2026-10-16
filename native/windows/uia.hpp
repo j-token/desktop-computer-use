@@ -2,6 +2,7 @@
 
 #include "dcu/backend.hpp"
 
+#include <chrono>
 #include <optional>
 #include <string>
 #include <vector>
@@ -26,6 +27,26 @@ struct ScrollPosition {
 struct AccessibilitySnapshot {
     Json value;
     std::vector<ElementRecord> elements;
+};
+
+// Records when a window's provider reports that it applied a change: layout
+// invalidation, structure changes, or a scroll position change. Browsers
+// publish moved locations up to about half a second after the input that moved
+// them, so these events are what tells a pending update from no change at all.
+class UiaChangeWatcher final {
+public:
+    explicit UiaChangeWatcher(HWND hwnd);
+    ~UiaChangeWatcher();
+    UiaChangeWatcher(const UiaChangeWatcher&) = delete;
+    UiaChangeWatcher& operator=(const UiaChangeWatcher&) = delete;
+
+    bool watching() const { return handler_ != nullptr; }
+    std::optional<std::chrono::steady_clock::time_point> last_change() const;
+
+private:
+    class Handler;
+    Microsoft::WRL::ComPtr<IUIAutomation> automation_;
+    Handler* handler_ = nullptr;
 };
 
 // UIA is intentionally separate from screenshot capture. A screenshot-only
