@@ -291,6 +291,55 @@ DWORD guarded_set_value(IUIAutomationValuePattern* pattern, BSTR value,
     return 0;
 }
 
+DWORD guarded_bounding_rectangle(IUIAutomationElement* element, RECT* bounds,
+                                 HRESULT* status) noexcept {
+    __try {
+        *status = element->get_CurrentBoundingRectangle(bounds);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
+DWORD guarded_element_from_point(IUIAutomation* automation, POINT point,
+                                 IUIAutomationElement** element, HRESULT* status) noexcept {
+    *element = nullptr;
+    __try {
+        *status = automation->ElementFromPoint(point, element);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *element = nullptr;
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
+DWORD guarded_parent(IUIAutomationTreeWalker* walker, IUIAutomationElement* element,
+                     IUIAutomationElement** parent, HRESULT* status) noexcept {
+    *parent = nullptr;
+    __try {
+        *status = walker->GetParentElement(element, parent);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *parent = nullptr;
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
+DWORD guarded_scroll_percents(IUIAutomationScrollPattern* pattern, double* horizontal,
+                              double* vertical, HRESULT* status) noexcept {
+    __try {
+        *status = pattern->get_CurrentHorizontalScrollPercent(horizontal);
+        if (SUCCEEDED(*status)) *status = pattern->get_CurrentVerticalScrollPercent(vertical);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
 } // namespace
 
 AccessibilitySnapshot UiaSnapshotBuilder::build(HWND hwnd, const RECT& windowRect,
@@ -383,7 +432,6 @@ AccessibilitySnapshot UiaSnapshotBuilder::build(HWND hwnd, const RECT& windowRec
 
         ElementRecord record;
         record.description = std::move(description);
-        record.bounds = bounds;
         record.element = std::move(element);
         result.elements.push_back(std::move(record));
     }
@@ -476,6 +524,106 @@ bool UiaSnapshotBuilder::set_value(ElementRecord& record, const std::wstring& va
         return false;
     }
     return SUCCEEDED(status);
+}
+
+namespace {
+
+constexpr int kMaximumAncestors = 32;
+
+ComPtr<IUIAutomationTreeWalker> control_view_walker(IUIAutomation* automation) {
+    ComPtr<IUIAutomationTreeWalker> walker;
+    if (!automation || FAILED(automation->get_ControlViewWalker(&walker))) return nullptr;
+    return walker;
+}
+
+ComPtr<IUIAutomation> create_automation() {
+    ComPtr<IUIAutomation> automation;
+    if (FAILED(CoCreateInstance(CLSID_CUIAutomation, nullptr, CLSCTX_INPROC_SERVER,
+                                IID_PPV_ARGS(&automation)))) {
+        return nullptr;
+    }
+    return automation;
+}
+
+ComPtr<IUIAutomationElement> parent_of(IUIAutomationTreeWalker* walker,
+                                       IUIAutomationElement* element) {
+    ComPtr<IUIAutomationElement> parent;
+    HRESULT status = E_FAIL;
+    if (guarded_parent(walker, element, parent.GetAddressOf(), &status) || FAILED(status)) {
+        return nullptr;
+    }
+    return parent;
+}
+
+ComPtr<IUIAutomationScrollPattern> scroll_pattern_of(IUIAutomationElement* element) {
+    ComPtr<IUIAutomationScrollPattern> pattern;
+    HRESULT status = E_FAIL;
+    if (guarded_pattern(element, UIA_ScrollPatternId, __uuidof(IUIAutomationScrollPattern),
+                        reinterpret_cast<void**>(pattern.GetAddressOf()), &status)) {
+        return nullptr;
+    }
+    return pattern;
+}
+
+std::optional<RECT> screen_bounds(IUIAutomationElement* element) {
+    RECT bounds{};
+    HRESULT status = E_FAIL;
+    if (!element || guarded_bounding_rectangle(element, &bounds, &status) || FAILED(status)) {
+        return std::nullopt;
+    }
+    return bounds;
+}
+
+} // namespace
+
+std::optional<RECT> UiaSnapshotBuilder::visible_bounds(IUIAutomationElement* element,
+                                                       const RECT& windowRect) const {
+    const auto own = screen_bounds(element);
+    if (!own) return std::nullopt;
+    RECT visible = *own;
+    const auto automation = create_automation();
+    if (const auto walker = control_view_walker(automation.Get())) {
+        auto node = parent_of(walker.Get(), element);
+        for (int depth = 0; node && depth < kMaximumAncestors; ++depth) {
+            if (scroll_pattern_of(node.Get())) {
+                const auto viewport = screen_bounds(node.Get());
+                if (viewport && !IntersectRect(&visible, &visible, &*viewport)) return RECT{};
+            }
+            node = parent_of(walker.Get(), node.Get());
+        }
+    }
+    return RECT{visible.left - windowRect.left, visible.top - windowRect.top,
+                visible.right - windowRect.left, visible.bottom - windowRect.top};
+}
+
+ComPtr<IUIAutomationScrollPattern> UiaSnapshotBuilder::scroll_container_at(POINT screenPoint) const {
+    const auto automation = create_automation();
+    const auto walker = control_view_walker(automation.Get());
+    if (!walker) return nullptr;
+    ComPtr<IUIAutomationElement> node;
+    HRESULT status = E_FAIL;
+    if (guarded_element_from_point(automation.Get(), screenPoint, node.GetAddressOf(), &status) ||
+        FAILED(status)) {
+        return nullptr;
+    }
+    for (int depth = 0; node && depth < kMaximumAncestors; ++depth) {
+        if (auto pattern = scroll_pattern_of(node.Get())) return pattern;
+        node = parent_of(walker.Get(), node.Get());
+    }
+    return nullptr;
+}
+
+std::optional<ScrollPosition> UiaSnapshotBuilder::scroll_position(
+    IUIAutomationScrollPattern* container) const {
+    if (!container) return std::nullopt;
+    ScrollPosition position;
+    HRESULT status = E_FAIL;
+    if (guarded_scroll_percents(container, &position.horizontalPercent,
+                                &position.verticalPercent, &status) ||
+        FAILED(status)) {
+        return std::nullopt;
+    }
+    return position;
 }
 
 } // namespace dcu::windows

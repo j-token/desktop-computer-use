@@ -587,15 +587,6 @@ void send_mouse_move(int x, int y) {
 // SetCursorPos only repositions the cursor; pointer-based UI such as WinUI
 // sliders ignores it while a button is held. A drag moves with injected input.
 void send_mouse_move_input(int x, int y) {
-    // A DPI-unaware thread's absolute input lands a pixel off on most
-    // coordinates, so map and send it as per-monitor aware.
-    struct DpiScope {
-        DPI_AWARENESS_CONTEXT previous =
-            SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-        ~DpiScope() {
-            if (previous) SetThreadDpiAwarenessContext(previous);
-        }
-    } dpiScope;
     const int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
     const int top = GetSystemMetrics(SM_YVIRTUALSCREEN);
     const int width = std::max(2, GetSystemMetrics(SM_CXVIRTUALSCREEN));
@@ -949,13 +940,54 @@ WindowsBackend::Observation& WindowsBackend::require_observation(const Json& par
 }
 
 namespace {
-// A degenerate bounding rectangle would centre on the window corner, so every
-// coordinate derived from an element has to refuse it instead of clicking there.
-void require_clickable_bounds(const ElementRecord& record) {
-    if (record.bounds.right <= record.bounds.left || record.bounds.bottom <= record.bounds.top) {
+// A page that scrolled or reflowed since the observation keeps the window
+// geometry, so the observation stays valid while its element bounds point at
+// whatever moved into that place. The point therefore comes from the bounds the
+// provider reports now, clipped to its scroll viewports and the window: only the
+// visible part can take the input, content scrolled under a browser toolbar
+// would hand the click to the toolbar, and a degenerate rectangle would centre
+// on the window corner.
+POINT visible_element_center(const UiaSnapshotBuilder& uia, const ElementRecord& record,
+                             const WindowInfo& target) {
+    const auto bounds = uia.visible_bounds(record.element.Get(), target.rect);
+    if (!bounds) throw Error("stale_observation", "Element is no longer available; observe again");
+    const RECT window{0, 0, target.rect.right - target.rect.left,
+                      target.rect.bottom - target.rect.top};
+    RECT visible{};
+    if (!IntersectRect(&visible, &*bounds, &window)) {
         throw Error("element_not_actionable",
-                    "Element has no clickable area; observe again or choose another element");
+                    "Element has no visible clickable area; scroll it into view and observe again");
     }
+    return POINT{(visible.left + visible.right) / 2, (visible.top + visible.bottom) / 2};
+}
+
+// Chrome publishes new accessibility locations about half a second after a
+// wheel scroll, so an observation taken at once still lists the old layout and
+// a click on it lands on whatever scrolled into that place. Waiting until the
+// scroll position of the container under the pointer has changed and held still
+// lets the next observation see the scrolled page. A scroll that moves nothing
+// (the end of the page) waits out the timeout and reports false.
+bool wait_for_scroll_to_settle(const UiaSnapshotBuilder& uia,
+                               IUIAutomationScrollPattern* container,
+                               const ScrollPosition& before, Context& context) {
+    constexpr auto timeout = std::chrono::milliseconds(1000);
+    constexpr auto stableFor = std::chrono::milliseconds(150);
+    constexpr int pollMilliseconds = 50;
+    ScrollPosition last = before;
+    std::optional<Clock::time_point> movedAt;
+    const auto deadline = Clock::now() + timeout;
+    while (Clock::now() < deadline) {
+        sleep_context(context, pollMilliseconds);
+        const auto position = uia.scroll_position(container);
+        if (!position) return false;
+        if (*position != last) {
+            last = *position;
+            movedAt = Clock::now();
+        } else if (movedAt && Clock::now() - *movedAt >= stableFor) {
+            return true;
+        }
+    }
+    return false;
 }
 } // namespace
 
@@ -1434,10 +1466,13 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
                 auto& record = require_element(params, *observation, "elementIndex");
                 activate(target.hwnd, context);
                 if (!uia_.invoke(record, context)) {
-                    require_clickable_bounds(record);
-                    point.x = target.rect.left + (record.bounds.left + record.bounds.right) / 2;
-                    point.y = target.rect.top + (record.bounds.top + record.bounds.bottom) / 2;
+                    const POINT local = visible_element_center(uia_, record, target);
+                    point.x = target.rect.left + local.x;
+                    point.y = target.rect.top + local.y;
                     click_at(target.hwnd, point, mouse_button(json_string(params, "button")), params, context);
+                    auto result = action_result();
+                    result["windowPoint"] = pointJson(local);
+                    return result;
                 }
             } else {
                 const auto transform = coordinate_transform(params, target, observation);
@@ -1460,9 +1495,7 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
                 if (element != params.end()) {
                     if (!observation) throw Error("observation_required", "Element drag requires observationId");
                     auto& record = require_element(params, *observation, elementKey);
-                    require_clickable_bounds(record);
-                    point.x = (record.bounds.left + record.bounds.right) / 2;
-                    point.y = (record.bounds.top + record.bounds.bottom) / 2;
+                    point = visible_element_center(uia_, record, target);
                 } else {
                     if (!transform) transform = coordinate_transform(params, target, observation);
                     point = windowPoint(xKey, yKey, *transform);
@@ -1495,7 +1528,10 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
                 local = windowPoint("x", "y", *transform);
             }
             activate(target.hwnd, context);
-            send_mouse_move(target.rect.left + local.x, target.rect.top + local.y);
+            const POINT screenPoint{target.rect.left + local.x, target.rect.top + local.y};
+            send_mouse_move(screenPoint.x, screenPoint.y);
+            const auto container = uia_.scroll_container_at(screenPoint);
+            const auto positionBefore = uia_.scroll_position(container.Get());
             const auto direction = lower(json_string(params, "direction", "down"));
             const int amount = std::clamp(json_int(params, "amount", 3), -100, 100);
             INPUT input{};
@@ -1508,9 +1544,16 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
                 input.mi.mouseData = static_cast<DWORD>((direction == "up" ? 1 : -1) * amount * WHEEL_DELTA);
             }
             send_input(input);
+            // Without a scrollable container (games, canvases) there is nothing
+            // to watch, so the scroll returns at once and reports no settle state.
+            std::optional<bool> layoutSettled;
+            if (positionBefore) {
+                layoutSettled = wait_for_scroll_to_settle(uia_, container.Get(), *positionBefore, context);
+            }
             auto result = action_result();
             if (transform) result["coordinateSpace"] = transform->space;
             result["windowPoint"] = pointJson(local);
+            if (layoutSettled) result["layoutSettled"] = *layoutSettled;
             return result;
         }
         if (method == "type-text") {
