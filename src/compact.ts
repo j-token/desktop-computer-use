@@ -120,7 +120,7 @@ const DROPPED_KEYS = new Set([
 
 function compactValue(value: unknown, key = ""): unknown {
   if (Array.isArray(value)) {
-    if (key === "windows" && value.every(isWindowRecord)) {
+    if ((key === "windows" || key === "ownedWindows") && value.every(isWindowRecord)) {
       return value.map(window => windowLine(window));
     }
     return value.map(item => compactValue(item));

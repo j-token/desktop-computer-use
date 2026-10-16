@@ -70,6 +70,10 @@ dialog's ID for observation, screenshots, accessibility, and input. When the tar
 one when dialogs are nested) and a `notice`, and input methods fail with `modal_active` before
 sending anything, naming the dialog's window ID in the message. On Windows the target's
 screenshot and accessibility tree exclude the dialog because they are captured per window.
+On Windows `get-app-state` also adds `ownedWindows`, the window records of visible non-modal
+windows owned by the target (for example Chrome permission and download bubbles), and a `notice`
+naming them, because the target's per-window screenshot excludes them. Some apps, Chrome included, still
+expose such popups in the target's accessibility tree.
 
 Actions return `delivered: true` only when the provider accepted the input sequence. Their
 verification state is `unverified` unless the follow-up observation asserts the intended state.
