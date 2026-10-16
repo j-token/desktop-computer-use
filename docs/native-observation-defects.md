@@ -138,6 +138,8 @@ void require_clickable_bounds(const ElementRecord& record) {
 
 이 함수가 `click`의 elementIndex 폴백과 `drag`의 요소 좌표 계산 앞에 삽입되어, 이상 사각형에서 좌표를 만들기 전에 `element_not_actionable` 오류를 던지도록 되어 있었다. 위 "고칠 곳"과 같은 방향이다. 다만 `uia.cpp`의 `get_bounds` 자체는 여전히 0으로 채운 `RECT`를 조용히 돌려준다 — 근본 원인은 남아 있고, 호출자 쪽에서만 그 결과를 걸러내는 형태다.
 
+이후 #19 수정에서 `require_clickable_bounds`는 `visible_element_center`로 바뀌었다. 관찰 당시 캐시한 경계 대신 동작 시점의 `CurrentBoundingRectangle`을 다시 읽고, 스크롤 가능한 조상과 창으로 잘라 낸 보이는 영역의 중심을 누른다. 보이는 영역이 없으면 같은 `element_not_actionable`을, 요소가 트리에서 사라졌으면 `stale_observation`을 돌려준다.
+
 ## 결함 4 — 지원하지 않는 패턴까지 전부 보고한다
 
 ### 증상

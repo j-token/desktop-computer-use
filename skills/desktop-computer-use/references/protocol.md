@@ -40,7 +40,16 @@ screenshot; `coords: "full"` selects the original image instead. The daemon conv
 `observationId` observation or, without one, the window's most recent screenshot observation, and
 fails with `observation_required` when there is none. Coordinate action results include
 `coordinateSpace` and the window-local point used (`windowPoint`, or `windowFrom`/`windowTo` for a
-drag). An observation ID becomes stale when the window geometry, monitor scale, or target state
+drag). On Windows an element `click` or `drag` that falls back to pointer input targets the
+element's bounds as UI Automation reports them at action time, clipped to its scrollable ancestors
+and the window, so a page that scrolled or reflowed since the observation does not shift the target;
+the click result then carries `windowPoint`. An element that has left the tree fails with
+`stale_observation`, and one with no visible area (for example scrolled under a browser toolbar)
+fails with `element_not_actionable`. When a scrollable container is under the pointer, a Windows
+`scroll` waits up to one second for its scroll position to change and settle before returning and
+reports `layoutSettled`; `false` means it did not move or settle (end of page), so observe again
+before acting on element bounds. Without such a container the field is absent and the scroll
+returns at once. An observation ID becomes stale when the window geometry, monitor scale, or target state
 changes, and the native backend rejects stale element or coordinate use. MCP reads the screenshot
 path into an image content block; the CLI leaves the absolute private path in JSON.
 
