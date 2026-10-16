@@ -2,12 +2,21 @@
 #include <fstream>
 #include <iostream>
 #ifdef _WIN32
+#include <windows.h>
 #include <roapi.h>
 #endif
 
 int main(int argc, char** argv) {
     try {
 #ifdef _WIN32
+        // DWM frame bounds and captured frames are always physical pixels, while
+        // UIA bounds and SetCursorPos follow the caller's DPI awareness. Without
+        // per-monitor awareness a scaled display mixes the two spaces and every
+        // click lands off target.
+        if (!SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)) {
+            std::cerr << "Per-monitor DPI awareness unavailable (" << GetLastError()
+                      << "); input may miss its target on scaled displays\n";
+        }
         if (argc == 4 && std::string(argv[1]) == "--input-watchdog") {
             return dcu::windows::run_input_watchdog(static_cast<std::uint32_t>(std::stoul(argv[2])), argv[3]);
         }

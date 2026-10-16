@@ -587,15 +587,6 @@ void send_mouse_move(int x, int y) {
 // SetCursorPos only repositions the cursor; pointer-based UI such as WinUI
 // sliders ignores it while a button is held. A drag moves with injected input.
 void send_mouse_move_input(int x, int y) {
-    // A DPI-unaware thread's absolute input lands a pixel off on most
-    // coordinates, so map and send it as per-monitor aware.
-    struct DpiScope {
-        DPI_AWARENESS_CONTEXT previous =
-            SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-        ~DpiScope() {
-            if (previous) SetThreadDpiAwarenessContext(previous);
-        }
-    } dpiScope;
     const int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
     const int top = GetSystemMetrics(SM_YVIRTUALSCREEN);
     const int width = std::max(2, GetSystemMetrics(SM_CXVIRTUALSCREEN));
