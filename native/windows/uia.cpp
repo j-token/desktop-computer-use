@@ -6,6 +6,7 @@
 #include <windows.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cwctype>
 #include <iostream>
@@ -611,6 +612,102 @@ ComPtr<IUIAutomationScrollPattern> UiaSnapshotBuilder::scroll_container_at(POINT
         node = parent_of(walker.Get(), node.Get());
     }
     return nullptr;
+}
+
+class UiaChangeWatcher::Handler final : public IUIAutomationEventHandler,
+                                        public IUIAutomationStructureChangedEventHandler,
+                                        public IUIAutomationPropertyChangedEventHandler {
+public:
+    std::optional<std::chrono::steady_clock::time_point> last_change() const {
+        const auto ticks = lastChangeTicks_.load(std::memory_order_acquire);
+        if (ticks == 0) return std::nullopt;
+        return std::chrono::steady_clock::time_point(std::chrono::steady_clock::duration(ticks));
+    }
+
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** result) override {
+        if (!result) return E_POINTER;
+        if (iid == __uuidof(IUnknown) || iid == __uuidof(IUIAutomationEventHandler)) {
+            *result = static_cast<IUIAutomationEventHandler*>(this);
+        } else if (iid == __uuidof(IUIAutomationStructureChangedEventHandler)) {
+            *result = static_cast<IUIAutomationStructureChangedEventHandler*>(this);
+        } else if (iid == __uuidof(IUIAutomationPropertyChangedEventHandler)) {
+            *result = static_cast<IUIAutomationPropertyChangedEventHandler*>(this);
+        } else {
+            *result = nullptr;
+            return E_NOINTERFACE;
+        }
+        AddRef();
+        return S_OK;
+    }
+    ULONG STDMETHODCALLTYPE AddRef() override { return ++references_; }
+    ULONG STDMETHODCALLTYPE Release() override {
+        const ULONG remaining = --references_;
+        if (remaining == 0) delete this;
+        return remaining;
+    }
+
+    HRESULT STDMETHODCALLTYPE HandleAutomationEvent(IUIAutomationElement*, EVENTID) override {
+        record();
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE HandleStructureChangedEvent(IUIAutomationElement*, StructureChangeType,
+                                                          SAFEARRAY*) override {
+        record();
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE HandlePropertyChangedEvent(IUIAutomationElement*, PROPERTYID,
+                                                         VARIANT) override {
+        record();
+        return S_OK;
+    }
+
+private:
+    void record() {
+        lastChangeTicks_.store(std::chrono::steady_clock::now().time_since_epoch().count(),
+                               std::memory_order_release);
+    }
+
+    std::atomic<ULONG> references_{1};
+    std::atomic<std::chrono::steady_clock::rep> lastChangeTicks_{0};
+};
+
+UiaChangeWatcher::UiaChangeWatcher(HWND hwnd) : automation_(create_automation()) {
+    ComPtr<IUIAutomationElement> root;
+    if (!automation_ || FAILED(automation_->ElementFromHandle(hwnd, &root)) || !root) return;
+    // Only the arrival time matters, so no element data is fetched across
+    // processes for each event; a burst would otherwise delay its delivery.
+    ComPtr<IUIAutomationCacheRequest> nothing;
+    if (FAILED(automation_->CreateCacheRequest(&nothing)) ||
+        FAILED(nothing->put_AutomationElementMode(AutomationElementMode_None))) {
+        return;
+    }
+    auto* handler = new Handler();
+    PROPERTYID scrollProperties[] = {UIA_ScrollHorizontalScrollPercentPropertyId,
+                                     UIA_ScrollVerticalScrollPercentPropertyId};
+    const bool registered =
+        SUCCEEDED(automation_->AddAutomationEventHandler(UIA_LayoutInvalidatedEventId, root.Get(),
+                                                         TreeScope_Subtree, nothing.Get(), handler)) &&
+        SUCCEEDED(automation_->AddStructureChangedEventHandler(root.Get(), TreeScope_Subtree,
+                                                               nothing.Get(), handler)) &&
+        SUCCEEDED(automation_->AddPropertyChangedEventHandlerNativeArray(
+            root.Get(), TreeScope_Subtree, nothing.Get(), handler, scrollProperties,
+            static_cast<int>(std::size(scrollProperties))));
+    if (!registered) {
+        automation_->RemoveAllEventHandlers();
+        handler->Release();
+        return;
+    }
+    handler_ = handler;
+}
+
+UiaChangeWatcher::~UiaChangeWatcher() {
+    if (!handler_) return;
+    automation_->RemoveAllEventHandlers();
+    handler_->Release();
+}
+
+std::optional<std::chrono::steady_clock::time_point> UiaChangeWatcher::last_change() const {
+    return handler_ ? handler_->last_change() : std::nullopt;
 }
 
 std::optional<ScrollPosition> UiaSnapshotBuilder::scroll_position(
