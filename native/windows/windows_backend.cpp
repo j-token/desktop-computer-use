@@ -963,6 +963,16 @@ bool WindowsBackend::activate(HWND hwnd, Context& context) const {
     SetForegroundWindow(hwnd);
     if (foreground_matches(hwnd)) return true;
 
+    // One condition under which Windows allows a foreground change is that the
+    // caller received the last input event.  Once the user types in another
+    // app, that event no longer belongs to this daemon, so an empty mouse
+    // event, which moves and presses nothing, takes it back (issue #15).
+    INPUT emptyInput{};
+    emptyInput.type = INPUT_MOUSE;
+    SendInput(1, &emptyInput, sizeof(INPUT));
+    SetForegroundWindow(hwnd);
+    if (foreground_matches(hwnd)) return true;
+
     // The dispatcher handles requests on detached worker threads.  Establish
     // a temporary relationship with the foreground and target GUI threads so
     // SetForegroundWindow can pass the foreground-lock check.  The scope
@@ -992,7 +1002,10 @@ bool WindowsBackend::activate(HWND hwnd, Context& context) const {
         if (foreground_matches(hwnd)) return true;
         Sleep(10);
     }
-    throw Error("focus_denied", "The target window could not be brought to the foreground");
+    throw Error("focus_denied",
+                "The target window could not be brought to the foreground; Windows may be blocking "
+                "the change because the current foreground window is elevated or locked. Observe "
+                "again and retry, or ask the user to switch to the target window");
 }
 
 Json WindowsBackend::observe(const Json& params, Context& context) {
