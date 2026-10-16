@@ -27,6 +27,7 @@ export interface RuntimePaths {
   endpoint: string;
   tokenFile: string;
   sessionFile: string;
+  bindEndpointToToken?: boolean;
 }
 
 export interface SessionState {

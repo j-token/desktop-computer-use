@@ -34,8 +34,19 @@ export function resolveRuntimePaths(env: NodeJS.ProcessEnv = process.env, platfo
     directory,
     endpoint,
     tokenFile: join(directory, "token"),
-    sessionFile: join(directory, "session.json")
+    sessionFile: join(directory, "session.json"),
+    bindEndpointToToken: !explicitEndpoint && isWindows(platform)
   };
+}
+
+// Packaged Windows apps such as Codex Desktop redirect LOCALAPPDATA writes into
+// their package folder, so two clients can see different token files under the
+// same path while sharing the global named-pipe namespace. Deriving the pipe
+// name from the token keeps each token on its own daemon (issue #13).
+export function endpointForToken(paths: RuntimePaths, token: string): string {
+  if (!paths.bindEndpointToToken) return paths.endpoint;
+  const tokenFingerprint = createHash("sha256").update(token, "utf8").digest("hex").slice(0, 12);
+  return `${paths.endpoint}-${tokenFingerprint}`;
 }
 
 export function resolveSkillRoot(): string {
@@ -98,10 +109,10 @@ interface DaemonStartupLock {
   existing: boolean;
 }
 
-async function acquireDaemonLock(paths: RuntimePaths): Promise<DaemonStartupLock> {
+async function acquireDaemonLock(paths: RuntimePaths, endpoint: string): Promise<DaemonStartupLock> {
   const lockPath = join(paths.directory, "daemon.lock");
   for (let attempt = 0; attempt < 240; attempt += 1) {
-    if (await endpointReachable(paths.endpoint)) {
+    if (await endpointReachable(endpoint)) {
       return { existing: true };
     }
     try {
@@ -276,8 +287,8 @@ export async function startNativeDaemon(paths = resolveRuntimePaths(), skillRoot
   }
   startPromise = (async () => {
     await ensureRuntime(paths);
-    await ensureToken(paths);
-    const lock = await acquireDaemonLock(paths);
+    const endpoint = endpointForToken(paths, await ensureToken(paths));
+    const lock = await acquireDaemonLock(paths, endpoint);
     if (lock.existing) {
       return;
     }
@@ -285,16 +296,16 @@ export async function startNativeDaemon(paths = resolveRuntimePaths(), skillRoot
       throw new DcuError("runtime_error", "Daemon startup lock was not acquired");
     }
     try {
-      if (await endpointReachable(paths.endpoint)) return;
+      if (await endpointReachable(endpoint)) return;
       if (process.platform !== "win32") {
-        const endpointDirectory = resolve(dirname(paths.endpoint));
+        const endpointDirectory = resolve(dirname(endpoint));
         if (endpointDirectory === resolve(paths.directory)) {
           try {
-            const endpointInfo = await lstat(paths.endpoint);
+            const endpointInfo = await lstat(endpoint);
             const ownedByCurrentUser =
               typeof process.getuid !== "function" || endpointInfo.uid === process.getuid();
             if (endpointInfo.isSocket() && ownedByCurrentUser) {
-              await unlink(paths.endpoint);
+              await unlink(endpoint);
             }
           } catch (error) {
             const endpointError = error as NodeJS.ErrnoException;
@@ -325,7 +336,7 @@ export async function startNativeDaemon(paths = resolveRuntimePaths(), skillRoot
       try {
         const child = spawn(
           nativePath,
-          ["--serve", "--endpoint", paths.endpoint, "--token-file", paths.tokenFile],
+          ["--serve", "--endpoint", endpoint, "--token-file", paths.tokenFile],
           {
             detached: true,
             stdio: ["ignore", daemonLog.fd, daemonLog.fd],
@@ -350,17 +361,17 @@ export async function startNativeDaemon(paths = resolveRuntimePaths(), skillRoot
           if (childExited) {
             throw new DcuError(
               "runtime_error",
-              `Native daemon exited before opening ${paths.endpoint}. See ${daemonLogPath}`
+              `Native daemon exited before opening ${endpoint}. See ${daemonLogPath}`
             );
           }
-          if (await endpointReachable(paths.endpoint)) {
+          if (await endpointReachable(endpoint)) {
             return;
           }
           await wait(50);
         }
         throw new DcuError(
           "transport_timeout",
-          `Timed out waiting for native daemon at ${paths.endpoint}. See ${daemonLogPath}`
+          `Timed out waiting for native daemon at ${endpoint}. See ${daemonLogPath}`
         );
       } finally {
         await daemonLog.close();

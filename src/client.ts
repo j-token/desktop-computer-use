@@ -1,5 +1,6 @@
 import { DcuError, nativeError } from "./errors.js";
 import {
+  endpointForToken,
   ensureRuntime,
   ensureToken,
   resolveRuntimePaths,
@@ -45,9 +46,10 @@ export class DcuClient {
   async request(method: string, params: JsonObject = {}, options: CallOptions = {}): Promise<NativeResponse> {
     await ensureRuntime(this.paths);
     const token = await ensureToken(this.paths);
+    const endpoint = endpointForToken(this.paths, token);
     const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     try {
-      return await sendNativeRequest(this.paths.endpoint, method, token, params, timeoutMs);
+      return await sendNativeRequest(endpoint, method, token, params, timeoutMs);
     } catch (error) {
       if (options.autoStart === false || !canStart(error)) {
         throw error;
@@ -59,7 +61,7 @@ export class DcuClient {
         try {
           // Only pre-write connection failures are retried. Once the request reaches
           // the daemon, the mutation is never sent again by this client.
-          return await sendNativeRequest(this.paths.endpoint, method, token, params, timeoutMs);
+          return await sendNativeRequest(endpoint, method, token, params, timeoutMs);
         } catch (retryError) {
           lastError = retryError;
           if (!canStart(retryError)) {
