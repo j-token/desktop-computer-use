@@ -15,8 +15,7 @@ decision; there is no other model.
 ## Loop
 
 1. `dcu session start` (shows the "computer in use" indicator). End with `dcu session stop` after
-   releasing toggles. The user stops the session with `Esc` twice within 1 second; on session loss,
-   stop and do not restart automatically.
+   releasing toggles.
 2. Find the target: `dcu list-windows --app APP` (or `list-apps`).
 3. Observe: `dcu get-app-state --app APP --include-text --no-screenshot`. Add a screenshot only
    when the elements are not enough.
