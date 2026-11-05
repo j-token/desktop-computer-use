@@ -42,10 +42,25 @@ def mark(results: Path, name: str) -> int:
     return int((results / f"{name}.lines").read_text(encoding="utf-8").strip())
 
 
+def undrawn_row_frame_problems(results: Path) -> list[str]:
+    observation = json.loads((results / f"{GATE}-observe.json").read_text(encoding="utf-8"))["result"]
+    rows = [e for e in observation["accessibility"]["elements"] if e["name"] == "Row 90" and e["controlType"] == "list item"]
+    if len(rows) != 1:
+        return [f"expected one Row 90 list item, found {len(rows)}"]
+    if rows[0]["frame"] is not None:
+        return [f"undrawn Row 90 frame is {rows[0]['frame']}, expected null"]
+    return []
+
+
 def check(results: Path) -> dict:
     events = load_events(results)
     failures = []
     passed = []
+    frame_problems = undrawn_row_frame_problems(results)
+    if frame_problems:
+        failures.append({"action": "undrawn-frame", "problems": frame_problems, "result": None})
+    else:
+        passed.append("undrawn-frame")
     previous = mark(results, GATE)
     for name, error_code, fields, events_match in EXPECTATIONS:
         response = json.loads((results / f"{name}.json").read_text(encoding="utf-8"))
