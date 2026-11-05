@@ -3441,14 +3441,14 @@ bool rects_intersect(const std::array<int, 4>& a, const std::array<int, 4>& b) {
     return a[0] < b[0] + b[2] && b[0] < a[0] + a[2] && a[1] < b[1] + b[3] && b[1] < a[1] + a[3];
 }
 
-// GTK reports a row it has not drawn yet at coordinates near INT_MAX, which
-// is no position at all.
+// GTK reports a row it has not drawn yet at INT_MIN, which is no position at
+// all. std::abs(INT_MIN) is undefined, so the range is compared directly.
 std::optional<std::array<int, 4>> atspi_drawn_rect(AtspiAccessible* node) {
     constexpr int kMaxCoordinate = 1 << 20;
     const auto rect = atspi_rect(node);
-    if (rect && (std::abs(rect->at(0)) > kMaxCoordinate || std::abs(rect->at(1)) > kMaxCoordinate)) {
-        return std::nullopt;
-    }
+    if (!rect) return std::nullopt;
+    const auto plausible = [](int coordinate) { return -kMaxCoordinate <= coordinate && coordinate <= kMaxCoordinate; };
+    if (!plausible(rect->at(0)) || !plausible(rect->at(1))) return std::nullopt;
     return rect;
 }
 
