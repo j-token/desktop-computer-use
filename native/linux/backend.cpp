@@ -257,6 +257,9 @@ private:
     Json hotkey(const Json& params, Context& context);
     Json set_value(const Json& params, Context& context);
     Json paste_text(const Json& params, Context& context);
+    Json set_state(const Json& params, Context& context);
+    Json scroll_to(const Json& params, Context& context);
+    Json select_option(const Json& params, Context& context);
 
     void ensure_active(const Json& params) const;
     std::vector<WindowInfo> enumerate_windows() const;
@@ -642,9 +645,9 @@ Json LinuxBackend::capabilities() const {
         {"click", DCU_HAVE_ATSPI != 0},
         {"setValue", DCU_HAVE_ATSPI != 0},
         {"scroll", false},
-        {"setState", false},
-        {"scrollTo", false},
-        {"selectOption", false},
+        {"setState", DCU_HAVE_ATSPI != 0},
+        {"scrollTo", DCU_HAVE_ATSPI != 0},
+        {"selectOption", DCU_HAVE_ATSPI != 0},
     };
     // AT-SPI and Xlib are not thread-safe, so agents' operations take turns here.
     result["multiAgent"] = {
@@ -2274,7 +2277,8 @@ Json LinuxBackend::execute(const std::string& method, const Json& params, Contex
         if (method == "get-full-screenshot") return full_screenshot(params);
         if (method == "click" || method == "drag" || method == "scroll" || method == "type-text" ||
             method == "press-key" || method == "hotkey" || method == "set-value" ||
-            method == "paste-text") {
+            method == "paste-text" || method == "set-state" || method == "scroll-to" ||
+            method == "select-option") {
             // A modal parent ignores input, so it would only look delivered.
             ensure_active(params);
             reject_blocked_target(params);
@@ -2287,9 +2291,9 @@ Json LinuxBackend::execute(const std::string& method, const Json& params, Contex
         if (method == "hotkey") return hotkey(params, context);
         if (method == "set-value") return set_value(params, context);
         if (method == "paste-text") return paste_text(params, context);
-        if (method == "set-state" || method == "scroll-to" || method == "select-option") {
-            throw Error("unsupported", method + " is not available on Linux yet; use click or scroll");
-        }
+        if (method == "set-state") return set_state(params, context);
+        if (method == "scroll-to") return scroll_to(params, context);
+        if (method == "select-option") return select_option(params, context);
         throw Error("unsupported", "Unknown Linux backend method: " + method);
     };
     Json result = run();
@@ -3290,7 +3294,14 @@ AtspiAccessible* atspi_element_for_index(const WindowInfo& window, const Json& p
     return result;
 }
 
-std::optional<std::string> atspi_do_primary_action(AtspiAccessible* element) {
+enum class ActionFallback { FirstAction, PreferredOnly };
+
+// Runs the first action whose name is in preferred and returns its name, or
+// nullopt when there is none (unless the fallback allows the first action) or
+// the toolkit refuses it.
+std::optional<std::string> atspi_do_preferred_action(AtspiAccessible* element,
+                                                     std::initializer_list<const char*> preferred,
+                                                     ActionFallback fallback) {
     AtspiAction* action = atspi_accessible_get_action_iface(element);
     if (!action) return std::nullopt;
     const gint count = atspi_action_get_n_actions(action, nullptr);
@@ -3300,11 +3311,9 @@ std::optional<std::string> atspi_do_primary_action(AtspiAccessible* element) {
         names.push_back(name ? lower(name) : std::string{});
         g_free(name);
     }
-    // Toolkits name the same intent differently (GTK "click", Qt "Press",
-    // Firefox "jump" for links); the first action is the toolkit's default.
-    gint chosen = count > 0 ? 0 : -1;
-    for (const char* preferred : {"click", "press", "activate", "toggle", "jump", "open", "expand or contract"}) {
-        const auto found = std::find(names.begin(), names.end(), preferred);
+    gint chosen = fallback == ActionFallback::FirstAction && count > 0 ? 0 : -1;
+    for (const char* wanted : preferred) {
+        const auto found = std::find(names.begin(), names.end(), wanted);
         if (found != names.end()) {
             chosen = static_cast<gint>(found - names.begin());
             break;
@@ -3314,10 +3323,375 @@ std::optional<std::string> atspi_do_primary_action(AtspiAccessible* element) {
     g_object_unref(action);
     if (!performed) return std::nullopt;
     const auto& name = names[static_cast<std::size_t>(chosen)];
-    return name.empty() ? std::string("action0") : name;
+    return name.empty() ? "action" + std::to_string(chosen) : name;
+}
+
+std::optional<std::string> atspi_do_primary_action(AtspiAccessible* element) {
+    // Toolkits name the same intent differently (GTK "click", Qt "Press",
+    // Firefox "jump" for links); the first action is the toolkit's default.
+    return atspi_do_preferred_action(element, {"click", "press", "activate", "toggle", "jump", "open",
+                                               "expand or contract"},
+                                     ActionFallback::FirstAction);
+}
+
+struct AtspiStateChange {
+    std::string action;
+    bool changed = false;
+    bool verified = false;
+};
+
+constexpr int kSettleMilliseconds = 600;
+constexpr int kSettlePollMilliseconds = 25;
+
+template <typename Settled>
+bool atspi_wait_until(Settled settled, Context& context) {
+    for (int waited = 0; !settled(); waited += kSettlePollMilliseconds) {
+        if (waited >= kSettleMilliseconds) return false;
+        wait_checked(context, kSettlePollMilliseconds);
+    }
+    return true;
+}
+
+bool atspi_is_checkable(AtspiAccessible* node) {
+    if (atspi_state(node, ATSPI_STATE_CHECKABLE)) return true;
+    switch (atspi_accessible_get_role(node, nullptr)) {
+    case ATSPI_ROLE_CHECK_BOX:
+    case ATSPI_ROLE_TOGGLE_BUTTON:
+    case ATSPI_ROLE_RADIO_BUTTON:
+    case ATSPI_ROLE_CHECK_MENU_ITEM:
+    case ATSPI_ROLE_RADIO_MENU_ITEM:
+        return true;
+    default:
+        return false;
+    }
+}
+
+// Changes one state flag through actions. A tri-state check box can need two
+// toggles, but a second toggle only follows a toggle that visibly changed
+// something, so a slow provider is not toggled back.
+std::optional<AtspiStateChange> atspi_set_flag(AtspiAccessible* element, AtspiStateType flag, bool wanted,
+                                               std::initializer_list<const char*> actions, Context& context) {
+    const auto reached = [&] { return atspi_state(element, flag) == wanted; };
+    if (reached()) return AtspiStateChange{"", false, true};
+    const auto signature = [&] {
+        return std::pair{atspi_state(element, flag), atspi_state(element, ATSPI_STATE_INDETERMINATE)};
+    };
+    const auto initial = signature();
+    std::optional<std::string> performed;
+    for (int toggles = 0; toggles < 2 && !reached(); ++toggles) {
+        const auto before = signature();
+        const auto action = atspi_do_preferred_action(element, actions, ActionFallback::PreferredOnly);
+        if (!action) break;
+        performed = action;
+        if (!atspi_wait_until([&] { return signature() != before; }, context)) break;
+    }
+    if (!performed) return std::nullopt;
+    return AtspiStateChange{*performed, signature() != initial, reached()};
+}
+
+// Selects a child through its parent's Selection interface.
+bool atspi_select_in_parent(AtspiAccessible* parent, AtspiAccessible* child) {
+    if (!parent) return false;
+    AtspiSelection* selection = atspi_accessible_get_selection_iface(parent);
+    if (!selection) return false;
+    const gint index = atspi_accessible_get_index_in_parent(child, nullptr);
+    const bool selected = index >= 0 && atspi_selection_select_child(selection, index, nullptr) != FALSE;
+    g_object_unref(selection);
+    return selected;
+}
+
+std::optional<std::string> atspi_select(AtspiAccessible* element) {
+    AtspiAccessible* parent = atspi_accessible_get_parent(element, nullptr);
+    const bool selected = atspi_select_in_parent(parent, element);
+    if (parent) g_object_unref(parent);
+    if (selected) return "selection";
+    return atspi_do_preferred_action(element, {"select", "click", "press", "activate"}, ActionFallback::PreferredOnly);
+}
+
+std::optional<AtspiStateChange> atspi_set_selected(AtspiAccessible* element, Context& context) {
+    const auto selected = [&] { return atspi_state(element, ATSPI_STATE_SELECTED); };
+    if (selected()) return AtspiStateChange{"", false, true};
+    const auto action = atspi_select(element);
+    if (!action) return std::nullopt;
+    const bool reached = atspi_wait_until(selected, context);
+    return AtspiStateChange{*action, reached, reached};
+}
+
+std::optional<AtspiStateChange> atspi_set_state(AtspiAccessible* element, const std::string& state,
+                                                Context& context) {
+    if (state == "checked" || state == "unchecked") {
+        if (!atspi_is_checkable(element)) return std::nullopt;
+        return atspi_set_flag(element, ATSPI_STATE_CHECKED, state == "checked",
+                              {"toggle", "click", "press", "activate"}, context);
+    }
+    if (state == "expanded" || state == "collapsed") {
+        if (!atspi_state(element, ATSPI_STATE_EXPANDABLE)) return std::nullopt;
+        const bool expand = state == "expanded";
+        return atspi_set_flag(element, ATSPI_STATE_EXPANDED, expand,
+                              {expand ? "expand" : "collapse", "expand or contract", "toggle", "activate",
+                               "press", "click"},
+                              context);
+    }
+    if (!atspi_state(element, ATSPI_STATE_SELECTABLE)) return std::nullopt;
+    return atspi_set_selected(element, context);
+}
+
+bool rects_intersect(const std::array<int, 4>& a, const std::array<int, 4>& b) {
+    return a[0] < b[0] + b[2] && b[0] < a[0] + a[2] && a[1] < b[1] + b[3] && b[1] < a[1] + a[3];
+}
+
+struct GObjectUnref {
+    void operator()(gpointer object) const { g_object_unref(object); }
+};
+using AtspiRef = std::unique_ptr<AtspiAccessible, GObjectUnref>;
+
+struct ScrollBar {
+    std::unique_ptr<AtspiValue, GObjectUnref> value;
+    bool vertical = false;
+};
+
+struct ScrollArea {
+    AtspiRef viewport;
+    std::vector<ScrollBar> bars;
+};
+
+// Finds the nearest ancestor with scroll bars as direct children, which is how
+// GTK and Qt scrolled areas expose their scrolling.
+std::optional<ScrollArea> atspi_scroll_ancestor(AtspiAccessible* element) {
+    constexpr int kMaxAncestors = 32;
+    AtspiRef ancestor{atspi_accessible_get_parent(element, nullptr)};
+    for (int depth = 0; ancestor && depth < kMaxAncestors; ++depth) {
+        std::vector<ScrollBar> bars;
+        const int children = atspi_accessible_get_child_count(ancestor.get(), nullptr);
+        for (int index = 0; index < children; ++index) {
+            AtspiRef child{atspi_child(ancestor.get(), index)};
+            if (!child || atspi_accessible_get_role(child.get(), nullptr) != ATSPI_ROLE_SCROLL_BAR) continue;
+            if (AtspiValue* value = atspi_accessible_get_value_iface(child.get())) {
+                bars.push_back({std::unique_ptr<AtspiValue, GObjectUnref>{value},
+                                atspi_state(child.get(), ATSPI_STATE_VERTICAL)});
+            }
+        }
+        if (!bars.empty()) return ScrollArea{std::move(ancestor), std::move(bars)};
+        ancestor.reset(atspi_accessible_get_parent(ancestor.get(), nullptr));
+    }
+    return std::nullopt;
+}
+
+// Moves the scroll bars toward the target until it is shown. With known
+// bounds each bar centers the target, assuming one value unit per pixel as in
+// GTK adjustments; without bounds the vertical bar pages from the top.
+bool atspi_scroll_with_bars(AtspiAccessible* element, const ScrollArea& area, const std::function<bool()>& shown,
+                            Context& context) {
+    constexpr int kMaxSteps = 200;
+    bool paged_from_top = false;
+    for (int step = 0; step < kMaxSteps; ++step) {
+        if (shown()) return true;
+        const auto view = atspi_rect(area.viewport.get());
+        if (!view) return false;
+        const auto target = atspi_rect(element);
+        bool moved = false;
+        for (const auto& bar : area.bars) {
+            if (!target && !bar.vertical) continue;
+            AtspiValue* value = bar.value.get();
+            const double current = atspi_value_get_current_value(value, nullptr);
+            const double minimum = atspi_value_get_minimum_value(value, nullptr);
+            const double maximum = atspi_value_get_maximum_value(value, nullptr);
+            double next = current;
+            if (target) {
+                const int axis = bar.vertical ? 1 : 0;
+                const double target_center = target->at(axis) + target->at(axis + 2) / 2.0;
+                const double view_center = view->at(axis) + view->at(axis + 2) / 2.0;
+                next = current + (target_center - view_center);
+            } else if (!paged_from_top) {
+                next = minimum;
+            } else {
+                next = current + view->at(3);
+            }
+            next = std::clamp(next, minimum, maximum);
+            if (std::abs(next - current) < 1.0) continue;
+            moved = atspi_value_set_current_value(value, next, nullptr) != FALSE || moved;
+        }
+        if (!target) paged_from_top = true;
+        if (!moved) return shown();
+        wait_checked(context, kSettlePollMilliseconds * 2);
+    }
+    return shown();
+}
+
+bool atspi_is_option(AtspiAccessible* node) {
+    if (atspi_state(node, ATSPI_STATE_SELECTABLE)) return true;
+    switch (atspi_accessible_get_role(node, nullptr)) {
+    case ATSPI_ROLE_LIST_ITEM:
+    case ATSPI_ROLE_MENU_ITEM:
+    case ATSPI_ROLE_TREE_ITEM:
+    case ATSPI_ROLE_PAGE_TAB:
+    case ATSPI_ROLE_TABLE_CELL:
+    case ATSPI_ROLE_RADIO_MENU_ITEM:
+    case ATSPI_ROLE_CHECK_MENU_ITEM:
+        return true;
+    default:
+        return false;
+    }
+}
+
+// Returns descendants of container that look like options named option,
+// compared case-insensitively.
+std::vector<AtspiRef> atspi_options_named(AtspiAccessible* container, const std::string& option,
+                                          Context& context) {
+    const std::string wanted = lower(option);
+    std::vector<AtspiRef> matches;
+    std::size_t visited = 0;
+    std::function<void(AtspiAccessible*, std::size_t)> visit = [&](AtspiAccessible* node, std::size_t depth) {
+        if (visited++ >= kMaxTreeNodes || depth > kMaxTreeDepth) return;
+        check_context(context);
+        if (node != container && lower(atspi_name(node)) == wanted && atspi_is_option(node)) {
+            matches.emplace_back(static_cast<AtspiAccessible*>(g_object_ref(node)));
+        }
+        const int children = atspi_accessible_get_child_count(node, nullptr);
+        for (int index = 0; index < children; ++index) {
+            AtspiAccessible* child = atspi_child(node, index);
+            if (!child) continue;
+            visit(child, depth + 1);
+            g_object_unref(child);
+        }
+    };
+    visit(container, 0);
+    return matches;
+}
+
+// A GTK combo box implements Selection over its popup's items, so its
+// selection is tried before the item's own parent.
+std::optional<std::string> atspi_select_option(AtspiAccessible* container, AtspiAccessible* item) {
+    const bool is_combo = atspi_accessible_get_role(container, nullptr) == ATSPI_ROLE_COMBO_BOX;
+    if (is_combo && atspi_select_in_parent(container, item)) return "selection";
+    return atspi_select(item);
+}
+
+AtspiStateChange atspi_select_named(AtspiAccessible* container, const std::string& option, Context& context) {
+    const auto matches = atspi_options_named(container, option, context);
+    if (matches.empty()) {
+        throw Error("option_not_found", "No selectable item named \"" + option + "\" is inside the element");
+    }
+    if (matches.size() > 1) {
+        throw Error("ambiguous_target", std::to_string(matches.size()) + " items are named \"" + option +
+                                            "\"; use set-state selected on one of them");
+    }
+    AtspiAccessible* item = matches.front().get();
+    // A combo box names itself after its active item instead of marking it selected.
+    const auto chosen = [&] {
+        return atspi_state(item, ATSPI_STATE_SELECTED) || lower(atspi_name(container)) == lower(option);
+    };
+    if (chosen()) return {"", false, true};
+    const auto action = atspi_select_option(container, item);
+    if (!action) {
+        throw Error("pattern_unavailable", "The item named \"" + option +
+                                               "\" exposes no AT-SPI Selection parent or select action");
+    }
+    const bool reached = atspi_wait_until(chosen, context);
+    return {*action, reached, reached};
+}
+
+Json semantic_result(const std::string& action) {
+    Json result = action_result();
+    result["delivery"] = "semantic";
+    if (!action.empty()) result["semanticAction"] = action;
+    return result;
+}
+
+Json state_change_result(const AtspiStateChange& change) {
+    Json result = semantic_result(change.action);
+    result["changed"] = change.changed;
+    result["verified"] = change.verified;
+    return result;
 }
 } // namespace
 #endif
+
+// set-state, scroll-to, and select-option never activate the window, even
+// outside headless mode, because the dispatcher runs them without the
+// physical-input turn.
+Json LinuxBackend::set_state(const Json& params, Context& context) {
+    WindowInfo window = current_window(select_window(params));
+    validate_observation(params, window);
+#if DCU_HAVE_ATSPI
+    const std::string state = string_value(params, "state");
+    AtspiRef element{atspi_element_for_index(window, params, context)};
+    const auto change = atspi_set_state(element.get(), state, context);
+    if (!change) {
+        throw Error("pattern_unavailable", "The target element exposes no AT-SPI state and action for state " + state);
+    }
+    mark_input_complete();
+    Json result = state_change_result(*change);
+    result["state"] = state;
+    return result;
+#else
+    (void)context;
+    throw Error("unsupported", "AT-SPI set-state is not available in this build");
+#endif
+}
+
+Json LinuxBackend::scroll_to(const Json& params, Context& context) {
+    WindowInfo window = current_window(select_window(params));
+    validate_observation(params, window);
+#if DCU_HAVE_ATSPI
+    AtspiRef element{atspi_element_for_index(window, params, context)};
+    const std::array<int, 4> window_rect{window.x, window.y, window.width, window.height};
+    const std::function<bool()> shown = [&] {
+        const auto rect = atspi_rect(element.get());
+        return rect && atspi_state(element.get(), ATSPI_STATE_SHOWING) && rects_intersect(*rect, window_rect);
+    };
+
+    std::string action;
+    bool visible = shown();
+    if (!visible) {
+        AtspiComponent* component = atspi_accessible_get_component_iface(element.get());
+        const bool scrolled =
+            component && atspi_component_scroll_to(component, ATSPI_SCROLL_ANYWHERE, nullptr) != FALSE;
+        if (component) g_object_unref(component);
+        if (scrolled) {
+            action = "scrollTo";
+            visible = atspi_wait_until(shown, context);
+        }
+    }
+    // Component.scroll_to is optional for a toolkit and can report success
+    // without moving anything, so the enclosing scroll bars are the fallback.
+    if (!visible) {
+        const auto area = atspi_scroll_ancestor(element.get());
+        if (!area && action.empty()) {
+            throw Error("pattern_unavailable",
+                        "The target element supports no AT-SPI scroll_to and has no ancestor with scroll bars");
+        }
+        if (area) {
+            action = "scrollBar";
+            visible = atspi_scroll_with_bars(element.get(), *area, shown, context) || atspi_wait_until(shown, context);
+        }
+    }
+    mark_input_complete();
+    Json result = semantic_result(action);
+    result["visible"] = visible;
+    return result;
+#else
+    (void)context;
+    throw Error("unsupported", "AT-SPI scroll-to is not available in this build");
+#endif
+}
+
+Json LinuxBackend::select_option(const Json& params, Context& context) {
+    WindowInfo window = current_window(select_window(params));
+    validate_observation(params, window);
+#if DCU_HAVE_ATSPI
+    const std::string option = string_value(params, "option");
+    AtspiRef container{atspi_element_for_index(window, params, context)};
+    const auto change = atspi_select_named(container.get(), option, context);
+    mark_input_complete();
+    Json result = state_change_result(change);
+    result["option"] = option;
+    return result;
+#else
+    (void)context;
+    throw Error("unsupported", "AT-SPI select-option is not available in this build");
+#endif
+}
 
 
 

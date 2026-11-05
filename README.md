@@ -15,7 +15,7 @@ The LLM already running the skill observes the desktop, chooses every action, an
 - Windows UI Automation and Linux accessibility integration for standard application controls.
 - A headless mode that acts through accessibility patterns without moving your pointer, pressing keys, or changing focus.
 - Multi-agent sessions: several agents share one desktop session, observing and acting headless at the same time while physical input takes turns.
-- State-targeted accessibility actions on Windows: `set-state` checks, unchecks, expands, collapses, or selects an element only when needed, `scroll-to` scrolls an item into view, and `select-option` picks a combo box, list, or tree item by name, without ever waiting for another agent's physical input.
+- State-targeted accessibility actions on Windows (UI Automation) and Linux (AT-SPI): `set-state` checks, unchecks, expands, collapses, or selects an element only when needed, `scroll-to` scrolls an item into view, and `select-option` picks a combo box, list, or tree item by name, without ever waiting for another agent's physical input.
 
 ## Quick start from source
 
