@@ -3635,10 +3635,17 @@ Json LinuxBackend::scroll_to(const Json& params, Context& context) {
     validate_observation(params, window);
 #if DCU_HAVE_ATSPI
     AtspiRef element{atspi_element_for_index(window, params, context)};
+    const auto area = atspi_scroll_ancestor(element.get());
     const std::array<int, 4> window_rect{window.x, window.y, window.width, window.height};
+    // GTK keeps a scrolled-out row SHOWING with its real extents, so the row
+    // must also meet the scroll area, not only the window.
     const std::function<bool()> shown = [&] {
         const auto rect = atspi_rect(element.get());
-        return rect && atspi_state(element.get(), ATSPI_STATE_SHOWING) && rects_intersect(*rect, window_rect);
+        if (!rect || !atspi_state(element.get(), ATSPI_STATE_SHOWING) || !rects_intersect(*rect, window_rect)) {
+            return false;
+        }
+        const auto view = area ? atspi_rect(area->viewport.get()) : std::nullopt;
+        return !view || rects_intersect(*rect, *view);
     };
 
     std::string action;
@@ -3656,7 +3663,6 @@ Json LinuxBackend::scroll_to(const Json& params, Context& context) {
     // Component.scroll_to is optional for a toolkit and can report success
     // without moving anything, so the enclosing scroll bars are the fallback.
     if (!visible) {
-        const auto area = atspi_scroll_ancestor(element.get());
         if (!area && action.empty()) {
             throw Error("pattern_unavailable",
                         "The target element supports no AT-SPI scroll_to and has no ancestor with scroll bars");
