@@ -45,6 +45,55 @@ jobs:
             build/desktop-computer-use-native
             build/Release/desktop-computer-use-native.exe
           if-no-files-found: error
+  linux-semantic:
+    # Runs set-state, scroll-to, and select-option against a GTK fixture in a
+    # nested GNOME 42 X11 session. The daemon comes from the 22.04 build so its
+    # glibc matches the Ubuntu 22.04 test image.
+    needs: [native]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run bundle
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-ubuntu-22.04
+          path: .cache/native-artifact
+      - name: Stage the native daemon
+        run: |
+          mkdir -p .cache/native
+          find .cache/native-artifact -name desktop-computer-use-native -exec cp '{}' .cache/native/ \;
+          chmod +x .cache/native/desktop-computer-use-native
+      - name: Build the GNOME test images
+        run: |
+          docker build -t dcu-gnome42-test -f tests/integration/gnome-container/Dockerfile .
+          docker build --build-arg BASE_IMAGE=dcu-gnome42-test \
+            -t dcu-linux-native-x11 -f tests/integration/linux-native/Dockerfile .
+      - name: Run the semantic action harness
+        run: |
+          # The container's tester user (uid 1000) writes the results.
+          mkdir -p .cache/semantic-results
+          chmod 777 .cache/semantic-results
+          docker run --rm --network none \
+            --mount type=bind,src="$PWD",dst=/test/project,readonly \
+            --mount type=bind,src="$PWD/.cache/native",dst=/test/native,readonly \
+            --mount type=bind,src="$(dirname "$(dirname "$(command -v node)")")",dst=/test/node,readonly \
+            --mount type=bind,src="$PWD/.cache/semantic-results",dst=/results \
+            -e DCU_RUNNER=/test/run-semantic.sh \
+            dcu-linux-native-x11
+      - name: Upload semantic harness results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-semantic-results
+          path: .cache/semantic-results
+          if-no-files-found: warn
   adapters:
     strategy:
       fail-fast: false
