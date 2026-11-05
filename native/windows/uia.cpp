@@ -441,6 +441,18 @@ DWORD guarded_set_scroll_percent(IUIAutomationScrollPattern* pattern, double hor
     return 0;
 }
 
+DWORD guarded_current_name(IUIAutomationElement* element, BSTR* name, HRESULT* status) noexcept {
+    *name = nullptr;
+    __try {
+        *status = element->get_CurrentName(name);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *name = nullptr;
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
 DWORD guarded_bounding_rectangle(IUIAutomationElement* element, RECT* bounds,
                                  HRESULT* status) noexcept {
     __try {
@@ -1142,6 +1154,167 @@ std::optional<bool> UiaSnapshotBuilder::scroll_ancestor_into_view(ElementRecord&
         if (!center_target(pattern, *target, *viewport, context)) break;
     }
     return page_until_shown(pattern, shown, context);
+}
+
+namespace {
+
+std::wstring current_name(IUIAutomationElement* element) {
+    BSTR name = nullptr;
+    HRESULT status = E_FAIL;
+    if (guarded_current_name(element, &name, &status) || FAILED(status) || !name) return {};
+    std::wstring result(name, SysStringLen(name));
+    SysFreeString(name);
+    return result;
+}
+
+ComPtr<IUIAutomationCondition> pattern_available_condition(IUIAutomation* automation, PROPERTYID property) {
+    VARIANT available;
+    VariantInit(&available);
+    available.vt = VT_BOOL;
+    available.boolVal = VARIANT_TRUE;
+    ComPtr<IUIAutomationCondition> condition;
+    if (FAILED(automation->CreatePropertyCondition(property, available, &condition))) return nullptr;
+    return condition;
+}
+
+// Only items the provider has realized are found; a virtualized list
+// realizes the rest as it scrolls.
+std::vector<ComPtr<IUIAutomationElement>> selectable_items(IUIAutomation* automation,
+                                                           IUIAutomationElement* container) {
+    const auto condition =
+        pattern_available_condition(automation, UIA_IsSelectionItemPatternAvailablePropertyId);
+    ComPtr<IUIAutomationElementArray> found;
+    if (!condition || FAILED(container->FindAll(TreeScope_Descendants, condition.Get(), &found)) || !found) {
+        return {};
+    }
+    int length = 0;
+    if (FAILED(found->get_Length(&length))) return {};
+    std::vector<ComPtr<IUIAutomationElement>> items;
+    for (int i = 0; i < length; ++i) {
+        ComPtr<IUIAutomationElement> item;
+        if (SUCCEEDED(found->GetElement(i, &item)) && item) items.push_back(std::move(item));
+    }
+    return items;
+}
+
+std::vector<ComPtr<IUIAutomationElement>> selectable_items_named(IUIAutomation* automation,
+                                                                 IUIAutomationElement* container,
+                                                                 const std::wstring& option) {
+    const auto wanted = lower(option);
+    std::vector<ComPtr<IUIAutomationElement>> matches;
+    for (auto& item : selectable_items(automation, container)) {
+        if (lower(current_name(item.Get())) == wanted) matches.push_back(std::move(item));
+    }
+    return matches;
+}
+
+// A Win32 combo box seen through the MSAA proxy has no ExpandCollapsePattern
+// and exposes its items only while dropped down; its drop-down button's Invoke
+// opens and closes the list instead.
+ComPtr<IUIAutomationInvokePattern> drop_down_button(IUIAutomation* automation, IUIAutomationElement* comboBox) {
+    VARIANT button;
+    VariantInit(&button);
+    button.vt = VT_I4;
+    button.lVal = UIA_ButtonControlTypeId;
+    ComPtr<IUIAutomationCondition> isButton;
+    const auto invokable = pattern_available_condition(automation, UIA_IsInvokePatternAvailablePropertyId);
+    ComPtr<IUIAutomationCondition> condition;
+    if (!invokable || FAILED(automation->CreatePropertyCondition(UIA_ControlTypePropertyId, button, &isButton)) ||
+        FAILED(automation->CreateAndCondition(isButton.Get(), invokable.Get(), &condition))) {
+        return nullptr;
+    }
+    ComPtr<IUIAutomationElement> found;
+    if (FAILED(comboBox->FindFirst(TreeScope_Children, condition.Get(), &found)) || !found) return nullptr;
+    ComPtr<IUIAutomationInvokePattern> pattern;
+    HRESULT status = E_FAIL;
+    if (guarded_pattern(found.Get(), UIA_InvokePatternId, __uuidof(IUIAutomationInvokePattern),
+                        reinterpret_cast<void**>(pattern.GetAddressOf()), &status)) {
+        return nullptr;
+    }
+    return pattern;
+}
+
+bool invoke_succeeded(IUIAutomationInvokePattern* pattern) {
+    HRESULT status = E_FAIL;
+    return !guarded_invoke(pattern, &status) && SUCCEEDED(status);
+}
+
+// A combo box scrolls through a list child, not through itself.
+ComPtr<IUIAutomationScrollPattern> scroll_pattern_within(IUIAutomation* automation,
+                                                         IUIAutomationElement* container) {
+    if (auto own = scroll_pattern_of(container)) return own;
+    const auto condition = pattern_available_condition(automation, UIA_IsScrollPatternAvailablePropertyId);
+    ComPtr<IUIAutomationElement> list;
+    if (!condition || FAILED(container->FindFirst(TreeScope_Descendants, condition.Get(), &list)) || !list) {
+        return nullptr;
+    }
+    return scroll_pattern_of(list.Get());
+}
+
+} // namespace
+
+StateChange UiaSnapshotBuilder::select_option(ElementRecord& record, const std::wstring& option,
+                                              Context& context) const {
+    context.check();
+    if (!record.element) throw Error("element_not_found", "The target element is gone; observe again");
+    const auto automation = create_automation();
+    if (!automation) throw Error("uia_unavailable", "UI Automation is unavailable");
+
+    std::vector<ComPtr<IUIAutomationElement>> matches;
+    const auto search = [&] {
+        matches = selectable_items_named(automation.Get(), record.element.Get(), option);
+        return !matches.empty();
+    };
+    const auto listShown = [&] { return !selectable_items(automation.Get(), record.element.Get()).empty(); };
+
+    const auto expander = current_pattern<IUIAutomationExpandCollapsePattern>(
+        record, UIA_ExpandCollapsePatternId, "GetCurrentPattern(ExpandCollapse)");
+    const auto dropDown = !expander && record.description.value("controlType", "") == "ComboBox"
+                              ? drop_down_button(automation.Get(), record.element.Get())
+                              : nullptr;
+    bool expandedHere = false;
+    if (expander && read_expand_collapse_state(record, expander.Get()) == ExpandCollapseState_Collapsed) {
+        HRESULT status = E_FAIL;
+        expandedHere = !guarded_expand(expander.Get(), true, &status) && SUCCEEDED(status);
+        if (expandedHere) {
+            poll_until([&] {
+                return read_expand_collapse_state(record, expander.Get()) == ExpandCollapseState_Expanded;
+            }, context);
+        }
+    } else if (dropDown && !search()) {
+        expandedHere = invoke_succeeded(dropDown.Get());
+        if (expandedHere) poll_until(search, context);
+    }
+    const auto restore = [&] {
+        if (!expandedHere) return;
+        HRESULT status = E_FAIL;
+        if (expander) guarded_expand(expander.Get(), false, &status);
+        // The list may already have closed on selection, and a second Invoke would reopen it.
+        else if (dropDown && listShown()) invoke_succeeded(dropDown.Get());
+    };
+
+    try {
+        if (!search()) {
+            if (const auto list = scroll_pattern_within(automation.Get(), record.element.Get())) {
+                page_until_shown(list.Get(), search, context);
+            }
+        }
+        if (matches.size() > 1) {
+            throw Error("ambiguous_target", std::to_string(matches.size()) + " selectable items are named \"" +
+                                                utf8(option) + "\"; select one with set-state instead");
+        }
+        if (matches.empty()) {
+            throw Error("option_not_found", "No selectable item named \"" + utf8(option) + "\" under the element");
+        }
+        ElementRecord item{Json{{"name", utf8(option)}}, matches.front()};
+        const auto change = select_item(item, context);
+        if (!change) throw Error("pattern_unavailable", "The matching item has no SelectionItemPattern");
+        restore();
+        return *change;
+    } catch (...) {
+        restore();
+        throw;
+    }
 }
 
 class UiaChangeWatcher::Handler final : public IUIAutomationEventHandler,

@@ -6,14 +6,15 @@
 
 namespace dcu {
 namespace {
-const std::set<std::string> semanticActions{"set-state", "scroll-to"};
+const std::set<std::string> semanticActions{"set-state", "scroll-to", "select-option"};
 const std::set<std::string> inputActions{
-    "click", "drag", "scroll", "type-text", "press-key", "hotkey", "set-value", "paste-text", "set-state", "scroll-to"
+    "click", "drag", "scroll", "type-text", "press-key", "hotkey", "set-value", "paste-text", "set-state", "scroll-to",
+    "select-option"
 };
 const std::set<std::string> supportedMethods{
     "doctor", "capabilities", "session.start", "session.status", "session.stop", "daemon.shutdown",
     "list-apps", "list-windows", "get-app-state", "get-full-screenshot", "click", "drag", "scroll", "type-text",
-    "press-key", "hotkey", "set-value", "paste-text", "set-state", "scroll-to",
+    "press-key", "hotkey", "set-value", "paste-text", "set-state", "scroll-to", "select-option",
     "toggle.set", "toggle.release-all", "toggle.status"
 };
 const std::set<std::string> clickModifiers{
@@ -79,7 +80,7 @@ void validate_params(const std::string& method, const Json& params) {
     for (auto key : {"elementIndex", "fromElementIndex", "toElementIndex"}) validate_number(params, key, 0, 1000000, true);
     for (auto key : {"includeText", "includeScreenshot", "restoreWindow", "activate", "headless", "multiAgent"})
         if (params.contains(key) && !params[key].is_boolean()) throw Error("invalid_argument", std::string(key) + " must be boolean");
-    for (auto key : {"app", "windowId", "observationId", "sessionId", "text", "key", "value"})
+    for (auto key : {"app", "windowId", "observationId", "sessionId", "text", "key", "value", "option"})
         if (params.contains(key) && (!params[key].is_string() || params[key].get_ref<const std::string&>().size() > 1048576))
             throw Error("invalid_argument", std::string("Invalid ") + key);
     validate_agent_id(params);
@@ -128,6 +129,9 @@ void validate_params(const std::string& method, const Json& params) {
         throw Error("invalid_argument", "set-state requires elementIndex and state");
     if (method == "scroll-to" && !params.contains("elementIndex"))
         throw Error("invalid_argument", "scroll-to requires elementIndex");
+    if (method == "select-option" &&
+        (!params.contains("elementIndex") || !params.contains("option") || params["option"].get_ref<const std::string&>().empty()))
+        throw Error("invalid_argument", "select-option requires elementIndex and a non-empty option");
 }
 
 void validate_headless_input(const std::string& method, const Json& params) {

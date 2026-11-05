@@ -110,7 +110,18 @@ that has bounds through SetScrollPercent, and an element without bounds yet (an 
 virtualized list) is found by paging the ancestor from its start with LargeIncrement until it
 shows or the position stops moving. The result reports `visible` and `semanticAction`
 (`scrollIntoView` or `scrollPattern`). An element with neither pattern nor scrollable ancestor, a
-refused call, or a provider fault fails with `pattern_unavailable`. Observation elements list `scrollItem` among their
+refused call, or a provider fault fails with `pattern_unavailable`.
+
+`select-option {elementIndex, option}` (Windows only) is semantic in the same way. It selects the
+one SelectionItemPattern descendant of the element whose name equals `option`, ignoring case. A
+collapsed container with ExpandCollapsePattern is expanded first; a Win32 combo box without it is
+opened through the Invoke of its drop-down button. Either is closed again afterwards. When no
+realized item matches, a scrollable container (the element or its first scrollable descendant) is
+paged from its start until one appears. The selection is read back for up to 600 ms, and the result
+carries `semanticAction: "select"`, `option`, `changed`, and `verified`. No match fails with
+`option_not_found`; several matches in one page fail with `ambiguous_target` (use `set-state
+selected` on one of them instead). Opening a Win32 combo box can move keyboard focus to it inside
+its window. Observation elements list `scrollItem` among their
 `patterns` when ScrollIntoView is available. `set-value` with an empty `value` clears a field.
 
 One desktop session (indicator, Esc stop, input lease) can be shared by up to 16 agent sessions.

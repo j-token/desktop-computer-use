@@ -66,6 +66,7 @@ dcu type-text|paste-text --app APP --text TEXT     (--text-stdin for secrets)
 dcu set-value --app APP --element-index N --value TEXT   (--value-stdin for secrets; "" clears)
 dcu set-state --app APP --element-index N --state checked|unchecked|expanded|collapsed|selected
 dcu scroll-to --app APP --element-index N
+dcu select-option --app APP --element-index N --option NAME
 dcu press-key --app APP --key KEY | hotkey --app APP --key MODIFIER+KEY
 dcu toggle on|off --key shift|ctrl|alt|win|space | toggle off --all | toggle status
 ```
@@ -92,7 +93,9 @@ acceptable. Results report `delivery: "semantic"` or `"physical"`.
 On Windows, prefer `set-state` over a click for check boxes, radio buttons, tree nodes, combo
 boxes, and tabs: it acts only when the element is not already in that state and reports `changed`
 and `verified`. `scroll-to` brings a list, tree, or panel item into view, even one still listed
-`offscreen` without bounds, and reports `visible`. Both always
+`offscreen` without bounds, and reports `visible`. To pick a value in a combo box, list, or tree,
+use `select-option` on the container with the item's name; it opens and closes a combo box itself
+and fails with `option_not_found` or `ambiguous_target`. Both always
 use accessibility patterns, with or without `--headless`, so they never wait for another agent's
 physical input. Without the needed pattern they fail with `pattern_unavailable`.
 

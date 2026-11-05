@@ -198,7 +198,10 @@ test("CLI rejects set-state and scroll-to without an element or a known state be
     [["set-state", "--session-id", "s", "--app", "x", "--observation-id", "o", "--element-index", "2", "--state", "on"],
      /set-state requires --state/],
     [["scroll-to", "--session-id", "s", "--app", "x"], /scroll-to requires --element-index/],
-    [["scroll-to", "--session-id", "s", "--observation-id", "o", "--element-index", "2"], /scroll-to requires --app or --window-id/]
+    [["scroll-to", "--session-id", "s", "--observation-id", "o", "--element-index", "2"], /scroll-to requires --app or --window-id/],
+    [["select-option", "--session-id", "s", "--app", "x", "--option", "Medium"], /select-option requires --element-index/],
+    [["select-option", "--session-id", "s", "--app", "x", "--observation-id", "o", "--element-index", "2"],
+     /select-option requires --option NAME/]
   ];
   for (const [args, message] of cases) {
     const { code, response } = await runCliProcess(args);
