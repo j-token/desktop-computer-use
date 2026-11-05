@@ -13,13 +13,21 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         libxtst6 libxrandr2 libjpeg-turbo8 libatspi2.0-0 \
         libpipewire-0.3-0t64 libpng16-16t64
+# GTK reaches the AT-SPI bus through the ATK bridge, which the base image's
+# --no-install-recommends GNOME install does not guarantee.
+RUN apt-get install -y --no-install-recommends at-spi2-core libatk-adaptor gir1.2-atspi-2.0
 RUN rm -rf /var/lib/apt/lists/*
 
 COPY tests/integration/linux-native/run-x11.sh /test/run-x11.sh
+COPY tests/integration/linux-native/run-semantic.sh /test/run-semantic.sh
 COPY tests/integration/linux-native/parse-window.py /test/parse-window.py
+COPY tests/integration/linux-native/find-element.py /test/find-element.py
 COPY tests/integration/linux-native/capture-root.py /test/capture-root.py
 COPY tests/integration/linux-native/validate-results.py /test/validate-results.py
-RUN chmod 0755 /test/run-x11.sh
+COPY tests/integration/linux-native/validate-semantic.py /test/validate-semantic.py
+COPY tests/integration/linux-native/semantic-fixture.py /test/semantic-fixture.py
+COPY tests/integration/linux-native/probe-scroll-bars.py /test/probe-scroll-bars.py
+RUN chmod 0755 /test/run-x11.sh /test/run-semantic.sh
 
 ENV HOME=/home/tester \
     XDG_RUNTIME_DIR=/tmp/dcu-runtime \
@@ -28,4 +36,7 @@ ENV HOME=/home/tester \
     GDK_BACKEND=x11 \
     LIBGL_ALWAYS_SOFTWARE=1
 
-ENTRYPOINT ["bash", "-c", "mkdir -p /run/dbus /tmp/dcu-runtime && chown tester:tester /tmp/dcu-runtime && chmod 700 /tmp/dcu-runtime && dbus-daemon --system --fork && exec runuser -u tester -- dbus-run-session -- bash /test/run-x11.sh"]
+# DCU_RUNNER picks the runner; the default is the drag harness, run-semantic.sh
+# checks set-state, scroll-to, and select-option.
+ENV DCU_RUNNER=/test/run-x11.sh
+ENTRYPOINT ["bash", "-c", "mkdir -p /run/dbus /tmp/dcu-runtime && chown tester:tester /tmp/dcu-runtime && chmod 700 /tmp/dcu-runtime && dbus-daemon --system --fork && exec runuser -u tester -- dbus-run-session -- bash \"$DCU_RUNNER\""]

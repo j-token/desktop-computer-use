@@ -15,6 +15,7 @@
 #include <fstream>
 #include <functional>
 #include <iomanip>
+#include <limits>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -219,6 +220,7 @@ Json valid_overlay_regions(const Json& candidate);
 void wait_checked(Context& context, int milliseconds);
 #if DCU_HAVE_ATSPI
 std::optional<std::array<int, 4>> atspi_rect(AtspiAccessible* node);
+std::optional<std::array<int, 4>> atspi_drawn_rect(AtspiAccessible* node);
 AtspiAccessible* atspi_element_for_index(const WindowInfo& window, const Json& params, Context& context);
 // Runs the element's click-like AT-SPI action without the pointer or focus and
 // returns its name, or nullopt when the element has none or refuses it.
@@ -1880,7 +1882,7 @@ Json LinuxBackend::click(const Json& params, Context& context) {
 #if DCU_HAVE_ATSPI
     if (params.contains("elementIndex")) {
         AtspiAccessible* element = atspi_element_for_index(window, params, context);
-        const auto rect = atspi_rect(element);
+        const auto rect = atspi_drawn_rect(element);
         if (!rect) {
             g_object_unref(element);
             throw Error("element_not_found", "The selected accessibility element has no screen rectangle");
@@ -1953,8 +1955,8 @@ Json LinuxBackend::drag(const Json& params, Context& context) {
         to_params["elementIndex"] = params.at("toElementIndex");
         AtspiAccessible* from_element = atspi_element_for_index(window, from_params, context);
         AtspiAccessible* to_element = atspi_element_for_index(window, to_params, context);
-        const auto from_rect = atspi_rect(from_element);
-        const auto to_rect = atspi_rect(to_element);
+        const auto from_rect = atspi_drawn_rect(from_element);
+        const auto to_rect = atspi_drawn_rect(to_element);
         g_object_unref(from_element);
         g_object_unref(to_element);
         if (!from_rect || !to_rect) throw Error("element_not_found", "Drag elements have no screen rectangle");
@@ -2037,7 +2039,7 @@ Json LinuxBackend::scroll(const Json& params, Context& context) {
     if (params.contains("elementIndex")) {
 #if DCU_HAVE_ATSPI
         AtspiAccessible* element = atspi_element_for_index(window, params, context);
-        const auto rect = atspi_rect(element);
+        const auto rect = atspi_drawn_rect(element);
         g_object_unref(element);
         if (!rect) throw Error("element_not_found", "The selected accessibility element has no screen rectangle");
         point = {rect->at(0) - window.x + rect->at(2) / 2, rect->at(1) - window.y + rect->at(3) / 2};
@@ -2967,6 +2969,17 @@ std::optional<std::array<int, 4>> atspi_rect(AtspiAccessible* node) {
     return std::array<int, 4>{rect.value->x, rect.value->y, rect.value->width, rect.value->height};
 }
 
+// GTK reports a row it has not drawn yet at INT_MIN, which is no position at
+// all. std::abs(INT_MIN) is undefined, so the range is compared directly.
+std::optional<std::array<int, 4>> atspi_drawn_rect(AtspiAccessible* node) {
+    constexpr int kMaxCoordinate = 1 << 20;
+    const auto rect = atspi_rect(node);
+    if (!rect) return std::nullopt;
+    const auto plausible = [](int coordinate) { return -kMaxCoordinate <= coordinate && coordinate <= kMaxCoordinate; };
+    if (!plausible(rect->at(0)) || !plausible(rect->at(1))) return std::nullopt;
+    return rect;
+}
+
 AtspiAccessible* atspi_child(AtspiAccessible* node, int index) {
     if (!node) return nullptr;
     return atspi_accessible_get_child_at_index(node, index, nullptr);
@@ -3082,7 +3095,7 @@ Json LinuxBackend::accessibility_snapshot(const WindowInfo& window, Context& con
                         {"value", value},
                         {"isSelected", atspi_state(node, ATSPI_STATE_SELECTED)},
                         {"actions", atspi_actions(node)}};
-            const auto rect = atspi_rect(node);
+            const auto rect = atspi_drawn_rect(node);
             if (rect) record["frame"] = Json{{"x", rect->at(0) - window.x},
                                                {"y", rect->at(1) - window.y},
                                                {"width", rect->at(2)},
@@ -3440,6 +3453,13 @@ bool rects_intersect(const std::array<int, 4>& a, const std::array<int, 4>& b) {
     return a[0] < b[0] + b[2] && b[0] < a[0] + a[2] && a[1] < b[1] + b[3] && b[1] < a[1] + a[3];
 }
 
+bool atspi_is_vertical_bar(AtspiAccessible* bar) {
+    if (atspi_state(bar, ATSPI_STATE_VERTICAL)) return true;
+    if (atspi_state(bar, ATSPI_STATE_HORIZONTAL)) return false;
+    const auto rect = atspi_rect(bar);
+    return rect && rect->at(3) > rect->at(2);
+}
+
 struct GObjectUnref {
     void operator()(gpointer object) const { g_object_unref(object); }
 };
@@ -3467,8 +3487,7 @@ std::optional<ScrollArea> atspi_scroll_ancestor(AtspiAccessible* element) {
             AtspiRef child{atspi_child(ancestor.get(), index)};
             if (!child || atspi_accessible_get_role(child.get(), nullptr) != ATSPI_ROLE_SCROLL_BAR) continue;
             if (AtspiValue* value = atspi_accessible_get_value_iface(child.get())) {
-                bars.push_back({std::unique_ptr<AtspiValue, GObjectUnref>{value},
-                                atspi_state(child.get(), ATSPI_STATE_VERTICAL)});
+                bars.push_back({std::unique_ptr<AtspiValue, GObjectUnref>{value}, atspi_is_vertical_bar(child.get())});
             }
         }
         if (!bars.empty()) return ScrollArea{std::move(ancestor), std::move(bars)};
@@ -3479,16 +3498,18 @@ std::optional<ScrollArea> atspi_scroll_ancestor(AtspiAccessible* element) {
 
 // Moves the scroll bars toward the target until it is shown. With known
 // bounds each bar centers the target, assuming one value unit per pixel as in
-// GTK adjustments; without bounds the vertical bar pages from the top.
+// GTK adjustments; without bounds the vertical bar pages from the top. It
+// stops when no bar moves any more.
 bool atspi_scroll_with_bars(AtspiAccessible* element, const ScrollArea& area, const std::function<bool()>& shown,
                             Context& context) {
     constexpr int kMaxSteps = 200;
-    bool paged_from_top = false;
+    bool paging = false;
     for (int step = 0; step < kMaxSteps; ++step) {
         if (shown()) return true;
         const auto view = atspi_rect(area.viewport.get());
         if (!view) return false;
-        const auto target = atspi_rect(element);
+        const auto target = atspi_drawn_rect(element);
+        const bool starts_paging = !target && !paging;
         bool moved = false;
         for (const auto& bar : area.bars) {
             if (!target && !bar.vertical) continue;
@@ -3496,23 +3517,26 @@ bool atspi_scroll_with_bars(AtspiAccessible* element, const ScrollArea& area, co
             const double current = atspi_value_get_current_value(value, nullptr);
             const double minimum = atspi_value_get_minimum_value(value, nullptr);
             const double maximum = atspi_value_get_maximum_value(value, nullptr);
+            // A provider that reports no range clamps the value itself.
+            const double upper = maximum > minimum ? maximum : std::numeric_limits<double>::max();
             double next = current;
             if (target) {
                 const int axis = bar.vertical ? 1 : 0;
                 const double target_center = target->at(axis) + target->at(axis + 2) / 2.0;
                 const double view_center = view->at(axis) + view->at(axis + 2) / 2.0;
                 next = current + (target_center - view_center);
-            } else if (!paged_from_top) {
+            } else if (starts_paging) {
                 next = minimum;
             } else {
                 next = current + view->at(3);
             }
-            next = std::clamp(next, minimum, maximum);
+            next = std::clamp(next, minimum, upper);
             if (std::abs(next - current) < 1.0) continue;
-            moved = atspi_value_set_current_value(value, next, nullptr) != FALSE || moved;
+            atspi_value_set_current_value(value, next, nullptr);
+            moved = std::abs(atspi_value_get_current_value(value, nullptr) - current) >= 1.0 || moved;
         }
-        if (!target) paged_from_top = true;
-        if (!moved) return shown();
+        if (!target) paging = true;
+        if (!moved && !starts_paging) return shown();
         wait_checked(context, kSettlePollMilliseconds * 2);
     }
     return shown();
@@ -3635,10 +3659,17 @@ Json LinuxBackend::scroll_to(const Json& params, Context& context) {
     validate_observation(params, window);
 #if DCU_HAVE_ATSPI
     AtspiRef element{atspi_element_for_index(window, params, context)};
+    const auto area = atspi_scroll_ancestor(element.get());
     const std::array<int, 4> window_rect{window.x, window.y, window.width, window.height};
+    // GTK keeps a scrolled-out row SHOWING with its real extents, so the row
+    // must also meet the scroll area, not only the window.
     const std::function<bool()> shown = [&] {
-        const auto rect = atspi_rect(element.get());
-        return rect && atspi_state(element.get(), ATSPI_STATE_SHOWING) && rects_intersect(*rect, window_rect);
+        const auto rect = atspi_drawn_rect(element.get());
+        if (!rect || !atspi_state(element.get(), ATSPI_STATE_SHOWING) || !rects_intersect(*rect, window_rect)) {
+            return false;
+        }
+        const auto view = area ? atspi_rect(area->viewport.get()) : std::nullopt;
+        return !view || rects_intersect(*rect, *view);
     };
 
     std::string action;
@@ -3656,7 +3687,6 @@ Json LinuxBackend::scroll_to(const Json& params, Context& context) {
     // Component.scroll_to is optional for a toolkit and can report success
     // without moving anything, so the enclosing scroll bars are the fallback.
     if (!visible) {
-        const auto area = atspi_scroll_ancestor(element.get());
         if (!area && action.empty()) {
             throw Error("pattern_unavailable",
                         "The target element supports no AT-SPI scroll_to and has no ancestor with scroll bars");

@@ -55,6 +55,16 @@ directory (`$DCU_RESULTS_DIR` in the example):
   session stop client; the report requires a cancelled drag response, a prompt
   button-up, and an inactive session before restarting and stopping cleanly.
 
+Pass `-e DCU_RUNNER=/test/run-semantic.sh` to the same `docker run` to check
+`set-state`, `scroll-to`, and `select-option` instead. It starts the GTK
+`semantic-fixture.py` (check box, expander, a 100-row list in a scrolled window,
+and two combo boxes), observes again with `get-app-state --include-text` before
+every action, and
+`validate-semantic.py` passes only when the fixture's own event log shows each
+change: toggled, expanded, selected row, scrolled adjustment, and active combo
+item. CI runs this as the `linux-semantic` job and uploads the results
+directory.
+
 If the Node or native mount is absent, the runner exits 77 before starting Xvfb
 and writes preflight.json with the missing path. This is an explicit runtime
 limitation, not a passing desktop test. A prebuilt daemon is required; the
