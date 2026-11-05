@@ -78,6 +78,11 @@ public:
                                          Context& context) const;
     // ScrollItemPattern.ScrollIntoView; false when the element lacks the pattern.
     bool scroll_into_view(ElementRecord& element, Context& context) const;
+    // Scrolls the nearest scrollable ancestor through ScrollPattern until the
+    // element shows inside it: centered when it has bounds, paged from the
+    // start when it has none yet. Whether it shows, or nullopt without a
+    // scrollable ancestor.
+    std::optional<bool> scroll_ancestor_into_view(ElementRecord& element, Context& context) const;
 
     // Window-local bounds the provider reports now, clipped to every scrollable
     // ancestor, or nullopt once the element is gone. An observation's bounds go

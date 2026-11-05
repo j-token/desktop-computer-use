@@ -103,9 +103,14 @@ take the physical-input turn, and ignore other agents' toggles. `state` is `chec
 (SelectionItemPattern). The element is changed only when it is not already in that state, and the
 state is read back for up to 600 ms. The result carries `semanticAction` (`toggle`,
 `expandCollapse`, or `select`), `state`, `changed`, and `verified`. `scroll-to` calls
-ScrollItemPattern.ScrollIntoView, waits up to 800 ms for the element to intersect the window inside
-every scrollable ancestor, and reports `visible`. A missing pattern, a refused call, or a provider
-fault fails with `pattern_unavailable`. Observation elements list `scrollItem` among their
+ScrollItemPattern.ScrollIntoView and waits up to 800 ms for the element to intersect the window
+inside every scrollable ancestor. When the element has no ScrollItemPattern or is still hidden, it
+scrolls the nearest ancestor with a ScrollPattern instead: up to 10 times it centers an element
+that has bounds through SetScrollPercent, and an element without bounds yet (an unrealized row of a
+virtualized list) is found by paging the ancestor from its start with LargeIncrement until it
+shows or the position stops moving. The result reports `visible` and `semanticAction`
+(`scrollIntoView` or `scrollPattern`). An element with neither pattern nor scrollable ancestor, a
+refused call, or a provider fault fails with `pattern_unavailable`. Observation elements list `scrollItem` among their
 `patterns` when ScrollIntoView is available. `set-value` with an empty `value` clears a field.
 
 One desktop session (indicator, Esc stop, input lease) can be shared by up to 16 agent sessions.

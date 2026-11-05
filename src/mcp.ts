@@ -223,8 +223,9 @@ const tools: ToolDefinition[] = [
     name: "dcu_scroll_to",
     method: "scroll-to",
     description:
-      "Scroll an observation's elementIndex into view through ScrollItemPattern and report whether it became " +
-      "visible. Never moves the pointer, keyboard, or focus, so it runs alongside other agents' physical input.",
+      "Scroll an observation's elementIndex into view through ScrollItemPattern, or else through the nearest " +
+      "scrollable ancestor's ScrollPattern, and report whether it became visible. Works for offscreen items " +
+      "without bounds. Never moves the pointer, keyboard, or focus, so it runs alongside other agents' physical input.",
     schema: { ...common }
   },
   {

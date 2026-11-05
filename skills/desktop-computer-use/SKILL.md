@@ -91,7 +91,8 @@ acceptable. Results report `delivery: "semantic"` or `"physical"`.
 
 On Windows, prefer `set-state` over a click for check boxes, radio buttons, tree nodes, combo
 boxes, and tabs: it acts only when the element is not already in that state and reports `changed`
-and `verified`. `scroll-to` brings a list or tree item into view and reports `visible`. Both always
+and `verified`. `scroll-to` brings a list, tree, or panel item into view, even one still listed
+`offscreen` without bounds, and reports `visible`. Both always
 use accessibility patterns, with or without `--headless`, so they never wait for another agent's
 physical input. Without the needed pattern they fail with `pattern_unavailable`.
 

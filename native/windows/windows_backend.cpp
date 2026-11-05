@@ -1784,10 +1784,6 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
         if (method == "scroll-to") {
             if (!observation) throw Error("observation_required", "scroll-to requires observationId");
             auto& record = require_element(params, *observation, "elementIndex");
-            if (!uia_.scroll_into_view(record, context)) {
-                throw Error("pattern_unavailable",
-                            "The target element has no ScrollItemPattern; scroll its container with scroll instead");
-            }
             const RECT window{0, 0, targetWidth, targetHeight};
             const auto visibleInWindow = [&] {
                 const auto bounds = uia_.visible_bounds(record.element.Get(), target.rect);
@@ -1795,14 +1791,32 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
                 return bounds && IntersectRect(&shown, &*bounds, &window);
             };
             // ScrollIntoView can return before the provider publishes the new location.
-            constexpr int settleMilliseconds = 800;
-            constexpr int pollMilliseconds = 25;
-            bool visible = visibleInWindow();
-            for (int waited = 0; !visible && waited < settleMilliseconds; waited += pollMilliseconds) {
-                sleep_context(context, pollMilliseconds);
-                visible = visibleInWindow();
+            const auto waitUntilVisible = [&] {
+                constexpr int settleMilliseconds = 800;
+                constexpr int pollMilliseconds = 25;
+                bool visible = visibleInWindow();
+                for (int waited = 0; !visible && waited < settleMilliseconds; waited += pollMilliseconds) {
+                    sleep_context(context, pollMilliseconds);
+                    visible = visibleInWindow();
+                }
+                return visible;
+            };
+
+            const bool hasScrollItem = uia_.scroll_into_view(record, context);
+            bool visible = hasScrollItem && waitUntilVisible();
+            std::string action = "scrollIntoView";
+            if (!visible) {
+                const auto shownByAncestor = uia_.scroll_ancestor_into_view(record, context);
+                if (!shownByAncestor && !hasScrollItem) {
+                    throw Error("pattern_unavailable",
+                                "The target element has no ScrollItemPattern and no ancestor with a ScrollPattern");
+                }
+                if (shownByAncestor) {
+                    action = "scrollPattern";
+                    visible = *shownByAncestor && waitUntilVisible();
+                }
             }
-            auto result = semanticResult("scrollIntoView");
+            auto result = semanticResult(action);
             result["visible"] = visible;
             return result;
         }

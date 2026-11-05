@@ -418,6 +418,29 @@ DWORD guarded_scroll(IUIAutomationScrollPattern* pattern, ScrollAmount horizonta
     return 0;
 }
 
+DWORD guarded_view_sizes(IUIAutomationScrollPattern* pattern, double* horizontal, double* vertical,
+                         HRESULT* status) noexcept {
+    __try {
+        *status = pattern->get_CurrentHorizontalViewSize(horizontal);
+        if (SUCCEEDED(*status)) *status = pattern->get_CurrentVerticalViewSize(vertical);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
+DWORD guarded_set_scroll_percent(IUIAutomationScrollPattern* pattern, double horizontal, double vertical,
+                                 HRESULT* status) noexcept {
+    __try {
+        *status = pattern->SetScrollPercent(horizontal, vertical);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
 DWORD guarded_bounding_rectangle(IUIAutomationElement* element, RECT* bounds,
                                  HRESULT* status) noexcept {
     __try {
@@ -974,6 +997,151 @@ std::optional<int> UiaSnapshotBuilder::scroll(IUIAutomationScrollPattern* contai
         ++applied;
     }
     return applied;
+}
+
+namespace {
+
+struct ScrollAncestor {
+    ComPtr<IUIAutomationElement> element;
+    ComPtr<IUIAutomationScrollPattern> pattern;
+};
+
+std::optional<ScrollAncestor> nearest_scroll_ancestor(IUIAutomationElement* element) {
+    const auto automation = create_automation();
+    const auto walker = control_view_walker(automation.Get());
+    if (!walker) return std::nullopt;
+    auto node = parent_of(walker.Get(), element);
+    for (int depth = 0; node && depth < kMaximumAncestors; ++depth) {
+        if (auto pattern = scroll_pattern_of(node.Get())) return ScrollAncestor{node, std::move(pattern)};
+        node = parent_of(walker.Get(), node.Get());
+    }
+    return std::nullopt;
+}
+
+bool has_area(const RECT& rect) {
+    return rect.right > rect.left && rect.bottom > rect.top;
+}
+
+// Providers report bounds unclipped by the viewport, so a target that fits
+// must lie inside it; a larger one only has to overlap it.
+bool shown_in(const RECT& target, const RECT& viewport) {
+    if (!has_area(target)) return false;
+    const bool fits = target.right - target.left <= viewport.right - viewport.left &&
+                      target.bottom - target.top <= viewport.bottom - viewport.top;
+    if (fits) {
+        return target.left >= viewport.left && target.right <= viewport.right &&
+               target.top >= viewport.top && target.bottom <= viewport.bottom;
+    }
+    RECT overlap{};
+    return IntersectRect(&overlap, &target, &viewport) != FALSE;
+}
+
+struct AxisPosition {
+    double percent = 0;
+    double viewSizePercent = 0;
+};
+
+std::optional<AxisPosition> axis_position(IUIAutomationScrollPattern* pattern, bool vertical) {
+    double horizontalPercent = 0, verticalPercent = 0, horizontalView = 0, verticalView = 0;
+    HRESULT status = E_FAIL;
+    if (guarded_scroll_percents(pattern, &horizontalPercent, &verticalPercent, &status) || FAILED(status)) {
+        return std::nullopt;
+    }
+    if (guarded_view_sizes(pattern, &horizontalView, &verticalView, &status) || FAILED(status)) {
+        return std::nullopt;
+    }
+    return vertical ? AxisPosition{verticalPercent, verticalView} : AxisPosition{horizontalPercent, horizontalView};
+}
+
+// The provider can move the content after the call returns. False when the
+// position never left `before`.
+bool wait_for_axis_move(IUIAutomationScrollPattern* pattern, bool vertical, double before, Context& context) {
+    return poll_until([&] {
+        const auto now = axis_position(pattern, vertical);
+        return !now || now->percent != before;
+    }, context);
+}
+
+bool set_axis_percent(IUIAutomationScrollPattern* pattern, bool vertical, double percent) {
+    const double horizontal = vertical ? UIA_ScrollPatternNoScroll : percent;
+    const double verticalPercent = vertical ? percent : UIA_ScrollPatternNoScroll;
+    HRESULT status = E_FAIL;
+    return !guarded_set_scroll_percent(pattern, horizontal, verticalPercent, &status) && SUCCEEDED(status);
+}
+
+// The content is viewSize percent of the whole, so the viewport extent maps
+// to the scroll percent through the hidden remainder.
+bool center_target(IUIAutomationScrollPattern* pattern, const RECT& target, const RECT& viewport,
+                   Context& context) {
+    const bool vertical = target.top < viewport.top || target.bottom > viewport.bottom;
+    const auto position = axis_position(pattern, vertical);
+    if (!position || position->viewSizePercent <= 0 || position->viewSizePercent >= 100) return false;
+    const double extent = vertical ? viewport.bottom - viewport.top : viewport.right - viewport.left;
+    const double offset = vertical ? (target.top + target.bottom - viewport.top - viewport.bottom) / 2.0
+                                   : (target.left + target.right - viewport.left - viewport.right) / 2.0;
+    const double hiddenExtent = extent * (100 - position->viewSizePercent) / position->viewSizePercent;
+    const double percent = std::clamp(position->percent + offset / hiddenExtent * 100.0, 0.0, 100.0);
+    if (percent == position->percent || !set_axis_percent(pattern, vertical, percent)) return false;
+    return wait_for_axis_move(pattern, vertical, position->percent, context);
+}
+
+// An unrealized item of a virtualized list has no bounds to steer by, so the
+// container is paged from its start until the item shows.
+template <typename Shown>
+bool page_until_shown(IUIAutomationScrollPattern* pattern, Shown shown, Context& context) {
+    BOOL horizontallyScrollable = FALSE;
+    BOOL verticallyScrollable = FALSE;
+    HRESULT status = E_FAIL;
+    if (guarded_scrollable(pattern, &horizontallyScrollable, &verticallyScrollable, &status) || FAILED(status)) {
+        return false;
+    }
+    if (!horizontallyScrollable && !verticallyScrollable) return false;
+    const bool vertical = verticallyScrollable == TRUE;
+
+    const auto start = axis_position(pattern, vertical);
+    if (!start) return false;
+    if (start->percent > 0) {
+        if (!set_axis_percent(pattern, vertical, 0)) return false;
+        wait_for_axis_move(pattern, vertical, start->percent, context);
+    }
+    const ScrollAmount horizontalStep = vertical ? ScrollAmount_NoAmount : ScrollAmount_LargeIncrement;
+    const ScrollAmount verticalStep = vertical ? ScrollAmount_LargeIncrement : ScrollAmount_NoAmount;
+    constexpr int maximumPages = 200;
+    for (int page = 0; page < maximumPages; ++page) {
+        context.check();
+        if (shown()) return true;
+        const auto before = axis_position(pattern, vertical);
+        if (!before || before->percent >= 100) return false;
+        if (guarded_scroll(pattern, horizontalStep, verticalStep, &status) || FAILED(status)) return false;
+        if (!wait_for_axis_move(pattern, vertical, before->percent, context)) return shown();
+    }
+    return shown();
+}
+
+} // namespace
+
+std::optional<bool> UiaSnapshotBuilder::scroll_ancestor_into_view(ElementRecord& record, Context& context) const {
+    context.check();
+    if (!record.element) return std::nullopt;
+    const auto ancestor = nearest_scroll_ancestor(record.element.Get());
+    if (!ancestor) return std::nullopt;
+    IUIAutomationScrollPattern* pattern = ancestor->pattern.Get();
+    const auto shown = [&] {
+        const auto target = screen_bounds(record.element.Get());
+        const auto viewport = screen_bounds(ancestor->element.Get());
+        return target && viewport && shown_in(*target, *viewport);
+    };
+
+    constexpr int maximumCenteringScrolls = 10;
+    for (int scrolls = 0; scrolls < maximumCenteringScrolls; ++scrolls) {
+        context.check();
+        if (shown()) return true;
+        const auto target = screen_bounds(record.element.Get());
+        const auto viewport = screen_bounds(ancestor->element.Get());
+        if (!target || !has_area(*target) || !viewport) break;
+        if (!center_target(pattern, *target, *viewport, context)) break;
+    }
+    return page_until_shown(pattern, shown, context);
 }
 
 class UiaChangeWatcher::Handler final : public IUIAutomationEventHandler,
