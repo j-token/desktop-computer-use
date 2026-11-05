@@ -220,6 +220,7 @@ Json valid_overlay_regions(const Json& candidate);
 void wait_checked(Context& context, int milliseconds);
 #if DCU_HAVE_ATSPI
 std::optional<std::array<int, 4>> atspi_rect(AtspiAccessible* node);
+std::optional<std::array<int, 4>> atspi_drawn_rect(AtspiAccessible* node);
 AtspiAccessible* atspi_element_for_index(const WindowInfo& window, const Json& params, Context& context);
 // Runs the element's click-like AT-SPI action without the pointer or focus and
 // returns its name, or nullopt when the element has none or refuses it.
@@ -1881,7 +1882,7 @@ Json LinuxBackend::click(const Json& params, Context& context) {
 #if DCU_HAVE_ATSPI
     if (params.contains("elementIndex")) {
         AtspiAccessible* element = atspi_element_for_index(window, params, context);
-        const auto rect = atspi_rect(element);
+        const auto rect = atspi_drawn_rect(element);
         if (!rect) {
             g_object_unref(element);
             throw Error("element_not_found", "The selected accessibility element has no screen rectangle");
@@ -1954,8 +1955,8 @@ Json LinuxBackend::drag(const Json& params, Context& context) {
         to_params["elementIndex"] = params.at("toElementIndex");
         AtspiAccessible* from_element = atspi_element_for_index(window, from_params, context);
         AtspiAccessible* to_element = atspi_element_for_index(window, to_params, context);
-        const auto from_rect = atspi_rect(from_element);
-        const auto to_rect = atspi_rect(to_element);
+        const auto from_rect = atspi_drawn_rect(from_element);
+        const auto to_rect = atspi_drawn_rect(to_element);
         g_object_unref(from_element);
         g_object_unref(to_element);
         if (!from_rect || !to_rect) throw Error("element_not_found", "Drag elements have no screen rectangle");
@@ -2038,7 +2039,7 @@ Json LinuxBackend::scroll(const Json& params, Context& context) {
     if (params.contains("elementIndex")) {
 #if DCU_HAVE_ATSPI
         AtspiAccessible* element = atspi_element_for_index(window, params, context);
-        const auto rect = atspi_rect(element);
+        const auto rect = atspi_drawn_rect(element);
         g_object_unref(element);
         if (!rect) throw Error("element_not_found", "The selected accessibility element has no screen rectangle");
         point = {rect->at(0) - window.x + rect->at(2) / 2, rect->at(1) - window.y + rect->at(3) / 2};
@@ -2968,6 +2969,17 @@ std::optional<std::array<int, 4>> atspi_rect(AtspiAccessible* node) {
     return std::array<int, 4>{rect.value->x, rect.value->y, rect.value->width, rect.value->height};
 }
 
+// GTK reports a row it has not drawn yet at INT_MIN, which is no position at
+// all. std::abs(INT_MIN) is undefined, so the range is compared directly.
+std::optional<std::array<int, 4>> atspi_drawn_rect(AtspiAccessible* node) {
+    constexpr int kMaxCoordinate = 1 << 20;
+    const auto rect = atspi_rect(node);
+    if (!rect) return std::nullopt;
+    const auto plausible = [](int coordinate) { return -kMaxCoordinate <= coordinate && coordinate <= kMaxCoordinate; };
+    if (!plausible(rect->at(0)) || !plausible(rect->at(1))) return std::nullopt;
+    return rect;
+}
+
 AtspiAccessible* atspi_child(AtspiAccessible* node, int index) {
     if (!node) return nullptr;
     return atspi_accessible_get_child_at_index(node, index, nullptr);
@@ -3083,7 +3095,7 @@ Json LinuxBackend::accessibility_snapshot(const WindowInfo& window, Context& con
                         {"value", value},
                         {"isSelected", atspi_state(node, ATSPI_STATE_SELECTED)},
                         {"actions", atspi_actions(node)}};
-            const auto rect = atspi_rect(node);
+            const auto rect = atspi_drawn_rect(node);
             if (rect) record["frame"] = Json{{"x", rect->at(0) - window.x},
                                                {"y", rect->at(1) - window.y},
                                                {"width", rect->at(2)},
@@ -3439,17 +3451,6 @@ std::optional<AtspiStateChange> atspi_set_state(AtspiAccessible* element, const 
 
 bool rects_intersect(const std::array<int, 4>& a, const std::array<int, 4>& b) {
     return a[0] < b[0] + b[2] && b[0] < a[0] + a[2] && a[1] < b[1] + b[3] && b[1] < a[1] + a[3];
-}
-
-// GTK reports a row it has not drawn yet at INT_MIN, which is no position at
-// all. std::abs(INT_MIN) is undefined, so the range is compared directly.
-std::optional<std::array<int, 4>> atspi_drawn_rect(AtspiAccessible* node) {
-    constexpr int kMaxCoordinate = 1 << 20;
-    const auto rect = atspi_rect(node);
-    if (!rect) return std::nullopt;
-    const auto plausible = [](int coordinate) { return -kMaxCoordinate <= coordinate && coordinate <= kMaxCoordinate; };
-    if (!plausible(rect->at(0)) || !plausible(rect->at(1))) return std::nullopt;
-    return rect;
 }
 
 bool atspi_is_vertical_bar(AtspiAccessible* bar) {

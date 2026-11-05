@@ -136,6 +136,9 @@ finds only items the toolkit already exposes. `scroll-to` calls Component.scroll
 scroll bars of the nearest ancestor that has them: it centers an element with bounds, assuming one
 scroll bar unit per pixel as in GTK, and pages the vertical bar from the top for one without bounds.
 It reports `semanticAction` `scrollTo` or `scrollBar`, or none when the element was already shown.
+An element the toolkit has not drawn yet (GTK places it at `INT_MIN`) has `frame: null` in the
+observation, and a click, drag, or scroll aimed at it fails with `element_not_found`; run
+`scroll-to` on it first.
 
 One desktop session (indicator, Esc stop, input lease) can be shared by up to 16 agent sessions.
 `session.start {multiAgent: true, agentId?}` starts or joins it; joining requires that both the
