@@ -16,7 +16,11 @@ struct FakeBackend : Backend {
     int toggleCalls = 0;
     int releaseToggleCalls = 0;
     Context* sessionContext = nullptr;
+    std::string lastMethod;
+    Json lastParams;
     Json execute(const std::string& method, const Json& parameters, Context& context) override {
+        lastMethod = method;
+        lastParams = parameters;
         if (method == "session.start" && failStart) throw Error("setup_required", "Indicator unavailable");
         if (method == "session.start") { sessionContext = &context; return {{"ready", true}}; }
         if (method == "session.stop") held.clear();
@@ -42,7 +46,40 @@ struct FakeBackend : Backend {
     }
     void release_toggles() noexcept override { ++releaseToggleCalls; held.clear(); }
 };
+// Holds get-app-state or click open until released, so a test can tell whether
+// another agent's operation ran meanwhile.
+struct ConcurrentBackend : Backend {
+    std::atomic_bool holdObservation{false};
+    std::atomic_bool holdClick{false};
+    std::atomic_int observationsRunning{0};
+    std::atomic_int clicksRunning{0};
+    bool supports_concurrent_execute() const noexcept override { return true; }
+    Json execute(const std::string& method, const Json& parameters, Context& context) override {
+        if (method == "session.start") return {{"ready", true}};
+        const auto hold = [&](std::atomic_bool& gate, std::atomic_int& running) {
+            ++running;
+            while (gate) {
+                if (context.cancelled) { --running; context.check(); }
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+            --running;
+        };
+        if (method == "get-app-state") hold(holdObservation, observationsRunning);
+        if (method == "click") hold(holdClick, clicksRunning);
+        return {{"delivered", true}, {"headless", parameters.value("headless", false)}};
+    }
+    void interrupt() noexcept override {}
+    void set_toggle(const std::string&, bool, Context&) override {}
+    void release_toggles() noexcept override {}
+};
 void require(bool condition, const char* name) { if (!condition) throw std::runtime_error(name); }
+void wait_until(const std::function<bool()>& condition, const char* name) {
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (!condition()) {
+        if (std::chrono::steady_clock::now() > deadline) throw std::runtime_error(name);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+}
 int main() {
     try {
         FakeBackend backend;
@@ -170,6 +207,161 @@ int main() {
             const auto status = sendTo(idle, "session.status")["result"];
             require(status["active"] == false && status["toggles"] == Json::array(), "idle expiry clears toggles");
             require(idleBackend.held.empty() && idleBackend.releaseToggleCalls > 0, "idle expiry releases toggled keys");
+            idle.shutdown();
+        }
+        {
+            FakeBackend shared;
+            Dispatcher desktop(shared, token, std::chrono::seconds(120), std::chrono::milliseconds(200));
+            auto send = [&](std::string method, Json params = Json::object()) { return sendTo(desktop, method, params); };
+            const auto alphaStart = send("session.start", {{"multiAgent", true}, {"agentId", "alpha"}});
+            require(alphaStart["ok"] && alphaStart["result"]["agentId"] == "alpha" && alphaStart["result"]["joined"] == false,
+                    "first multi-agent session starts the desktop");
+            const auto alpha = alphaStart["result"]["sessionId"].get<std::string>();
+            require(send("session.start")["error"]["code"] == "session_busy", "single-agent start cannot join a shared desktop");
+            require(send("session.start", {{"multiAgent", true}, {"agentId", "alpha"}})["error"]["code"] == "agent_id_in_use",
+                    "agent ids are unique");
+            require(send("session.start", {{"multiAgent", true}, {"agentId", "a b"}})["error"]["code"] == "invalid_argument",
+                    "agent id must be printable");
+            const auto betaStart = send("session.start", {{"multiAgent", true}, {"headless", true}});
+            const auto beta = betaStart["result"]["sessionId"].get<std::string>();
+            require(betaStart["result"]["joined"] == true && betaStart["result"]["agentCount"] == 2 &&
+                    betaStart["result"]["agentId"] == "agent-1" && betaStart["result"]["headless"] == true,
+                    "second agent joins with a generated id");
+            require(beta != alpha, "each agent gets its own session id");
+
+            const auto status = send("session.status", {{"sessionId", alpha}})["result"];
+            require(status["sessionId"] == alpha && status["agentCount"] == 2, "status shows the caller's session");
+            require(send("session.status")["result"]["sessionId"].is_null(), "status hides shared session ids");
+
+            require(send("click", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"}, {"elementIndex", 2}})["ok"],
+                    "headless element click accepted");
+            require(shared.lastParams["headless"] == true && shared.lastParams["agentSessionId"] == beta &&
+                    shared.lastParams["sessionId"] != beta, "backend sees the headless flag and the owning agent");
+            require(send("type-text", {{"sessionId", beta}, {"app", "test"}, {"text", "x"}})["error"]["code"] == "headless_unavailable",
+                    "session default headless refuses typing");
+            require(send("click", {{"sessionId", beta}, {"app", "test"}, {"x", 1}, {"y", 1}})["error"]["code"] == "headless_unavailable",
+                    "headless refuses a coordinate click");
+            require(send("click", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"}, {"elementIndex", 2}, {"button", "right"}})["error"]["code"] == "headless_unavailable",
+                    "headless refuses a right click");
+            const int actionsBefore = shared.actions;
+            require(send("type-text", {{"sessionId", beta}, {"app", "test"}, {"text", "x"}, {"headless", false}})["ok"],
+                    "request headless false overrides the session default");
+            const auto physical = send("click", {{"sessionId", alpha}, {"app", "test"}, {"x", 1}, {"y", 1}});
+            require(physical["result"]["delivery"] == "physical" && physical["result"]["sessionId"] == alpha &&
+                    shared.actions == actionsBefore + 1 && shared.lastParams["headless"] == false,
+                    "physical input reports its delivery");
+
+            require(send("toggle.set", {{"sessionId", alpha}, {"key", "shift"}, {"on", true}})["ok"], "owner holds shift");
+            const auto refused = send("click", {{"sessionId", beta}, {"app", "test"}, {"x", 1}, {"y", 1}, {"headless", false}});
+            require(refused["error"]["code"] == "toggles_active" &&
+                    refused["error"]["details"]["notice"].get<std::string>().find("Agent alpha") != std::string::npos,
+                    "another agent's toggle blocks physical input");
+            require(send("click", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"}, {"elementIndex", 2}})["ok"],
+                    "headless input ignores another agent's toggles");
+            require(send("set-state", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"}, {"elementIndex", 2},
+                                       {"state", "checked"}, {"headless", false}})["ok"] &&
+                        shared.lastMethod == "set-state",
+                    "set-state ignores another agent's toggles even when not headless");
+            require(send("set-state", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"}, {"elementIndex", 2},
+                                       {"state", "pressed"}})["error"]["code"] == "invalid_argument",
+                    "set-state refuses an unknown state");
+            require(send("set-state", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"}, {"elementIndex", 2}})
+                        ["error"]["code"] == "invalid_argument",
+                    "set-state requires a state");
+            require(send("scroll-to", {{"sessionId", beta}, {"app", "test"}})["error"]["code"] == "invalid_argument",
+                    "scroll-to requires an element");
+            require(send("toggle.release-all", {{"sessionId", beta}})["error"]["code"] == "toggles_active",
+                    "only the owner changes toggles");
+            require(send("session.stop", {{"sessionId", alpha}})["error"]["code"] == "toggles_active",
+                    "the toggle owner cannot leave with keys held");
+            require(send("toggle.release-all", {{"sessionId", alpha}})["ok"], "owner releases toggles");
+
+            const auto betaStop = send("session.stop", {{"sessionId", beta}});
+            require(betaStop["ok"] && betaStop["result"]["agentCount"] == 1, "stopping one agent keeps the desktop");
+            require(send("session.status")["result"]["active"] == true, "desktop survives one agent leaving");
+            require(send("click", {{"sessionId", beta}, {"app", "test"}, {"x", 1}, {"y", 1}})["error"]["code"] == "session_required",
+                    "a stopped agent cannot input");
+            require(send("session.stop", {{"sessionId", "unknown"}})["error"]["code"] == "session_required",
+                    "an unknown id cannot stop other agents");
+            require(send("session.stop", {{"sessionId", alpha}})["ok"] && send("session.status")["result"]["active"] == false,
+                    "the last agent stops the desktop");
+            desktop.shutdown();
+        }
+        {
+            FakeBackend serialized;
+            Dispatcher desktop(serialized, token, std::chrono::seconds(120), std::chrono::milliseconds(100));
+            auto send = [&](std::string method, Json params = Json::object()) { return sendTo(desktop, method, params); };
+            const auto alpha = send("session.start", {{"multiAgent", true}})["result"]["sessionId"];
+            const auto beta = send("session.start", {{"multiAgent", true}})["result"]["sessionId"];
+            serialized.entered = false; serialized.block = true;
+            Json blocked;
+            std::thread worker([&] { blocked = send("click", {{"sessionId", alpha}, {"app", "test"}, {"x", 1}, {"y", 1}}); });
+            wait_until([&] { return serialized.entered.load(); }, "alpha click entered");
+            require(send("get-app-state", {{"sessionId", beta}, {"app", "test"}})["error"]["code"] == "busy",
+                    "a serial backend makes other agents wait, then gives up");
+            std::thread release([&] { std::this_thread::sleep_for(std::chrono::milliseconds(30)); serialized.block = false; });
+            require(send("get-app-state", {{"sessionId", beta}, {"app", "test"}})["ok"], "a waiting agent runs once its turn comes");
+            release.join(); worker.join();
+            require(blocked["ok"], "the first agent's click completed");
+            desktop.shutdown();
+        }
+        {
+            ConcurrentBackend parallel;
+            Dispatcher desktop(parallel, token, std::chrono::seconds(120), std::chrono::milliseconds(100));
+            auto send = [&](std::string method, Json params = Json::object()) { return sendTo(desktop, method, params); };
+            const auto alpha = send("session.start", {{"multiAgent", true}})["result"]["sessionId"];
+            const auto beta = send("session.start", {{"multiAgent", true}})["result"]["sessionId"];
+            const auto gamma = send("session.start", {{"multiAgent", true}})["result"]["sessionId"];
+
+            parallel.holdObservation = true;
+            Json slowObservation;
+            std::thread first([&] { slowObservation = send("get-app-state", {{"sessionId", alpha}, {"app", "test"}}); });
+            Json secondObservation;
+            std::thread second([&] { secondObservation = send("get-app-state", {{"sessionId", beta}, {"app", "test"}}); });
+            wait_until([&] { return parallel.observationsRunning == 2; }, "two agents observe at the same time");
+            parallel.holdObservation = false;
+            first.join(); second.join();
+            require(slowObservation["ok"] && secondObservation["ok"], "concurrent observations both succeed");
+
+            parallel.holdClick = true;
+            Json physicalClick;
+            std::thread clicker([&] { physicalClick = send("click", {{"sessionId", alpha}, {"app", "test"}, {"x", 1}, {"y", 1}}); });
+            wait_until([&] { return parallel.clicksRunning == 1; }, "alpha physical click running");
+            require(send("get-app-state", {{"sessionId", beta}, {"app", "test"}})["ok"], "observation runs during physical input");
+            require(send("click", {{"sessionId", beta}, {"app", "test"}, {"x", 1}, {"y", 1}})["error"]["code"] == "busy",
+                    "physical input takes turns");
+            require(send("set-state", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"},
+                                       {"elementIndex", 1}, {"state", "expanded"}})["ok"],
+                    "set-state runs during another agent's physical input without headless");
+            require(send("scroll-to", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"},
+                                       {"elementIndex", 1}})["ok"],
+                    "scroll-to runs during another agent's physical input without headless");
+            Json headlessClick;
+            std::thread headless([&] {
+                headlessClick = send("click", {{"sessionId", gamma}, {"app", "test"}, {"observationId", "o"},
+                                               {"elementIndex", 1}, {"headless", true}});
+            });
+            wait_until([&] { return parallel.clicksRunning == 2; }, "headless click runs during physical input");
+            const auto gammaStop = send("session.stop", {{"sessionId", gamma}});
+            headless.join();
+            require(gammaStop["ok"] && headlessClick["error"]["code"] == "cancelled", "stopping one agent cancels only its operation");
+            require(parallel.clicksRunning == 1, "the other agent's click keeps running");
+            parallel.holdClick = false;
+            clicker.join();
+            require(physicalClick["ok"], "physical click completes after another agent stopped");
+            desktop.shutdown();
+        }
+        {
+            FakeBackend idleBackend;
+            Dispatcher idle(idleBackend, token, std::chrono::milliseconds(100));
+            const auto alpha = sendTo(idle, "session.start", {{"multiAgent", true}})["result"]["sessionId"];
+            const auto beta = sendTo(idle, "session.start", {{"multiAgent", true}})["result"]["sessionId"];
+            std::this_thread::sleep_for(std::chrono::milliseconds(150));
+            require(sendTo(idle, "list-apps", {{"sessionId", beta}})["ok"], "beta stays active");
+            idle.tick();
+            const auto status = sendTo(idle, "session.status", {{"sessionId", beta}})["result"];
+            require(status["active"] == true && status["agentCount"] == 1, "an idle agent expires alone");
+            require(sendTo(idle, "list-apps", {{"sessionId", alpha}})["error"]["code"] == "session_required", "the expired agent is gone");
             idle.shutdown();
         }
         std::cout << "Contract tests passed\n";

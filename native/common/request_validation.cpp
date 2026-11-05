@@ -1,17 +1,20 @@
 #include "dispatch.hpp"
+#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <set>
 
 namespace dcu {
 namespace {
+const std::set<std::string> semanticActions{"set-state", "scroll-to"};
 const std::set<std::string> inputActions{
-    "click", "drag", "scroll", "type-text", "press-key", "hotkey", "set-value", "paste-text"
+    "click", "drag", "scroll", "type-text", "press-key", "hotkey", "set-value", "paste-text", "set-state", "scroll-to"
 };
 const std::set<std::string> supportedMethods{
     "doctor", "capabilities", "session.start", "session.status", "session.stop", "daemon.shutdown",
     "list-apps", "list-windows", "get-app-state", "get-full-screenshot", "click", "drag", "scroll", "type-text",
-    "press-key", "hotkey", "set-value", "paste-text", "toggle.set", "toggle.release-all", "toggle.status"
+    "press-key", "hotkey", "set-value", "paste-text", "set-state", "scroll-to",
+    "toggle.set", "toggle.release-all", "toggle.status"
 };
 const std::set<std::string> clickModifiers{
     "shift", "ctrl", "control", "alt", "option", "win", "meta", "super"
@@ -50,6 +53,19 @@ void validate_choice(const Json& params, const char* key, const std::set<std::st
     if (params.contains(key) && (!params[key].is_string() || !choices.contains(params[key].get<std::string>())))
         throw Error("invalid_argument", std::string("Invalid ") + key);
 }
+// Agent ids appear in other agents' notices and errors, so they stay short and printable.
+void validate_agent_id(const Json& params) {
+    if (!params.contains("agentId")) return;
+    const auto& value = params["agentId"];
+    const auto allowed = [](unsigned char character) {
+        return std::isalnum(character) || character == '-' || character == '_' || character == '.';
+    };
+    const bool valid = value.is_string() && !value.get_ref<const std::string&>().empty() &&
+                       value.get_ref<const std::string&>().size() <= 64 &&
+                       std::all_of(value.get_ref<const std::string&>().begin(),
+                                   value.get_ref<const std::string&>().end(), allowed);
+    if (!valid) throw Error("invalid_argument", "agentId must be 1-64 letters, digits, '-', '_', or '.'");
+}
 }
 void validate_params(const std::string& method, const Json& params) {
     if (!supportedMethods.contains(method)) throw Error("invalid_argument", "Unknown method: " + method);
@@ -61,16 +77,18 @@ void validate_params(const std::string& method, const Json& params) {
     validate_number(params, "maxEdge", 0, 16384, true);
     validate_number(params, "amount", 1, 1000, true);
     for (auto key : {"elementIndex", "fromElementIndex", "toElementIndex"}) validate_number(params, key, 0, 1000000, true);
-    for (auto key : {"includeText", "includeScreenshot", "restoreWindow", "activate"})
+    for (auto key : {"includeText", "includeScreenshot", "restoreWindow", "activate", "headless", "multiAgent"})
         if (params.contains(key) && !params[key].is_boolean()) throw Error("invalid_argument", std::string(key) + " must be boolean");
     for (auto key : {"app", "windowId", "observationId", "sessionId", "text", "key", "value"})
         if (params.contains(key) && (!params[key].is_string() || params[key].get_ref<const std::string&>().size() > 1048576))
             throw Error("invalid_argument", std::string("Invalid ") + key);
+    validate_agent_id(params);
     validate_choice(params, "button", {"left", "right", "middle"});
     validate_choice(params, "format", {"jpeg", "png"});
     validate_choice(params, "observe", {"none", "screenshot", "text", "both"});
     validate_choice(params, "direction", {"up", "down", "left", "right"});
     validate_choice(params, "coords", {"reduced", "full"});
+    validate_choice(params, "state", {"checked", "unchecked", "expanded", "collapsed", "selected"});
     validate_modifiers(params);
     if (method == "toggle.set") {
         if (!params.contains("key") || canonical_toggle_key(params["key"].get<std::string>()).empty()) {
@@ -106,10 +124,39 @@ void validate_params(const std::string& method, const Json& params) {
     if ((method == "press-key" || method == "hotkey") && !params.contains("key")) throw Error("invalid_argument", "key is required");
     if (method == "set-value" && (!params.contains("elementIndex") || !params.contains("value"))) throw Error("invalid_argument", "set-value requires elementIndex and value");
     if (method == "scroll" && !params.contains("direction")) throw Error("invalid_argument", "direction is required");
+    if (method == "set-state" && (!params.contains("elementIndex") || !params.contains("state")))
+        throw Error("invalid_argument", "set-state requires elementIndex and state");
+    if (method == "scroll-to" && !params.contains("elementIndex"))
+        throw Error("invalid_argument", "scroll-to requires elementIndex");
+}
+
+void validate_headless_input(const std::string& method, const Json& params) {
+    if (!params.value("headless", false)) return;
+    const std::string retry = "; pass headless false to let it use the real pointer and keyboard";
+    if (method == "type-text") {
+        throw Error("headless_unavailable", "type-text presses keys" + retry + ", or use set-value on the field");
+    }
+    if (method == "drag" || method == "press-key" || method == "hotkey" || method == "paste-text") {
+        throw Error("headless_unavailable", method + " needs the real pointer or keyboard" + retry);
+    }
+    if (method != "click") return;
+    if (!params.contains("elementIndex")) {
+        throw Error("headless_unavailable", "A coordinate click moves the pointer; click an elementIndex" + retry);
+    }
+    if (params.value("button", "left") != "left") {
+        throw Error("headless_unavailable", "Only a primary click has an accessibility action" + retry);
+    }
+    if (params.contains("modifiers")) {
+        throw Error("headless_unavailable", "Click modifiers hold real keys" + retry);
+    }
 }
 
 bool is_input_action(const std::string& method) {
     return inputActions.contains(method);
+}
+
+bool is_semantic_action(const std::string& method) {
+    return semanticActions.contains(method);
 }
 
 std::string canonical_toggle_key(const std::string& key) {

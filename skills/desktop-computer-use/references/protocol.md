@@ -13,8 +13,8 @@ host that virtualizes local application data (for example Codex Desktop) gets it
 ```
 
 Native method names remain kebab-case except `session.start`, `session.status`, `session.stop`,
-`daemon.shutdown`, and `toggle.set`, `toggle.release-all`, `toggle.status`. The daemon owns authorization, one active session, operation serialization,
-interrupt handling, and the 120-second idle lease. `session.start` only succeeds after the platform
+`daemon.shutdown`, and `toggle.set`, `toggle.release-all`, `toggle.status`. The daemon owns authorization, the desktop session and its agent sessions, operation scheduling,
+interrupt handling, and the 120-second idle lease (per agent session). `session.start` only succeeds after the platform
 indicator and global stop hotkey (`Esc` pressed twice within 1 second) are ready. While active, the
 indicator provides a top banner, a high-contrast cursor ring, and a blue screen-edge border that
 fades inward; these visual actors must not take focus or intercept application input. `session.stop`
@@ -76,6 +76,67 @@ disconnect, daemon exit) stops the session and releases all toggles. `type-text`
 pressing a toggled key as `press-key` or a hotkey base fails the same way. `click` and `drag` accept
 `modifiers` (`shift`, `ctrl`, `alt`, `win` joined by `+`) held for that one action; a toggled
 modifier is neither pressed again nor released by it.
+
+Headless mode never moves the user's pointer, sends keys, or changes focus or the foreground
+window. `session.start {headless: true}` sets the default for that agent session; any request may
+pass `headless` to override it. A headless `click` needs `elementIndex`, the left button, and no
+`modifiers`, and performs the element's accessibility action (Windows: Invoke, SelectionItem, Toggle,
+ExpandCollapse, then LegacyIAccessible default action; Linux: the AT-SPI action named click, press,
+activate, toggle, jump, open, or expand or contract, else action 0). `set-value` uses ValuePattern,
+then RangeValuePattern for a number (Linux: AT-SPI EditableText or Value) without activating the
+window. A Windows headless `scroll` uses the ScrollPattern of the element at `elementIndex`
+(or the container under `x`/`y`) or its nearest scrollable ancestor, one small increment per three
+wheel lines, and reports `layoutSettled`. `get-app-state` never activates the window unless
+`activate` is true. Anything that would need real input fails with `headless_unavailable` before
+sending anything: `type-text` (use `set-value`), `paste-text`, `press-key`, `hotkey`, `drag`, a
+coordinate click, a non-left button, click `modifiers`, an element with no accessibility action,
+and Linux `scroll`. Every input result carries `delivery: "semantic"` (with `semanticAction`, for
+example `invoke` or `toggle`) or `delivery: "physical"`; a non-headless element click that succeeds
+through Invoke is also reported as semantic. `capabilities.headless` lists what each platform
+supports.
+
+`set-state {elementIndex, state}` and `scroll-to {elementIndex}` (Windows only; Linux fails with
+`unsupported`) are always semantic, with or without `headless`: they never activate the window, never
+take the physical-input turn, and ignore other agents' toggles. `state` is `checked` or `unchecked`
+(TogglePattern, toggled at most twice so a three-state check box reaches off),
+`expanded` or `collapsed` (ExpandCollapsePattern; a leaf node fails), or `selected`
+(SelectionItemPattern). The element is changed only when it is not already in that state, and the
+state is read back for up to 600 ms. The result carries `semanticAction` (`toggle`,
+`expandCollapse`, or `select`), `state`, `changed`, and `verified`. `scroll-to` calls
+ScrollItemPattern.ScrollIntoView and waits up to 800 ms for the element to intersect the window
+inside every scrollable ancestor. When the element has no ScrollItemPattern or is still hidden, it
+scrolls the nearest ancestor with a ScrollPattern instead: up to 10 times it centers an element
+that has bounds through SetScrollPercent, and an element without bounds yet (an unrealized row of a
+virtualized list) is found by paging the ancestor from its start with LargeIncrement until it
+shows or the position stops moving. The result reports `visible` and `semanticAction`
+(`scrollIntoView` or `scrollPattern`). An element with neither pattern nor scrollable ancestor, a
+refused call, or a provider fault fails with `pattern_unavailable`. Observation elements list `scrollItem` among their
+`patterns` when ScrollIntoView is available. `set-value` with an empty `value` clears a field.
+
+One desktop session (indicator, Esc stop, input lease) can be shared by up to 16 agent sessions.
+`session.start {multiAgent: true, agentId?}` starts or joins it; joining requires that both the
+running session and the new request use `multiAgent`, otherwise the start fails with
+`session_busy`. `agentId` is 1-64 characters of letters, digits, `-`, `_`, or `.`; it defaults to
+`agent-N`, and a duplicate fails with `agent_id_in_use`. The result carries a distinct
+`sessionId`, `agentId`, `multiAgent`, `headless`, `joined`, and `agentCount`. A multi-agent
+`sessionId` is not written to the session file, so every request must pass it (the CLI also reads
+`DCU_SESSION_ID`). Observation IDs belong to the agent session that created them; another agent's
+ID fails with `stale_observation`. `session.status` lists `agents` (`agentId`, `multiAgent`,
+`headless`, `busy`, `idleMs`, `current`) and shows only the caller's own `sessionId`.
+`session.stop {sessionId}` stops that agent only, cancels its running operation, and returns
+`{stopped, agentId, agentCount}`; stopping the last agent, or `session.stop` without a session ID,
+Esc twice, or a 120-second operation timeout stops the whole desktop session. Each agent session
+expires separately after 120 idle seconds. Only the agent that turned a toggle on may change it,
+and its stop fails with `toggles_active` until released; while a toggle is held, another agent's
+physical input fails with `toggles_active`.
+
+Agents run at the same time. On Windows observations, screenshots, list methods, and headless
+actions of different agents run concurrently; physical input (non-headless actions, `toggle.set`,
+`toggle.release-all`, and `get-app-state` with `activate: true`) runs one at a time because there is
+one pointer and keyboard. On Linux AT-SPI and Xlib are not thread-safe, so the daemon runs one
+operation at a time across agents. A request waits up to 45 seconds for its turn and then fails
+with `busy`; a second request from the same agent session while its first is running fails with
+`busy` at once.
 
 `list-windows` and `list-apps` include visible dialogs owned by another window (Windows owned
 windows, Linux transient windows). Such a window carries `ownerWindowId`, the nearest listed

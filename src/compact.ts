@@ -115,6 +115,7 @@ function compactScreenshot(value: Rec): Rec {
 const DROPPED_KEYS = new Set([
   "timings", "capturedAt", "observedAt", "runtimeId", "tree",
   // CLI와 MCP가 원본 응답에서 세션 파일에 저장하므로 LLM에게는 반복되는 잡음입니다.
+  // 멀티 에이전트 세션은 세션 파일에 저장하지 않으므로 compactObject에서 남깁니다.
   "sessionId"
 ]);
 
@@ -148,8 +149,10 @@ function compactValue(value: unknown, key = ""): unknown {
 
 function compactObject(value: Rec, skip: readonly string[] = []): Rec {
   const out: Rec = {};
+  const keepsSessionId = value.multiAgent === true;
   for (const [key, item] of Object.entries(value)) {
-    if (skip.includes(key) || DROPPED_KEYS.has(key)) continue;
+    if (skip.includes(key)) continue;
+    if (DROPPED_KEYS.has(key) && !(key === "sessionId" && keepsSessionId)) continue;
     if (key === "toggles" && Array.isArray(item) && item.length === 0) continue;
     if (key === "overlayRegions" && Array.isArray(item) && item.length === 0) continue;
     // 관찰 결과의 coordinateSpace는 항상 "window"라 정보가 없습니다.

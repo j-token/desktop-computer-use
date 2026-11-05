@@ -13,6 +13,9 @@ The LLM already running the skill observes the desktop, chooses every action, an
 - A harness-first skill in which the running LLM makes every decision.
 - Visible session indicators and an emergency stop with `Esc` pressed twice within 1 second.
 - Windows UI Automation and Linux accessibility integration for standard application controls.
+- A headless mode that acts through accessibility patterns without moving your pointer, pressing keys, or changing focus.
+- Multi-agent sessions: several agents share one desktop session, observing and acting headless at the same time while physical input takes turns.
+- State-targeted accessibility actions on Windows: `set-state` checks, unchecks, expands, collapses, or selects an element only when needed, and `scroll-to` scrolls an item into view, without ever waiting for another agent's physical input.
 
 ## Quick start from source
 

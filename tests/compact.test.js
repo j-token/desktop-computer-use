@@ -6,6 +6,14 @@ import { compactResponse, compactResult, elementLine } from "../dist/compact.js"
 
 const fixtureDir = join("tests", "fixtures", "uia");
 
+test("compact keeps the sessionId of a multi-agent session, which is not saved to the session file", () => {
+  const joined = compactResult({ sessionId: "abc", agentId: "writer", multiAgent: true, joined: true, toggles: [] });
+  const solo = compactResult({ sessionId: "abc", multiAgent: false, toggles: [] });
+
+  assert.deepEqual(joined, { sessionId: "abc", agentId: "writer", multiAgent: true, joined: true });
+  assert.deepEqual(solo, { multiAgent: false });
+});
+
 test("compact observation keeps decision fields and drops diagnostics", () => {
   const result = compactResult({
     observationId: "obs",

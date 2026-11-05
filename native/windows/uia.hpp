@@ -24,6 +24,12 @@ struct ScrollPosition {
     bool operator==(const ScrollPosition&) const = default;
 };
 
+struct StateChange {
+    std::string pattern;
+    bool changed = false;
+    bool verified = false;
+};
+
 struct AccessibilitySnapshot {
     Json value;
     std::vector<ElementRecord> elements;
@@ -56,9 +62,27 @@ public:
     AccessibilitySnapshot build(HWND hwnd, const RECT& windowRect,
                                  Context& context) const;
 
-    bool invoke(ElementRecord& element, Context& context) const;
+    // Each returns the action it performed: invoke, select, or toggle, plus
+    // expand, collapse, or defaultAction for the semantic variant; nullopt when
+    // the element exposes none of them. Neither moves the pointer or focus.
+    std::optional<std::string> invoke(ElementRecord& element, Context& context) const;
+    std::optional<std::string> perform_semantic_action(ElementRecord& element, Context& context) const;
+    // ValuePattern first, then RangeValuePattern for a numeric value.
     bool set_value(ElementRecord& element, const std::wstring& value,
                    Context& context) const;
+    // Puts the element in `state` (checked, unchecked, expanded, collapsed, or
+    // selected) through TogglePattern, ExpandCollapsePattern, or
+    // SelectionItemPattern, and acts only when it is not already there. nullopt
+    // when the element lacks the pattern for that state.
+    std::optional<StateChange> set_state(ElementRecord& element, const std::string& state,
+                                         Context& context) const;
+    // ScrollItemPattern.ScrollIntoView; false when the element lacks the pattern.
+    bool scroll_into_view(ElementRecord& element, Context& context) const;
+    // Scrolls the nearest scrollable ancestor through ScrollPattern until the
+    // element shows inside it: centered when it has bounds, paged from the
+    // start when it has none yet. Whether it shows, or nullopt without a
+    // scrollable ancestor.
+    std::optional<bool> scroll_ancestor_into_view(ElementRecord& element, Context& context) const;
 
     // Window-local bounds the provider reports now, clipped to every scrollable
     // ancestor, or nullopt once the element is gone. An observation's bounds go
@@ -72,7 +96,14 @@ public:
     // browser hit-tests to a container that never moves while its content
     // scrolls, so a wheel scroll is observed through this position instead.
     Microsoft::WRL::ComPtr<IUIAutomationScrollPattern> scroll_container_at(POINT screenPoint) const;
+    // The element itself or its nearest scrollable ancestor, or null.
+    Microsoft::WRL::ComPtr<IUIAutomationScrollPattern> scroll_container_of(IUIAutomationElement* element) const;
     std::optional<ScrollPosition> scroll_position(IUIAutomationScrollPattern* container) const;
+    // Scrolls by small increments through ScrollPattern, without the pointer.
+    // Returns the increments applied (fewer at the end of the content), or
+    // nullopt when the container cannot scroll on that axis.
+    std::optional<int> scroll(IUIAutomationScrollPattern* container, bool horizontal, bool forward,
+                              int increments, Context& context) const;
 };
 
 } // namespace dcu::windows

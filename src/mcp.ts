@@ -4,7 +4,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { compactResult } from "./compact.js";
 import { DcuClient } from "./client.js";
-import { MODIFIER_NAMES, SESSIONLESS_METHODS, TOGGLE_KEY_ALIASES } from "./methods.js";
+import { MODIFIER_NAMES, SESSIONLESS_METHODS, TOGGLE_KEY_ALIASES, sessionFileAction } from "./methods.js";
 import { clearSession, readSession, writeSession } from "./runtime.js";
 import type { JsonObject, JsonValue } from "./types.js";
 
@@ -48,7 +48,8 @@ const common = {
   observe: z.enum(["none", "screenshot", "text", "both"]).optional(),
   modifiers,
   restoreWindow: z.boolean().optional(),
-  activate: z.boolean().optional()
+  activate: z.boolean().optional(),
+  headless: z.boolean().optional()
 };
 
 type ToolSchema = Record<string, z.ZodTypeAny>;
@@ -99,19 +100,30 @@ const tools: ToolDefinition[] = [
     method: "session.start",
     description:
       "Start a visible computer-use session with a top banner, high-contrast cursor ring, " +
-      "and blue inward-fading screen-edge border; press Esc twice within 1 second to stop it.",
-    schema: {}
+      "and blue inward-fading screen-edge border; press Esc twice within 1 second to stop it. " +
+      "headless: true makes actions default to accessibility patterns that never move the user's pointer, " +
+      "keyboard, or focus; an action that would need real input fails with headless_unavailable. " +
+      "multiAgent: true lets other agents join the same desktop, each with its own sessionId and agentId; " +
+      "observations and headless actions run concurrently, physical input runs one at a time. " +
+      "In a multi-agent session pass the returned sessionId on every call.",
+    schema: {
+      multiAgent: z.boolean().optional(),
+      agentId: z.string().regex(/^[A-Za-z0-9._-]{1,64}$/u).optional(),
+      headless: z.boolean().optional()
+    }
   },
   {
     name: "dcu_session_status",
     method: "session.status",
-    description: "Read the current computer-use session status.",
+    description: "Read the current computer-use session status, including the agents sharing the desktop.",
     schema: { sessionId: optionalString }
   },
   {
     name: "dcu_session_stop",
     method: "session.stop",
-    description: "Stop the current computer-use session and release held input.",
+    description:
+      "Stop the current computer-use session and release held input. With several agents on the desktop, " +
+      "a sessionId stops only that agent; omit it to stop every agent.",
     schema: { sessionId: optionalString }
   },
   {
@@ -168,13 +180,15 @@ const tools: ToolDefinition[] = [
   {
     name: "dcu_scroll",
     method: "scroll",
-    description: "Scroll at a point read from the latest reduced screenshot (coords \"full\" for a full image).",
+    description:
+      "Scroll at a point read from the latest reduced screenshot (coords \"full\" for a full image), " +
+      "or at an observation's elementIndex.",
     schema: { ...common }
   },
   {
     name: "dcu_type_text",
     method: "type-text",
-    description: "Type text into the currently focused target.",
+    description: "Type text into the currently focused target. Not available headless; use dcu_set_value.",
     schema: { ...common }
   },
   {
@@ -192,7 +206,26 @@ const tools: ToolDefinition[] = [
   {
     name: "dcu_set_value",
     method: "set-value",
-    description: "Set an accessibility element value and optionally observe it.",
+    description: "Set an accessibility element value and optionally observe it. An empty value clears the field.",
+    schema: { ...common }
+  },
+  {
+    name: "dcu_set_state",
+    method: "set-state",
+    description:
+      "Put an observation's elementIndex in a state through accessibility patterns: checked or unchecked " +
+      "(TogglePattern), expanded or collapsed (ExpandCollapsePattern), or selected (SelectionItemPattern). " +
+      "Acts only when the element is not already in that state and reports changed and verified. " +
+      "Never moves the pointer, keyboard, or focus, so it runs alongside other agents' physical input.",
+    schema: { ...common, state: z.enum(["checked", "unchecked", "expanded", "collapsed", "selected"]) }
+  },
+  {
+    name: "dcu_scroll_to",
+    method: "scroll-to",
+    description:
+      "Scroll an observation's elementIndex into view through ScrollItemPattern, or else through the nearest " +
+      "scrollable ancestor's ScrollPattern, and report whether it became visible. Works for offscreen items " +
+      "without bounds. Never moves the pointer, keyboard, or focus, so it runs alongside other agents' physical input.",
     schema: { ...common }
   },
   {
@@ -280,18 +313,19 @@ export async function resultContent(value: unknown): Promise<McpContent[]> {
 
 async function invoke(client: DcuClient, method: string, input: Record<string, unknown>): Promise<unknown> {
   const params = asJsonObject(input);
-  if (!SESSIONLESS_METHODS.has(method) && params.sessionId === undefined) {
-    const current = await readSession(client.paths);
-    if (current) params.sessionId = current.sessionId;
+  const saved = await readSession(client.paths);
+  if (!SESSIONLESS_METHODS.has(method) && params.sessionId === undefined && saved) {
+    params.sessionId = saved.sessionId;
   }
   const response = await client.request(method, params);
   if (response.ok) {
     const value = response.result;
-    const result = asRecord(value);
-    if (method === "session.start" && typeof result?.sessionId === "string") {
-      await writeSession(result.sessionId, client.paths);
-    }
-    if (method === "session.stop") {
+    const requested = typeof params.sessionId === "string" ? params.sessionId : undefined;
+    const sessionFile = sessionFileAction(method, response, { requested, saved: saved?.sessionId });
+    const startedSessionId = asRecord(value)?.sessionId;
+    if (sessionFile === "write" && typeof startedSessionId === "string") {
+      await writeSession(startedSessionId, client.paths);
+    } else if (sessionFile === "clear") {
       await clearSession(client.paths);
     }
     return value;

@@ -92,10 +92,10 @@ test("MCP keeps the modal hint of an observation in its text content", async () 
   assert.match(text.notice, /hwnd:2/);
 });
 
-async function runCliProcess(args) {
+async function runCliProcess(args, env = process.env) {
   const { spawn } = await import("node:child_process");
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, ["dist/cli.js", ...args], { cwd: process.cwd() });
+    const child = spawn(process.execPath, ["dist/cli.js", ...args], { cwd: process.cwd(), env });
     let text = "";
     child.stdout.on("data", chunk => { text += chunk; });
     child.once("error", reject);
@@ -155,6 +155,57 @@ test("a refused session stop keeps the saved session", () => {
   assert.equal(sessionFileAction("session.stop", { id: "x", ok: true, result: { stopped: true } }), "clear");
   assert.equal(sessionFileAction("session.start", { id: "x", ok: true, result: { sessionId: "s" } }), "write");
   assert.equal(sessionFileAction("toggle.set", { id: "x", ok: true, result: {} }), undefined);
+});
+
+test("a multi-agent session is never saved and stopping another agent keeps the saved session", () => {
+  const joined = { id: "x", ok: true, result: { sessionId: "agent-b", multiAgent: true } };
+  const stopped = { id: "x", ok: true, result: { stopped: true } };
+
+  assert.equal(sessionFileAction("session.start", joined), undefined);
+  assert.equal(sessionFileAction("session.stop", stopped, { requested: "agent-b", saved: "solo" }), undefined);
+  assert.equal(sessionFileAction("session.stop", stopped, { requested: "solo", saved: "solo" }), "clear");
+  assert.equal(sessionFileAction("session.stop", stopped, { saved: "solo" }), "clear");
+});
+
+test("CLI parses headless and multi-agent session options", () => {
+  const parsed = parseArgs(["session", "start", "--multi-agent", "--agent-id", "writer", "--headless"]);
+
+  assert.equal(methodFor(parsed.command, parsed.options), "session.start");
+  assert.deepEqual(parsed.options, { multiAgent: true, agentId: "writer", headless: true });
+  assert.equal(parseArgs(["click", "--no-headless"]).options.headless, false);
+});
+
+test("CLI uses DCU_SESSION_ID and accepts an element index for scroll", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "dcu-env-session-"));
+  const env = { ...process.env, DCU_RUNTIME_DIR: directory, DCU_SESSION_ID: "from-env" };
+  try {
+    const missingTarget = await runCliProcess(["scroll", "--app", "x", "--direction", "down"], env);
+    assert.equal(missingTarget.response.error.code, "invalid_argument");
+    assert.match(missingTarget.response.error.message, /scroll requires --x and --y, or --element-index/);
+
+    const withoutObservation = await runCliProcess(["scroll", "--app", "x", "--direction", "down", "--element-index", "3"], env);
+    assert.match(withoutObservation.response.error.message, /element indexes require --observation-id/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("CLI rejects set-state and scroll-to without an element or a known state before sending input", async () => {
+  const cases = [
+    [["set-state", "--session-id", "s", "--app", "x", "--state", "checked"], /set-state requires --element-index/],
+    [["set-state", "--session-id", "s", "--app", "x", "--observation-id", "o", "--element-index", "2"],
+     /set-state requires --state checked\|unchecked\|expanded\|collapsed\|selected/],
+    [["set-state", "--session-id", "s", "--app", "x", "--observation-id", "o", "--element-index", "2", "--state", "on"],
+     /set-state requires --state/],
+    [["scroll-to", "--session-id", "s", "--app", "x"], /scroll-to requires --element-index/],
+    [["scroll-to", "--session-id", "s", "--observation-id", "o", "--element-index", "2"], /scroll-to requires --app or --window-id/]
+  ];
+  for (const [args, message] of cases) {
+    const { code, response } = await runCliProcess(args);
+    assert.equal(code, 1, args.join(" "));
+    assert.equal(response.error.code, "invalid_argument", args.join(" "));
+    assert.match(response.error.message, message);
+  }
 });
 
 test("CLI get-full-screenshot requires a target window and an observation ID", async () => {
