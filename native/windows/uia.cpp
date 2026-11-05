@@ -13,6 +13,7 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <thread>
 #include <winrt/base.h>
 
 namespace dcu::windows {
@@ -329,6 +330,60 @@ DWORD guarded_default_action(IUIAutomationLegacyIAccessiblePattern* pattern,
     return 0;
 }
 
+DWORD guarded_toggle_state(IUIAutomationTogglePattern* pattern, ToggleState* state,
+                           HRESULT* status) noexcept {
+    __try {
+        *status = pattern->get_CurrentToggleState(state);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
+DWORD guarded_expand_collapse_state(IUIAutomationExpandCollapsePattern* pattern,
+                                    ExpandCollapseState* state, HRESULT* status) noexcept {
+    __try {
+        *status = pattern->get_CurrentExpandCollapseState(state);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
+DWORD guarded_expand(IUIAutomationExpandCollapsePattern* pattern, bool expand,
+                     HRESULT* status) noexcept {
+    __try {
+        *status = expand ? pattern->Expand() : pattern->Collapse();
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
+DWORD guarded_is_selected(IUIAutomationSelectionItemPattern* pattern, BOOL* selected,
+                          HRESULT* status) noexcept {
+    __try {
+        *status = pattern->get_CurrentIsSelected(selected);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
+DWORD guarded_scroll_into_view(IUIAutomationScrollItemPattern* pattern, HRESULT* status) noexcept {
+    __try {
+        *status = pattern->ScrollIntoView();
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
 DWORD guarded_set_range_value(IUIAutomationRangeValuePattern* pattern, double value,
                               HRESULT* status) noexcept {
     __try {
@@ -519,7 +574,7 @@ AccessibilitySnapshot UiaSnapshotBuilder::build(HWND hwnd, const RECT& windowRec
     for (const PATTERNID pattern : {UIA_InvokePatternId, UIA_ValuePatternId,
                                     UIA_SelectionItemPatternId, UIA_TogglePatternId,
                                     UIA_ExpandCollapsePatternId, UIA_RangeValuePatternId,
-                                    UIA_ScrollPatternId}) {
+                                    UIA_ScrollPatternId, UIA_ScrollItemPatternId}) {
         winrt::check_hresult(cache->AddPattern(pattern));
     }
     ComPtr<IUIAutomationCondition> condition;
@@ -572,6 +627,7 @@ AccessibilitySnapshot UiaSnapshotBuilder::build(HWND hwnd, const RECT& windowRec
         if (cached_pattern(element.Get(), UIA_ExpandCollapsePatternId)) patterns.push_back("expand");
         if (cached_pattern(element.Get(), UIA_RangeValuePatternId)) patterns.push_back("range");
         if (cached_pattern(element.Get(), UIA_ScrollPatternId)) patterns.push_back("scroll");
+        if (cached_pattern(element.Get(), UIA_ScrollItemPatternId)) patterns.push_back("scrollItem");
         description["patterns"] = std::move(patterns);
 
         const auto runtimeId = get_runtime_id(element.Get());
@@ -630,6 +686,168 @@ bool UiaSnapshotBuilder::set_value(ElementRecord& record, const std::wstring& va
                [number](IUIAutomationRangeValuePattern* pattern, HRESULT* status) {
                    return guarded_set_range_value(pattern, *number, status);
                }) == PatternOutcome::performed;
+}
+
+namespace {
+
+// Providers can apply a pattern call after it returns, so the state is read
+// again until it settles or the timeout passes.
+template <typename Settled>
+bool poll_until(Settled settled, Context& context) {
+    constexpr auto timeout = std::chrono::milliseconds(600);
+    constexpr auto interval = std::chrono::milliseconds(25);
+    const auto deadline = std::chrono::steady_clock::now() + timeout;
+    while (!settled()) {
+        if (std::chrono::steady_clock::now() >= deadline) return false;
+        context.check();
+        std::this_thread::sleep_for(interval);
+    }
+    return true;
+}
+
+// Null when the element does not support the pattern.
+template <typename Pattern>
+ComPtr<Pattern> current_pattern(const ElementRecord& record, PATTERNID id, const char* lookupName) {
+    HRESULT status = E_FAIL;
+    ComPtr<Pattern> pattern;
+    if (const DWORD fault = guarded_pattern(record.element.Get(), id, __uuidof(Pattern),
+                                            reinterpret_cast<void**>(pattern.GetAddressOf()), &status)) {
+        report_pattern_fault(lookupName, record.description, fault);
+        throw Error("pattern_unavailable", std::string(lookupName) + " faulted in the target application");
+    }
+    return pattern;
+}
+
+// `call` invokes one guarded_* helper and returns its fault code.
+template <typename Call>
+void call_or_throw(const ElementRecord& record, const char* callName, Call call) {
+    HRESULT status = E_FAIL;
+    if (const DWORD fault = call(&status)) {
+        report_pattern_fault(callName, record.description, fault);
+        throw Error("pattern_unavailable", std::string(callName) + " faulted in the target application");
+    }
+    if (FAILED(status)) {
+        throw Error("pattern_unavailable", std::string(callName) + " was refused by the target application");
+    }
+}
+
+std::optional<ToggleState> read_toggle_state(const ElementRecord& record,
+                                             IUIAutomationTogglePattern* pattern) {
+    ToggleState state = ToggleState_Indeterminate;
+    HRESULT status = E_FAIL;
+    if (const DWORD fault = guarded_toggle_state(pattern, &state, &status)) {
+        report_pattern_fault("TogglePattern.CurrentToggleState", record.description, fault);
+        return std::nullopt;
+    }
+    if (FAILED(status)) return std::nullopt;
+    return state;
+}
+
+std::optional<ExpandCollapseState> read_expand_collapse_state(const ElementRecord& record,
+                                                              IUIAutomationExpandCollapsePattern* pattern) {
+    ExpandCollapseState state = ExpandCollapseState_LeafNode;
+    HRESULT status = E_FAIL;
+    if (const DWORD fault = guarded_expand_collapse_state(pattern, &state, &status)) {
+        report_pattern_fault("ExpandCollapsePattern.CurrentExpandCollapseState", record.description, fault);
+        return std::nullopt;
+    }
+    if (FAILED(status)) return std::nullopt;
+    return state;
+}
+
+std::optional<bool> read_is_selected(const ElementRecord& record,
+                                     IUIAutomationSelectionItemPattern* pattern) {
+    BOOL selected = FALSE;
+    HRESULT status = E_FAIL;
+    if (const DWORD fault = guarded_is_selected(pattern, &selected, &status)) {
+        report_pattern_fault("SelectionItemPattern.CurrentIsSelected", record.description, fault);
+        return std::nullopt;
+    }
+    if (FAILED(status)) return std::nullopt;
+    return selected == TRUE;
+}
+
+std::optional<StateChange> set_toggle_state(const ElementRecord& record, bool checked, Context& context) {
+    const auto pattern =
+        current_pattern<IUIAutomationTogglePattern>(record, UIA_TogglePatternId, "GetCurrentPattern(Toggle)");
+    if (!pattern) return std::nullopt;
+    const ToggleState wanted = checked ? ToggleState_On : ToggleState_Off;
+    auto current = read_toggle_state(record, pattern.Get());
+    if (current == wanted) return StateChange{"toggle", false, true};
+
+    // A three-state check box cycles off, on, indeterminate, so reaching off
+    // from on takes a second toggle.
+    constexpr int maximumToggles = 2;
+    for (int toggles = 0; toggles < maximumToggles; ++toggles) {
+        context.check();
+        call_or_throw(record, "TogglePattern.Toggle",
+                      [&pattern](HRESULT* status) { return guarded_toggle(pattern.Get(), status); });
+        const auto before = current;
+        poll_until([&] {
+            current = read_toggle_state(record, pattern.Get());
+            return current && current != before;
+        }, context);
+        if (current == wanted) return StateChange{"toggle", true, true};
+        if (!current || current == before) break;
+    }
+    return StateChange{"toggle", true, false};
+}
+
+std::optional<StateChange> set_expand_collapse_state(const ElementRecord& record, bool expanded,
+                                                     Context& context) {
+    const auto pattern = current_pattern<IUIAutomationExpandCollapsePattern>(
+        record, UIA_ExpandCollapsePatternId, "GetCurrentPattern(ExpandCollapse)");
+    if (!pattern) return std::nullopt;
+    const ExpandCollapseState wanted = expanded ? ExpandCollapseState_Expanded : ExpandCollapseState_Collapsed;
+    const auto current = read_expand_collapse_state(record, pattern.Get());
+    if (current == ExpandCollapseState_LeafNode) {
+        throw Error("pattern_unavailable", "The element is a leaf node, which can neither expand nor collapse");
+    }
+    if (current == wanted) return StateChange{"expandCollapse", false, true};
+
+    call_or_throw(record, expanded ? "ExpandCollapsePattern.Expand" : "ExpandCollapsePattern.Collapse",
+                  [&](HRESULT* status) { return guarded_expand(pattern.Get(), expanded, status); });
+    const bool verified = poll_until([&] {
+        return read_expand_collapse_state(record, pattern.Get()) == wanted;
+    }, context);
+    return StateChange{"expandCollapse", true, verified};
+}
+
+std::optional<StateChange> select_item(const ElementRecord& record, Context& context) {
+    const auto pattern = current_pattern<IUIAutomationSelectionItemPattern>(
+        record, UIA_SelectionItemPatternId, "GetCurrentPattern(SelectionItem)");
+    if (!pattern) return std::nullopt;
+    if (read_is_selected(record, pattern.Get()) == true) return StateChange{"select", false, true};
+
+    call_or_throw(record, "SelectionItemPattern.Select",
+                  [&pattern](HRESULT* status) { return guarded_select(pattern.Get(), status); });
+    const bool verified = poll_until([&] { return read_is_selected(record, pattern.Get()) == true; }, context);
+    return StateChange{"select", true, verified};
+}
+
+} // namespace
+
+std::optional<StateChange> UiaSnapshotBuilder::set_state(ElementRecord& record, const std::string& state,
+                                                         Context& context) const {
+    context.check();
+    if (!record.element) return std::nullopt;
+    if (state == "checked" || state == "unchecked") return set_toggle_state(record, state == "checked", context);
+    if (state == "expanded" || state == "collapsed") {
+        return set_expand_collapse_state(record, state == "expanded", context);
+    }
+    if (state == "selected") return select_item(record, context);
+    throw Error("invalid_argument", "Unknown state: " + state);
+}
+
+bool UiaSnapshotBuilder::scroll_into_view(ElementRecord& record, Context& context) const {
+    context.check();
+    if (!record.element) return false;
+    const auto pattern = current_pattern<IUIAutomationScrollItemPattern>(
+        record, UIA_ScrollItemPatternId, "GetCurrentPattern(ScrollItem)");
+    if (!pattern) return false;
+    call_or_throw(record, "ScrollItemPattern.ScrollIntoView",
+                  [&pattern](HRESULT* status) { return guarded_scroll_into_view(pattern.Get(), status); });
+    return true;
 }
 
 namespace {

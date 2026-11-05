@@ -70,6 +70,7 @@ std::string string_param(const Json& params, const char* key) {
 // interleave with another agent's physical input, so these take turns.
 bool needs_physical_input(const std::string& method, const Json& params) {
     if (method.starts_with("toggle.") && method != "toggle.status") return true;
+    if (is_semantic_action(method)) return false;
     if (is_input_action(method)) return !params.value("headless", false);
     return method == "get-app-state" && params.value("activate", false);
 }

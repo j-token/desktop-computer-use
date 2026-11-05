@@ -339,6 +339,12 @@ Json modal_json(const WindowInfo& modal) {
     return Json{{"windowId", window_id(modal.hwnd)}, {"title", modal.title}, {"app", modal.app}};
 }
 
+std::string pattern_for_state(const std::string& state) {
+    if (state == "selected") return "SelectionItemPattern";
+    if (state == "expanded" || state == "collapsed") return "ExpandCollapsePattern";
+    return "TogglePattern";
+}
+
 void reject_blocked_target(const WindowInfo& target) {
     if (const auto modal = blocking_modal(target)) {
         const auto id = window_id(modal->hwnd);
@@ -1535,7 +1541,7 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
                                    Context& context) {
     if (method == "click" || method == "drag" || method == "scroll" || method == "type-text" ||
         method == "press-key" || method == "hotkey" || method == "set-value" ||
-        method == "paste-text") {
+        method == "paste-text" || method == "set-state" || method == "scroll-to") {
         const auto target = require_target_window(params);
         // Windows discards input to a disabled owner, so it would only look delivered.
         reject_blocked_target(target);
@@ -1758,6 +1764,48 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
             }
             return semanticResult("");
         }
+        // set-state and scroll-to never activate the window, even outside headless
+        // mode, because the dispatcher runs them without the physical-input turn.
+        if (method == "set-state") {
+            if (!observation) throw Error("observation_required", "set-state requires observationId");
+            auto& record = require_element(params, *observation, "elementIndex");
+            const auto state = json_string(params, "state");
+            const auto change = uia_.set_state(record, state, context);
+            if (!change) {
+                throw Error("pattern_unavailable",
+                            "The target element has no " + pattern_for_state(state) + " for state " + state);
+            }
+            auto result = semanticResult(change->pattern);
+            result["state"] = state;
+            result["changed"] = change->changed;
+            result["verified"] = change->verified;
+            return result;
+        }
+        if (method == "scroll-to") {
+            if (!observation) throw Error("observation_required", "scroll-to requires observationId");
+            auto& record = require_element(params, *observation, "elementIndex");
+            if (!uia_.scroll_into_view(record, context)) {
+                throw Error("pattern_unavailable",
+                            "The target element has no ScrollItemPattern; scroll its container with scroll instead");
+            }
+            const RECT window{0, 0, targetWidth, targetHeight};
+            const auto visibleInWindow = [&] {
+                const auto bounds = uia_.visible_bounds(record.element.Get(), target.rect);
+                RECT shown{};
+                return bounds && IntersectRect(&shown, &*bounds, &window);
+            };
+            // ScrollIntoView can return before the provider publishes the new location.
+            constexpr int settleMilliseconds = 800;
+            constexpr int pollMilliseconds = 25;
+            bool visible = visibleInWindow();
+            for (int waited = 0; !visible && waited < settleMilliseconds; waited += pollMilliseconds) {
+                sleep_context(context, pollMilliseconds);
+                visible = visibleInWindow();
+            }
+            auto result = semanticResult("scrollIntoView");
+            result["visible"] = visible;
+            return result;
+        }
         if (method == "paste-text") {
             activate(target.hwnd, context);
             const auto text = wide(json_string(params, "text"));
@@ -1855,7 +1903,8 @@ Json WindowsBackend::capabilities() const {
                                {"overlay", true}, {"hotkeyStop", true},
                                {"stopKey", "Escape x2"}, {"edgeBorder", true}}},
                 {"coordinateSpace", "reduced"},
-                {"headless", {{"click", true}, {"setValue", true}, {"scroll", true}}},
+                {"headless", {{"click", true}, {"setValue", true}, {"scroll", true},
+                              {"setState", true}, {"scrollTo", true}}},
                 {"multiAgent", {{"maxAgents", 16}, {"concurrentObservation", true},
                                 {"concurrentHeadless", true}, {"physicalInput", "one at a time"}}},
                 {"defaults", {{"durationMs", 240}, {"steps", 12},

@@ -24,6 +24,12 @@ struct ScrollPosition {
     bool operator==(const ScrollPosition&) const = default;
 };
 
+struct StateChange {
+    std::string pattern;
+    bool changed = false;
+    bool verified = false;
+};
+
 struct AccessibilitySnapshot {
     Json value;
     std::vector<ElementRecord> elements;
@@ -64,6 +70,14 @@ public:
     // ValuePattern first, then RangeValuePattern for a numeric value.
     bool set_value(ElementRecord& element, const std::wstring& value,
                    Context& context) const;
+    // Puts the element in `state` (checked, unchecked, expanded, collapsed, or
+    // selected) through TogglePattern, ExpandCollapsePattern, or
+    // SelectionItemPattern, and acts only when it is not already there. nullopt
+    // when the element lacks the pattern for that state.
+    std::optional<StateChange> set_state(ElementRecord& element, const std::string& state,
+                                         Context& context) const;
+    // ScrollItemPattern.ScrollIntoView; false when the element lacks the pattern.
+    bool scroll_into_view(ElementRecord& element, Context& context) const;
 
     // Window-local bounds the provider reports now, clipped to every scrollable
     // ancestor, or nullopt once the element is gone. An observation's bounds go

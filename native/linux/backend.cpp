@@ -642,6 +642,8 @@ Json LinuxBackend::capabilities() const {
         {"click", DCU_HAVE_ATSPI != 0},
         {"setValue", DCU_HAVE_ATSPI != 0},
         {"scroll", false},
+        {"setState", false},
+        {"scrollTo", false},
     };
     // AT-SPI and Xlib are not thread-safe, so agents' operations take turns here.
     result["multiAgent"] = {
@@ -2284,6 +2286,9 @@ Json LinuxBackend::execute(const std::string& method, const Json& params, Contex
         if (method == "hotkey") return hotkey(params, context);
         if (method == "set-value") return set_value(params, context);
         if (method == "paste-text") return paste_text(params, context);
+        if (method == "set-state" || method == "scroll-to") {
+            throw Error("unsupported", method + " is not available on Linux yet; use click or scroll");
+        }
         throw Error("unsupported", "Unknown Linux backend method: " + method);
     };
     Json result = run();

@@ -258,6 +258,18 @@ int main() {
                     "another agent's toggle blocks physical input");
             require(send("click", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"}, {"elementIndex", 2}})["ok"],
                     "headless input ignores another agent's toggles");
+            require(send("set-state", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"}, {"elementIndex", 2},
+                                       {"state", "checked"}, {"headless", false}})["ok"] &&
+                        shared.lastMethod == "set-state",
+                    "set-state ignores another agent's toggles even when not headless");
+            require(send("set-state", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"}, {"elementIndex", 2},
+                                       {"state", "pressed"}})["error"]["code"] == "invalid_argument",
+                    "set-state refuses an unknown state");
+            require(send("set-state", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"}, {"elementIndex", 2}})
+                        ["error"]["code"] == "invalid_argument",
+                    "set-state requires a state");
+            require(send("scroll-to", {{"sessionId", beta}, {"app", "test"}})["error"]["code"] == "invalid_argument",
+                    "scroll-to requires an element");
             require(send("toggle.release-all", {{"sessionId", beta}})["error"]["code"] == "toggles_active",
                     "only the owner changes toggles");
             require(send("session.stop", {{"sessionId", alpha}})["error"]["code"] == "toggles_active",
@@ -318,6 +330,12 @@ int main() {
             require(send("get-app-state", {{"sessionId", beta}, {"app", "test"}})["ok"], "observation runs during physical input");
             require(send("click", {{"sessionId", beta}, {"app", "test"}, {"x", 1}, {"y", 1}})["error"]["code"] == "busy",
                     "physical input takes turns");
+            require(send("set-state", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"},
+                                       {"elementIndex", 1}, {"state", "expanded"}})["ok"],
+                    "set-state runs during another agent's physical input without headless");
+            require(send("scroll-to", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"},
+                                       {"elementIndex", 1}})["ok"],
+                    "scroll-to runs during another agent's physical input without headless");
             Json headlessClick;
             std::thread headless([&] {
                 headlessClick = send("click", {{"sessionId", gamma}, {"app", "test"}, {"observationId", "o"},

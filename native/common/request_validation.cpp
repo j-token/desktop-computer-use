@@ -6,13 +6,15 @@
 
 namespace dcu {
 namespace {
+const std::set<std::string> semanticActions{"set-state", "scroll-to"};
 const std::set<std::string> inputActions{
-    "click", "drag", "scroll", "type-text", "press-key", "hotkey", "set-value", "paste-text"
+    "click", "drag", "scroll", "type-text", "press-key", "hotkey", "set-value", "paste-text", "set-state", "scroll-to"
 };
 const std::set<std::string> supportedMethods{
     "doctor", "capabilities", "session.start", "session.status", "session.stop", "daemon.shutdown",
     "list-apps", "list-windows", "get-app-state", "get-full-screenshot", "click", "drag", "scroll", "type-text",
-    "press-key", "hotkey", "set-value", "paste-text", "toggle.set", "toggle.release-all", "toggle.status"
+    "press-key", "hotkey", "set-value", "paste-text", "set-state", "scroll-to",
+    "toggle.set", "toggle.release-all", "toggle.status"
 };
 const std::set<std::string> clickModifiers{
     "shift", "ctrl", "control", "alt", "option", "win", "meta", "super"
@@ -86,6 +88,7 @@ void validate_params(const std::string& method, const Json& params) {
     validate_choice(params, "observe", {"none", "screenshot", "text", "both"});
     validate_choice(params, "direction", {"up", "down", "left", "right"});
     validate_choice(params, "coords", {"reduced", "full"});
+    validate_choice(params, "state", {"checked", "unchecked", "expanded", "collapsed", "selected"});
     validate_modifiers(params);
     if (method == "toggle.set") {
         if (!params.contains("key") || canonical_toggle_key(params["key"].get<std::string>()).empty()) {
@@ -121,6 +124,10 @@ void validate_params(const std::string& method, const Json& params) {
     if ((method == "press-key" || method == "hotkey") && !params.contains("key")) throw Error("invalid_argument", "key is required");
     if (method == "set-value" && (!params.contains("elementIndex") || !params.contains("value"))) throw Error("invalid_argument", "set-value requires elementIndex and value");
     if (method == "scroll" && !params.contains("direction")) throw Error("invalid_argument", "direction is required");
+    if (method == "set-state" && (!params.contains("elementIndex") || !params.contains("state")))
+        throw Error("invalid_argument", "set-state requires elementIndex and state");
+    if (method == "scroll-to" && !params.contains("elementIndex"))
+        throw Error("invalid_argument", "scroll-to requires elementIndex");
 }
 
 void validate_headless_input(const std::string& method, const Json& params) {
@@ -146,6 +153,10 @@ void validate_headless_input(const std::string& method, const Json& params) {
 
 bool is_input_action(const std::string& method) {
     return inputActions.contains(method);
+}
+
+bool is_semantic_action(const std::string& method) {
+    return semanticActions.contains(method);
 }
 
 std::string canonical_toggle_key(const std::string& key) {

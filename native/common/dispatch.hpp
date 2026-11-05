@@ -83,6 +83,9 @@ void validate_params(const std::string& method, const Json& params);
 // user's pointer or keyboard while params["headless"] is true.
 void validate_headless_input(const std::string& method, const Json& params);
 bool is_input_action(const std::string& method);
+// An input action that only ever calls accessibility patterns, headless or not,
+// so it never takes the physical-input turn.
+bool is_semantic_action(const std::string& method);
 // Canonical toggle key name (shift, ctrl, alt, win, space), or empty when unknown.
 std::string canonical_toggle_key(const std::string& key);
 int serve(const std::string& endpoint, const std::string& token);

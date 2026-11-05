@@ -206,7 +206,25 @@ const tools: ToolDefinition[] = [
   {
     name: "dcu_set_value",
     method: "set-value",
-    description: "Set an accessibility element value and optionally observe it.",
+    description: "Set an accessibility element value and optionally observe it. An empty value clears the field.",
+    schema: { ...common }
+  },
+  {
+    name: "dcu_set_state",
+    method: "set-state",
+    description:
+      "Put an observation's elementIndex in a state through accessibility patterns: checked or unchecked " +
+      "(TogglePattern), expanded or collapsed (ExpandCollapsePattern), or selected (SelectionItemPattern). " +
+      "Acts only when the element is not already in that state and reports changed and verified. " +
+      "Never moves the pointer, keyboard, or focus, so it runs alongside other agents' physical input.",
+    schema: { ...common, state: z.enum(["checked", "unchecked", "expanded", "collapsed", "selected"]) }
+  },
+  {
+    name: "dcu_scroll_to",
+    method: "scroll-to",
+    description:
+      "Scroll an observation's elementIndex into view through ScrollItemPattern and report whether it became " +
+      "visible. Never moves the pointer, keyboard, or focus, so it runs alongside other agents' physical input.",
     schema: { ...common }
   },
   {

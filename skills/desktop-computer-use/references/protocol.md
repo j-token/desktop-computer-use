@@ -95,6 +95,19 @@ example `invoke` or `toggle`) or `delivery: "physical"`; a non-headless element 
 through Invoke is also reported as semantic. `capabilities.headless` lists what each platform
 supports.
 
+`set-state {elementIndex, state}` and `scroll-to {elementIndex}` (Windows only; Linux fails with
+`unsupported`) are always semantic, with or without `headless`: they never activate the window, never
+take the physical-input turn, and ignore other agents' toggles. `state` is `checked` or `unchecked`
+(TogglePattern, toggled at most twice so a three-state check box reaches off),
+`expanded` or `collapsed` (ExpandCollapsePattern; a leaf node fails), or `selected`
+(SelectionItemPattern). The element is changed only when it is not already in that state, and the
+state is read back for up to 600 ms. The result carries `semanticAction` (`toggle`,
+`expandCollapse`, or `select`), `state`, `changed`, and `verified`. `scroll-to` calls
+ScrollItemPattern.ScrollIntoView, waits up to 800 ms for the element to intersect the window inside
+every scrollable ancestor, and reports `visible`. A missing pattern, a refused call, or a provider
+fault fails with `pattern_unavailable`. Observation elements list `scrollItem` among their
+`patterns` when ScrollIntoView is available. `set-value` with an empty `value` clears a field.
+
 One desktop session (indicator, Esc stop, input lease) can be shared by up to 16 agent sessions.
 `session.start {multiAgent: true, agentId?}` starts or joins it; joining requires that both the
 running session and the new request use `multiAgent`, otherwise the start fails with

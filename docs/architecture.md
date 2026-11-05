@@ -30,6 +30,7 @@ Each local connection carries one authenticated UTF-8 NDJSON request and one res
 - Element indexes belong to the latest observation of the same agent session and cannot be reused after window geometry changes.
 - Scheduling uses a shared desktop lock for operations and an exclusive one for start, stop, and cleanup. Physical input (pointer, keyboard, toggles, activation) holds a separate mutex because the desktop has one pointer and keyboard. A backend that is not thread-safe (Linux AT-SPI and Xlib) also holds a backend mutex, so its operations run one at a time. Lock order is desktop, physical input, backend, state. A request that cannot get its turn within 45 seconds fails with `busy`.
 - Headless requests never take the physical-input mutex; anything that would need real input fails with `headless_unavailable` instead of falling back.
+- `set-state` and `scroll-to` only call accessibility patterns, so they skip the physical-input mutex and the toggle-owner check even without `headless`.
 - Cancellation can bypass a blocked capture or input operation; stopping one agent cancels only that agent's operation.
 - A transport failure after request bytes were written can leave a mutation outcome unknown. The client does not replay that mutation automatically.
 - Input ownership is released on normal stop, timeout, cancellation, disconnect, and process termination paths.

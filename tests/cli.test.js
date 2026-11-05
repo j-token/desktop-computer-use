@@ -190,6 +190,24 @@ test("CLI uses DCU_SESSION_ID and accepts an element index for scroll", async ()
   }
 });
 
+test("CLI rejects set-state and scroll-to without an element or a known state before sending input", async () => {
+  const cases = [
+    [["set-state", "--session-id", "s", "--app", "x", "--state", "checked"], /set-state requires --element-index/],
+    [["set-state", "--session-id", "s", "--app", "x", "--observation-id", "o", "--element-index", "2"],
+     /set-state requires --state checked\|unchecked\|expanded\|collapsed\|selected/],
+    [["set-state", "--session-id", "s", "--app", "x", "--observation-id", "o", "--element-index", "2", "--state", "on"],
+     /set-state requires --state/],
+    [["scroll-to", "--session-id", "s", "--app", "x"], /scroll-to requires --element-index/],
+    [["scroll-to", "--session-id", "s", "--observation-id", "o", "--element-index", "2"], /scroll-to requires --app or --window-id/]
+  ];
+  for (const [args, message] of cases) {
+    const { code, response } = await runCliProcess(args);
+    assert.equal(code, 1, args.join(" "));
+    assert.equal(response.error.code, "invalid_argument", args.join(" "));
+    assert.match(response.error.message, message);
+  }
+});
+
 test("CLI get-full-screenshot requires a target window and an observation ID", async () => {
   const missingId = await runCliProcess(["get-full-screenshot", "--session-id", "s", "--app", "x"]);
   assert.equal(missingId.code, 1);
