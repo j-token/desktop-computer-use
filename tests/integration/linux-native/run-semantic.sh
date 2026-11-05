@@ -136,9 +136,12 @@ act check-again "check box" Agree 0 set-state --state checked
 act expand "toggle button" Details 0 set-state --state expanded
 act collapse "toggle button" Details 0 set-state --state collapsed
 act select-row "list item" "Row 3" 0 set-state --state selected
-# Row 8 lies just below the scroll area but inside the window.
-act scroll-near "list item" "Row 8" 0 scroll-to
+# Row 10 lies wholly below the scroll area but inside the window, with real
+# extents; Row 90 is not drawn yet, so GTK gives it no usable position.
+act scroll-near "list item" "Row 10" 0 scroll-to
 act scroll-far "list item" "Row 90" 0 scroll-to
+# Kept for diagnosis: the scroll bars' values and the rows' extents after scrolling.
+run_cli after-scroll get-app-state --window-id "$WINDOW_ID" --include-text
 act option-row "list box" Rows 0 select-option --option "row 50"
 act option-combo "combo box" - 0 select-option --option medium
 act option-missing "combo box" - 0 select-option --option Huge
