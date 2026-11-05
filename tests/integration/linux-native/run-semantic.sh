@@ -48,14 +48,14 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-# Records the response and exit code under NAME and never fails the script, so
-# expected errors reach the validator.
+# Records the uncompacted response and exit code under NAME and never fails the
+# script, so expected errors reach the validator.
 run_cli() {
   local name="$1"
   shift
   printf '%s\n' "$name: $*" >> "$RESULTS_DIR/commands.log"
   set +e
-  "$NODE_BIN" "$DCU_CLI" "$@" >"$RESULTS_DIR/$name.json" 2>"$RESULTS_DIR/$name.stderr"
+  "$NODE_BIN" "$DCU_CLI" "$@" --raw >"$RESULTS_DIR/$name.json" 2>"$RESULTS_DIR/$name.stderr"
   printf '%s\n' "$?" > "$RESULTS_DIR/$name.exit"
   set -e
 }

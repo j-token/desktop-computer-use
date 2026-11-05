@@ -87,6 +87,9 @@ jobs:
             --mount type=bind,src="$PWD/.cache/semantic-results",dst=/results \
             -e DCU_RUNNER=/test/run-semantic.sh \
             dcu-linux-native-x11
+      - name: Make the results readable
+        if: always()
+        run: sudo chmod -R a+rX .cache/semantic-results
       - name: Upload semantic harness results
         if: always()
         uses: actions/upload-artifact@v4
