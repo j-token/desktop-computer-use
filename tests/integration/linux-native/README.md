@@ -58,7 +58,8 @@ directory (`$DCU_RESULTS_DIR` in the example):
 Pass `-e DCU_RUNNER=/test/run-semantic.sh` to the same `docker run` to check
 `set-state`, `scroll-to`, and `select-option` instead. It starts the GTK
 `semantic-fixture.py` (check box, expander, a 100-row list in a scrolled window,
-and two combo boxes), observes again before every action, and
+and two combo boxes), observes again with `get-app-state --include-text` before
+every action, and
 `validate-semantic.py` passes only when the fixture's own event log shows each
 change: toggled, expanded, selected row, scrolled adjustment, and active combo
 item. CI runs this as the `linux-semantic` job and uploads the results

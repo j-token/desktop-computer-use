@@ -64,7 +64,7 @@ run_cli() {
 # OBSERVATION and INDEX for the element with ROLE and NAME.
 target() {
   local name="$1" role="$2" element_name="$3" nth="${4:-0}"
-  run_cli "$name-observe" get-app-state --window-id "$WINDOW_ID" --observe text
+  run_cli "$name-observe" get-app-state --window-id "$WINDOW_ID" --include-text
   read -r OBSERVATION INDEX < <("$PYTHON_BIN" /test/find-element.py \
     "$RESULTS_DIR/$name-observe.json" "$role" "$element_name" "$nth")
 }
