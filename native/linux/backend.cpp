@@ -3294,7 +3294,7 @@ AtspiAccessible* atspi_element_for_index(const WindowInfo& window, const Json& p
     return result;
 }
 
-enum class ActionFallback { FirstAction, None };
+enum class ActionFallback { FirstAction, PreferredOnly };
 
 // Runs the first action whose name is in preferred and returns its name, or
 // nullopt when there is none (unless the fallback allows the first action) or
@@ -3380,7 +3380,7 @@ std::optional<AtspiStateChange> atspi_set_flag(AtspiAccessible* element, AtspiSt
     std::optional<std::string> performed;
     for (int toggles = 0; toggles < 2 && !reached(); ++toggles) {
         const auto before = signature();
-        const auto action = atspi_do_preferred_action(element, actions, ActionFallback::None);
+        const auto action = atspi_do_preferred_action(element, actions, ActionFallback::PreferredOnly);
         if (!action) break;
         performed = action;
         if (!atspi_wait_until([&] { return signature() != before; }, context)) break;
@@ -3405,7 +3405,7 @@ std::optional<std::string> atspi_select(AtspiAccessible* element) {
     const bool selected = atspi_select_in_parent(parent, element);
     if (parent) g_object_unref(parent);
     if (selected) return "selection";
-    return atspi_do_preferred_action(element, {"select", "click", "press", "activate"}, ActionFallback::None);
+    return atspi_do_preferred_action(element, {"select", "click", "press", "activate"}, ActionFallback::PreferredOnly);
 }
 
 std::optional<AtspiStateChange> atspi_set_selected(AtspiAccessible* element, Context& context) {
