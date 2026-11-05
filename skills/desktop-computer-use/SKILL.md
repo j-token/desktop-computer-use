@@ -90,14 +90,15 @@ by `--element-index` (left button, no modifiers), fill fields with `set-value` i
 with `headless_unavailable`; then retry with `--no-headless` only if taking over the input is
 acceptable. Results report `delivery: "semantic"` or `"physical"`.
 
-On Windows, prefer `set-state` over a click for check boxes, radio buttons, tree nodes, combo
+Prefer `set-state` over a click for check boxes, radio buttons, tree nodes, combo
 boxes, and tabs: it acts only when the element is not already in that state and reports `changed`
 and `verified`. `scroll-to` brings a list, tree, or panel item into view, even one still listed
 `offscreen` without bounds, and reports `visible`. To pick a value in a combo box, list, or tree,
 use `select-option` on the container with the item's name; it opens and closes a combo box itself
 and fails with `option_not_found` or `ambiguous_target`. Both always
 use accessibility patterns, with or without `--headless`, so they never wait for another agent's
-physical input. Without the needed pattern they fail with `pattern_unavailable`.
+physical input. Without the needed pattern they fail with `pattern_unavailable`. On Linux they
+use AT-SPI, and `select-option` finds only items already exposed (it does not open a combo box).
 
 ## Several agents at once
 

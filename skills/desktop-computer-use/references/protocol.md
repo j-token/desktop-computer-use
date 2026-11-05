@@ -95,8 +95,7 @@ example `invoke` or `toggle`) or `delivery: "physical"`; a non-headless element 
 through Invoke is also reported as semantic. `capabilities.headless` lists what each platform
 supports.
 
-`set-state {elementIndex, state}` and `scroll-to {elementIndex}` (Windows only; Linux fails with
-`unsupported`) are always semantic, with or without `headless`: they never activate the window, never
+`set-state {elementIndex, state}` and `scroll-to {elementIndex}` are always semantic, with or without `headless`: they never activate the window, never
 take the physical-input turn, and ignore other agents' toggles. `state` is `checked` or `unchecked`
 (TogglePattern, toggled at most twice so a three-state check box reaches off),
 `expanded` or `collapsed` (ExpandCollapsePattern; a leaf node fails), or `selected`
@@ -112,7 +111,7 @@ shows or the position stops moving. The result reports `visible` and `semanticAc
 (`scrollIntoView` or `scrollPattern`). An element with neither pattern nor scrollable ancestor, a
 refused call, or a provider fault fails with `pattern_unavailable`.
 
-`select-option {elementIndex, option}` (Windows only) is semantic in the same way. It selects the
+`select-option {elementIndex, option}` is semantic in the same way. It selects the
 one SelectionItemPattern descendant of the element whose name equals `option`, ignoring case. A
 collapsed container with ExpandCollapsePattern is expanded first; a Win32 combo box without it is
 opened through the Invoke of its drop-down button. Either is closed again afterwards. When no
@@ -123,6 +122,20 @@ carries `semanticAction: "select"`, `option`, `changed`, and `verified`. No matc
 selected` on one of them instead). Opening a Win32 combo box can move keyboard focus to it inside
 its window. Observation elements list `scrollItem` among their
 `patterns` when ScrollIntoView is available. `set-value` with an empty `value` clears a field.
+
+On Linux the same three methods use AT-SPI and need a build with AT-SPI
+(`capabilities.headless.setState`, `scrollTo`, `selectOption`). `checked`/`unchecked` need a
+checkable element and `expanded`/`collapsed` an expandable one; both run the element's action named
+toggle, click, press, or activate (for expansion: expand or collapse, expand or contract, toggle,
+activate, press, click), at most twice. `selected` and `select-option` select through the parent's
+(for a combo box, the combo box's) Selection interface, else the action named select, click, press,
+or activate. The state is read back for up to 600 ms, and `semanticAction` names the AT-SPI action
+or `selection`. `select-option` matches descendants that are selectable or have an item role (list,
+menu, tree, or table cell items and page tabs) and does not open a combo box or page a list, so it
+finds only items the toolkit already exposes. `scroll-to` calls Component.scroll_to, then moves the
+scroll bars of the nearest ancestor that has them: it centers an element with bounds, assuming one
+scroll bar unit per pixel as in GTK, and pages the vertical bar from the top for one without bounds.
+It reports `semanticAction` `scrollTo` or `scrollBar`, or none when the element was already shown.
 
 One desktop session (indicator, Esc stop, input lease) can be shared by up to 16 agent sessions.
 `session.start {multiAgent: true, agentId?}` starts or joins it; joining requires that both the
