@@ -15,7 +15,7 @@ RUN apt-get update && \
         libpipewire-0.3-0t64 libpng16-16t64
 # GTK reaches the AT-SPI bus through the ATK bridge, which the base image's
 # --no-install-recommends GNOME install does not guarantee.
-RUN apt-get install -y --no-install-recommends at-spi2-core libatk-adaptor
+RUN apt-get install -y --no-install-recommends at-spi2-core libatk-adaptor gir1.2-atspi-2.0
 RUN rm -rf /var/lib/apt/lists/*
 
 COPY tests/integration/linux-native/run-x11.sh /test/run-x11.sh
@@ -26,6 +26,7 @@ COPY tests/integration/linux-native/capture-root.py /test/capture-root.py
 COPY tests/integration/linux-native/validate-results.py /test/validate-results.py
 COPY tests/integration/linux-native/validate-semantic.py /test/validate-semantic.py
 COPY tests/integration/linux-native/semantic-fixture.py /test/semantic-fixture.py
+COPY tests/integration/linux-native/probe-scroll-bars.py /test/probe-scroll-bars.py
 RUN chmod 0755 /test/run-x11.sh /test/run-semantic.sh
 
 ENV HOME=/home/tester \

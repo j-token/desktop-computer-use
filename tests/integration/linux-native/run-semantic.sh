@@ -142,6 +142,9 @@ act scroll-near "list item" "Row 10" 0 scroll-to
 act scroll-far "list item" "Row 90" 0 scroll-to
 # Kept for diagnosis: the scroll bars' values and the rows' extents after scrolling.
 run_cli after-scroll get-app-state --window-id "$WINDOW_ID" --include-text
+"$PYTHON_BIN" /test/probe-scroll-bars.py "$FIXTURE_TITLE" \
+  >"$RESULTS_DIR/scroll-bar-probe.json" 2>"$RESULTS_DIR/scroll-bar-probe.stderr" || true
+mark_events scroll-bar-probe
 act option-row "list box" Rows 0 select-option --option "row 50"
 act option-combo "combo box" - 0 select-option --option medium
 act option-missing "combo box" - 0 select-option --option Huge
