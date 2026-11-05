@@ -28,6 +28,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -657,6 +658,10 @@ public:
         release_held_input();
     }
 
+    // Observations and headless actions of different agents run on their own
+    // request threads at once; the dispatcher keeps physical input, toggles,
+    // and session start/stop to one call at a time.
+    bool supports_concurrent_execute() const noexcept override { return true; }
     Json execute(const std::string& method, const Json& params, Context& context) override;
     void interrupt() noexcept override;
     void set_toggle(const std::string& key, bool down, Context& context) override;
@@ -665,6 +670,9 @@ public:
 private:
     struct Observation {
         std::string id;
+        // The agent session that took it; another agent's indexes and
+        // screenshot pixels describe what that agent saw, not this one.
+        std::string owner;
         HWND hwnd = nullptr;
         RECT rect{};
         Clock::time_point created;
@@ -691,16 +699,29 @@ private:
         WindowsBackend& owner;
         Context* context;
         ContextScope(WindowsBackend& backend, Context& value) : owner(backend), context(&value) {
-            owner.currentContext_.store(context, std::memory_order_release);
-            owner.interrupted_.store(false, std::memory_order_release);
+            std::lock_guard lock(owner.contextsMutex_);
+            owner.runningContexts_.insert(context);
         }
-        ~ContextScope() { owner.currentContext_.store(nullptr, std::memory_order_release); }
+        ~ContextScope() {
+            std::lock_guard lock(owner.contextsMutex_);
+            owner.runningContexts_.erase(context);
+        }
+    };
+
+    // Layout changes an input caused, which the next accessibility observation
+    // of that window waits for unless a scroll already confirmed them. The
+    // watcher is armed before the input so no event the input causes is
+    // missed, and becomes pending once the input completes.
+    struct PendingLayout {
+        std::unique_ptr<UiaChangeWatcher> watcher;
+        HWND hwnd = nullptr;
+        Clock::time_point inputAt;
     };
 
     void ensure_session(const Json& params) const;
     std::optional<WindowInfo> target_window(const Json& params) const;
     WindowInfo require_target_window(const Json& params) const;
-    Observation& require_observation(const Json& params, HWND hwnd, const RECT& rect);
+    std::shared_ptr<Observation> require_observation(const Json& params, HWND hwnd, const RECT& rect);
     ElementRecord& require_element(const Json& params, Observation& observation, const char* key);
     void purge_observations();
     void clear_observations() noexcept;
@@ -709,7 +730,8 @@ private:
     bool activate(HWND hwnd, Context& context) const;
     Json observe(const Json& params, Context& context);
     Json full_screenshot(const Json& params);
-    Json action_result();
+    Json complete_action(std::optional<PendingLayout>& armed);
+    void cancel_running_contexts() noexcept;
     std::vector<WORD> modifiers(const Json& params) const;
     void click_at(HWND hwnd, POINT point, MouseButton button, const Json& params,
                   Context& context);
@@ -732,11 +754,17 @@ private:
     void publish_input_state() noexcept;
 
     mutable std::mutex observationsMutex_;
-    std::unordered_map<std::string, Observation> observations_;
+    // Shared so an action keeps its observation alive while another agent's
+    // observation evicts it from the cache.
+    std::unordered_map<std::string, std::shared_ptr<Observation>> observations_;
     SessionIndicator indicator_;
+    // The capture keeps one frame pool for its current window, so captures
+    // take turns; the slower accessibility walk does not.
+    std::mutex captureMutex_;
     WindowCapture capture_;
     UiaSnapshotBuilder uia_;
-    std::atomic<Context*> currentContext_{nullptr};
+    std::mutex contextsMutex_;
+    std::set<Context*> runningContexts_;
     std::atomic<Context*> sessionContext_{nullptr};
     std::atomic_bool interrupted_{false};
     std::atomic_bool sessionActive_{false};
@@ -747,17 +775,8 @@ private:
     // receives the union.
     std::atomic<DWORD> heldModifiers_{0};
     std::atomic<DWORD> toggledKeys_{0};
-    // Layout changes an input caused, which the next accessibility observation
-    // of that window waits for unless a scroll already confirmed them. The
-    // watcher is armed before the input so no event the input causes is
-    // missed, and becomes pending once the input completes.
-    struct PendingLayout {
-        std::unique_ptr<UiaChangeWatcher> watcher;
-        HWND hwnd = nullptr;
-        Clock::time_point inputAt;
-    };
-    std::optional<PendingLayout> armedLayout_;
-    std::optional<PendingLayout> pendingLayout_;
+    std::mutex layoutsMutex_;
+    std::map<HWND, PendingLayout> pendingLayouts_;
     std::atomic<WORD> heldKey_{0};
     std::atomic<DWORD> heldKeyFlags_{0};
     InputWatchdog watchdog_;
@@ -872,18 +891,19 @@ void WindowsBackend::purge_observations() {
     {
         std::lock_guard lock(observationsMutex_);
         const auto evict = [&](auto it) {
-            removed.push_back(it->second.reduced.path);
-            removed.push_back(it->second.full.path);
+            removed.push_back(it->second->reduced.path);
+            removed.push_back(it->second->full.path);
             return observations_.erase(it);
         };
         for (auto it = observations_.begin(); it != observations_.end();) {
-            if (now - it->second.created > std::chrono::minutes(2)) it = evict(it);
+            if (now - it->second->created > std::chrono::minutes(2)) it = evict(it);
             else ++it;
         }
-        while (observations_.size() > 32) {
+        // Several agents share this cache, so it keeps more than one agent needs.
+        while (observations_.size() > 64) {
             const auto oldest = std::min_element(
                 observations_.begin(), observations_.end(),
-                [](const auto& a, const auto& b) { return a.second.created < b.second.created; });
+                [](const auto& a, const auto& b) { return a.second->created < b.second->created; });
             evict(oldest);
         }
     }
@@ -895,8 +915,8 @@ void WindowsBackend::clear_observations() noexcept {
     {
         std::lock_guard lock(observationsMutex_);
         for (const auto& entry : observations_) {
-            removed.push_back(entry.second.reduced.path);
-            removed.push_back(entry.second.full.path);
+            removed.push_back(entry.second->reduced.path);
+            removed.push_back(entry.second->full.path);
         }
         observations_.clear();
     }
@@ -911,10 +931,11 @@ WindowsBackend::CoordinateTransform WindowsBackend::coordinate_transform(
     std::lock_guard lock(observationsMutex_);
     if (!source) {
         // Without an observationId, pixel coordinates refer to the most recent
-        // screenshot of this window.
+        // screenshot this agent took of this window.
+        const auto owner = json_string(params, "agentSessionId");
         for (const auto& entry : observations_) {
-            const auto& candidate = entry.second;
-            if (candidate.hasScreenshot && candidate.hwnd == target.hwnd &&
+            const auto& candidate = *entry.second;
+            if (candidate.hasScreenshot && candidate.hwnd == target.hwnd && candidate.owner == owner &&
                 (!source || candidate.created > source->created)) {
                 source = &candidate;
             }
@@ -938,18 +959,22 @@ WindowsBackend::CoordinateTransform WindowsBackend::coordinate_transform(
                                image.width, image.height};
 }
 
-WindowsBackend::Observation& WindowsBackend::require_observation(const Json& params, HWND hwnd,
-                                                                   const RECT& rect) {
+std::shared_ptr<WindowsBackend::Observation> WindowsBackend::require_observation(const Json& params, HWND hwnd,
+                                                                                  const RECT& rect) {
     const auto id = json_string(params, "observationId");
     if (id.empty()) throw Error("observation_required", "An observationId is required for indexed input");
     purge_observations();
     std::lock_guard lock(observationsMutex_);
     const auto found = observations_.find(id);
     if (found == observations_.end()) throw Error("stale_observation", "Observation is missing or expired");
-    if (found->second.hwnd != hwnd || !same_rect(found->second.rect, rect) || !IsWindow(hwnd)) {
+    const auto& observation = found->second;
+    if (observation->owner != json_string(params, "agentSessionId")) {
+        throw Error("stale_observation", "Observation belongs to another agent session; observe again");
+    }
+    if (observation->hwnd != hwnd || !same_rect(observation->rect, rect) || !IsWindow(hwnd)) {
         throw Error("stale_observation", "Window geometry changed; observe again");
     }
-    return found->second;
+    return observation;
 }
 
 namespace {
@@ -1154,28 +1179,32 @@ Json WindowsBackend::observe(const Json& params, Context& context) {
     }
     // Waiting comes before the screenshot so both describe the same layout. A
     // screenshot-only observation shows the pixels as they are and never waits.
-    if (observeText && pendingLayout_ && pendingLayout_->hwnd == target.hwnd) {
-        auto pending = std::exchange(pendingLayout_, std::nullopt);
-        if (pending->watcher->watching()) {
-            const auto settleStarted = Clock::now();
-            result["layoutSettled"] =
-                wait_for_layout_to_settle(*pending->watcher, pending->inputAt, context);
-            pending.reset();
-            result["timings"]["settleMs"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-                Clock::now() - settleStarted).count();
-        }
+    std::optional<PendingLayout> pending;
+    if (observeText) {
+        std::lock_guard lock(layoutsMutex_);
+        if (auto node = pendingLayouts_.extract(target.hwnd)) pending = std::move(node.mapped());
+    }
+    if (pending && pending->watcher->watching()) {
+        const auto settleStarted = Clock::now();
+        result["layoutSettled"] = wait_for_layout_to_settle(*pending->watcher, pending->inputAt, context);
+        pending.reset();
+        result["timings"]["settleMs"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+            Clock::now() - settleStarted).count();
     }
     std::int64_t capturedAtUnixMs = 0;
     Observation observation;
     observation.id = id;
+    observation.owner = json_string(params, "agentSessionId");
     observation.hwnd = target.hwnd;
     observation.rect = target.rect;
     if (includeScreenshot) {
         const auto captureStarted = Clock::now();
+        std::unique_lock captureLock(captureMutex_);
         const auto shot = capture_.capture(target.hwnd, target.rect,
                                            private_capture_path(id, format, "-full"),
                                            private_capture_path(id, format), format, quality,
                                            maxEdge, context);
+        captureLock.unlock();
         observation.hasScreenshot = true;
         observation.mimeType = shot.mimeType;
         observation.reduced = shot.reduced;
@@ -1223,7 +1252,7 @@ Json WindowsBackend::observe(const Json& params, Context& context) {
     result["timings"]["accessibilityIncluded"] = observeText;
     {
         std::lock_guard lock(observationsMutex_);
-        observations_[id] = std::move(observation);
+        observations_[id] = std::make_shared<Observation>(std::move(observation));
     }
     return result;
 }
@@ -1238,7 +1267,10 @@ Json WindowsBackend::full_screenshot(const Json& params) {
     if (found == observations_.end()) {
         throw Error("stale_observation", "Observation is missing or expired; observe again");
     }
-    const auto& observation = found->second;
+    const auto& observation = *found->second;
+    if (observation.owner != json_string(params, "agentSessionId")) {
+        throw Error("stale_observation", "Observation belongs to another agent session; observe again");
+    }
     if (target && target->hwnd != observation.hwnd) {
         throw Error("stale_observation", "Observation belongs to a different window; observe again");
     }
@@ -1259,16 +1291,35 @@ Json WindowsBackend::full_screenshot(const Json& params) {
                 {"notice", "To click a point read from this image, pass --coords full."}};
 }
 
-Json WindowsBackend::action_result() {
+Json WindowsBackend::complete_action(std::optional<PendingLayout>& armed) {
     // The next observation must not consume a frame captured before this
     // action completed. Capture keeps this watermark independently of the
-    // serialized dispatcher so a follow-up observe can wait for a new frame.
-    capture_.mark_input_complete();
-    if (armedLayout_) {
-        armedLayout_->inputAt = Clock::now();
-        pendingLayout_ = std::exchange(armedLayout_, std::nullopt);
+    // dispatcher so a follow-up observe can wait for a new frame.
+    {
+        std::lock_guard lock(captureMutex_);
+        capture_.mark_input_complete();
+    }
+    if (armed) {
+        armed->inputAt = Clock::now();
+        constexpr std::size_t maximumPendingWindows = 8;
+        std::lock_guard lock(layoutsMutex_);
+        // Each pending entry keeps UIA event handlers registered; a window
+        // nobody observes again must not hold them forever.
+        if (pendingLayouts_.size() >= maximumPendingWindows && !pendingLayouts_.contains(armed->hwnd)) {
+            const auto oldest = std::min_element(
+                pendingLayouts_.begin(), pendingLayouts_.end(),
+                [](const auto& a, const auto& b) { return a.second.inputAt < b.second.inputAt; });
+            pendingLayouts_.erase(oldest);
+        }
+        pendingLayouts_[armed->hwnd] = std::move(*armed);
+        armed.reset();
     }
     return Json{{"delivered", true}, {"verification", {{"state", "unverified"}}}};
+}
+
+void WindowsBackend::cancel_running_contexts() noexcept {
+    std::lock_guard lock(contextsMutex_);
+    for (auto* context : runningContexts_) context->cancelled.store(true);
 }
 
 std::vector<WORD> WindowsBackend::modifiers(const Json& params) const {
@@ -1488,16 +1539,27 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
         const auto target = require_target_window(params);
         // Windows discards input to a disabled owner, so it would only look delivered.
         reject_blocked_target(target);
-        pendingLayout_.reset();
-        armedLayout_ = PendingLayout{std::make_unique<UiaChangeWatcher>(target.hwnd), target.hwnd, {}};
-        // An input that fails leaves nothing pending.
-        struct Disarm {
-            std::optional<PendingLayout>& armed;
-            ~Disarm() { armed.reset(); }
-        } disarm{armedLayout_};
+        // The dispatcher has already refused headless input that needs the real
+        // pointer or keyboard, so a headless branch below never activates the
+        // window, moves the cursor, or injects keys.
+        const bool headless = json_bool(params, "headless", false);
+        {
+            std::lock_guard lock(layoutsMutex_);
+            pendingLayouts_.erase(target.hwnd);
+        }
+        // An input that fails leaves nothing pending, because only
+        // complete_action moves the armed watcher into pendingLayouts_.
+        std::optional<PendingLayout> armed =
+            PendingLayout{std::make_unique<UiaChangeWatcher>(target.hwnd), target.hwnd, {}};
+        const auto semanticResult = [&](const std::string& action) {
+            auto result = complete_action(armed);
+            result["delivery"] = "semantic";
+            if (!action.empty()) result["semanticAction"] = action;
+            return result;
+        };
         const auto observationId = json_string(params, "observationId");
-        Observation* observation = nullptr;
-        if (!observationId.empty()) observation = &require_observation(params, target.hwnd, target.rect);
+        std::shared_ptr<Observation> observation;
+        if (!observationId.empty()) observation = require_observation(params, target.hwnd, target.rect);
         const int targetWidth = target.rect.right - target.rect.left;
         const int targetHeight = target.rect.bottom - target.rect.top;
         // x/y are screenshot pixels (reduced by default, full with coords=full).
@@ -1527,28 +1589,35 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
             if (element != params.end()) {
                 if (!observation) throw Error("observation_required", "elementIndex requires observationId");
                 auto& record = require_element(params, *observation, "elementIndex");
-                activate(target.hwnd, context);
-                if (!uia_.invoke(record, context)) {
-                    const POINT local = visible_element_center(uia_, record, target);
-                    point.x = target.rect.left + local.x;
-                    point.y = target.rect.top + local.y;
-                    click_at(target.hwnd, point, mouse_button(json_string(params, "button")), params, context);
-                    auto result = action_result();
-                    result["windowPoint"] = pointJson(local);
-                    return result;
+                if (headless) {
+                    const auto action = uia_.perform_semantic_action(record, context);
+                    if (!action) {
+                        throw Error("headless_unavailable",
+                                    "The element exposes no accessibility action (Invoke, SelectionItem, Toggle, "
+                                    "ExpandCollapse, or a LegacyIAccessible default action); pass headless false "
+                                    "to click it with the pointer");
+                    }
+                    return semanticResult(*action);
                 }
-            } else {
-                const auto transform = coordinate_transform(params, target, observation);
-                const POINT local = windowPoint("x", "y", transform);
+                activate(target.hwnd, context);
+                if (const auto action = uia_.invoke(record, context)) return semanticResult(*action);
+                const POINT local = visible_element_center(uia_, record, target);
                 point.x = target.rect.left + local.x;
                 point.y = target.rect.top + local.y;
                 click_at(target.hwnd, point, mouse_button(json_string(params, "button")), params, context);
-                auto result = action_result();
-                result["coordinateSpace"] = transform.space;
+                auto result = complete_action(armed);
                 result["windowPoint"] = pointJson(local);
                 return result;
             }
-            return action_result();
+            const auto transform = coordinate_transform(params, target, observation.get());
+            const POINT local = windowPoint("x", "y", transform);
+            point.x = target.rect.left + local.x;
+            point.y = target.rect.top + local.y;
+            click_at(target.hwnd, point, mouse_button(json_string(params, "button")), params, context);
+            auto result = complete_action(armed);
+            result["coordinateSpace"] = transform.space;
+            result["windowPoint"] = pointJson(local);
+            return result;
         }
         if (method == "drag") {
             std::optional<CoordinateTransform> transform;
@@ -1560,7 +1629,7 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
                     auto& record = require_element(params, *observation, elementKey);
                     point = visible_element_center(uia_, record, target);
                 } else {
-                    if (!transform) transform = coordinate_transform(params, target, observation);
+                    if (!transform) transform = coordinate_transform(params, target, observation.get());
                     point = windowPoint(xKey, yKey, *transform);
                 }
                 return point;
@@ -1575,7 +1644,7 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
                     std::max(0, json_int(params, "holdBeforeMs", 50)),
                     std::max(0, json_int(params, "holdAfterMs", 50)),
                     without_toggled(modifiers(params)), context);
-            auto result = action_result();
+            auto result = complete_action(armed);
             if (transform) {
                 result["coordinateSpace"] = transform->space;
                 result["windowFrom"] = pointJson(localFrom);
@@ -1584,19 +1653,53 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
             return result;
         }
         if (method == "scroll") {
+            const auto direction = lower(json_string(params, "direction", "down"));
+            const int amount = std::clamp(json_int(params, "amount", 3), -100, 100);
             POINT local{targetWidth / 2, targetHeight / 2};
             std::optional<CoordinateTransform> transform;
-            if (params.contains("x") || params.contains("y")) {
-                transform = coordinate_transform(params, target, observation);
+            ElementRecord* record = nullptr;
+            if (params.contains("elementIndex")) {
+                if (!observation) throw Error("observation_required", "elementIndex requires observationId");
+                record = &require_element(params, *observation, "elementIndex");
+            } else if (params.contains("x") || params.contains("y")) {
+                transform = coordinate_transform(params, target, observation.get());
                 local = windowPoint("x", "y", *transform);
             }
+            if (headless) {
+                const auto container = record ? uia_.scroll_container_of(record->element.Get())
+                                              : uia_.scroll_container_at({target.rect.left + local.x,
+                                                                          target.rect.top + local.y});
+                // One wheel notch scrolls three lines by default; a small increment is one line.
+                constexpr int linesPerNotch = 3;
+                const auto positionBefore = uia_.scroll_position(container.Get());
+                const bool horizontal = direction == "left" || direction == "right";
+                const bool forward = direction == "down" || direction == "right";
+                const auto applied = uia_.scroll(container.Get(), horizontal, forward,
+                                                 amount * linesPerNotch, context);
+                if (!applied) {
+                    throw Error("headless_unavailable",
+                                "No container there exposes a ScrollPattern that scrolls " +
+                                    std::string(horizontal ? "horizontally" : "vertically") +
+                                    "; pass headless false to scroll with the mouse wheel");
+                }
+                const bool settled = *applied > 0 && positionBefore &&
+                                     wait_for_scroll_to_settle(uia_, container.Get(), *positionBefore, context);
+                auto result = semanticResult("scroll");
+                // The scroll already watched its container, or nothing moved.
+                {
+                    std::lock_guard lock(layoutsMutex_);
+                    pendingLayouts_.erase(target.hwnd);
+                }
+                result["layoutSettled"] = settled;
+                if (transform) result["coordinateSpace"] = transform->space;
+                return result;
+            }
+            if (record) local = visible_element_center(uia_, *record, target);
             activate(target.hwnd, context);
             const POINT screenPoint{target.rect.left + local.x, target.rect.top + local.y};
             send_mouse_move(screenPoint.x, screenPoint.y);
             const auto container = uia_.scroll_container_at(screenPoint);
             const auto positionBefore = uia_.scroll_position(container.Get());
-            const auto direction = lower(json_string(params, "direction", "down"));
-            const int amount = std::clamp(json_int(params, "amount", 3), -100, 100);
             INPUT input{};
             input.type = INPUT_MOUSE;
             if (direction == "left" || direction == "right") {
@@ -1613,12 +1716,15 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
             if (positionBefore) {
                 layoutSettled = wait_for_scroll_to_settle(uia_, container.Get(), *positionBefore, context);
             }
-            auto result = action_result();
+            auto result = complete_action(armed);
             if (transform) result["coordinateSpace"] = transform->space;
             result["windowPoint"] = pointJson(local);
             if (layoutSettled) {
                 // The scroll already watched its container for up to a second.
-                pendingLayout_.reset();
+                {
+                    std::lock_guard lock(layoutsMutex_);
+                    pendingLayouts_.erase(target.hwnd);
+                }
                 result["layoutSettled"] = *layoutSettled;
             }
             return result;
@@ -1633,23 +1739,24 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
             }
             activate(target.hwnd, context);
             send_text(json_string(params, "text"), context);
-            return action_result();
+            return complete_action(armed);
         }
         if (method == "press-key" || method == "hotkey") {
             activate(target.hwnd, context);
             std::string chord = json_string(params, "key");
             if (chord.empty()) chord = json_string(params, "keys");
             send_chord(chord, context);
-            return action_result();
+            return complete_action(armed);
         }
         if (method == "set-value") {
             if (!observation) throw Error("observation_required", "set-value requires observationId");
             auto& record = require_element(params, *observation, "elementIndex");
-            activate(target.hwnd, context);
+            if (!headless) activate(target.hwnd, context);
             if (!uia_.set_value(record, wide(json_string(params, "value")), context)) {
-                throw Error("pattern_unavailable", "The target element has no ValuePattern");
+                throw Error("pattern_unavailable",
+                            "The target element has no writable ValuePattern or, for a number, RangeValuePattern");
             }
-            return action_result();
+            return semanticResult("");
         }
         if (method == "paste-text") {
             activate(target.hwnd, context);
@@ -1692,7 +1799,7 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
                 }
                 CloseClipboard();
             }
-            return action_result();
+            return complete_action(armed);
         }
     }
     throw Error("unsupported_method", "Unsupported Windows computer-use method: " + method);
@@ -1748,6 +1855,9 @@ Json WindowsBackend::capabilities() const {
                                {"overlay", true}, {"hotkeyStop", true},
                                {"stopKey", "Escape x2"}, {"edgeBorder", true}}},
                 {"coordinateSpace", "reduced"},
+                {"headless", {{"click", true}, {"setValue", true}, {"scroll", true}}},
+                {"multiAgent", {{"maxAgents", 16}, {"concurrentObservation", true},
+                                {"concurrentHeadless", true}, {"physicalInput", "one at a time"}}},
                 {"defaults", {{"durationMs", 240}, {"steps", 12},
                                {"holdBeforeMs", 50}, {"holdAfterMs", 50},
                                {"quality", 85}, {"maxEdge", 0}}}};
@@ -1756,24 +1866,28 @@ Json WindowsBackend::capabilities() const {
 void WindowsBackend::stop_session() noexcept {
     sessionActive_.store(false, std::memory_order_release);
     interrupted_.store(true, std::memory_order_release);
-    if (auto* context = currentContext_.load(std::memory_order_acquire)) context->cancelled.store(true);
+    cancel_running_contexts();
     if (auto* context = sessionContext_.load(std::memory_order_acquire)) context->cancelled.store(true);
     release_held_input();
     indicator_.stop();
     clear_observations();
-    pendingLayout_.reset();
+    {
+        std::lock_guard lock(layoutsMutex_);
+        pendingLayouts_.clear();
+    }
     {
         std::lock_guard lock(observationsMutex_);
         sessionId_.clear();
         sessionContext_.store(nullptr, std::memory_order_release);
     }
+    std::lock_guard lock(captureMutex_);
     capture_.reset();
 }
 
 void WindowsBackend::on_stop_key() noexcept {
     sessionActive_.store(false, std::memory_order_release);
     interrupted_.store(true, std::memory_order_release);
-    if (auto* context = currentContext_.load(std::memory_order_acquire)) context->cancelled.store(true);
+    cancel_running_contexts();
     if (auto* context = sessionContext_.load(std::memory_order_acquire)) context->cancelled.store(true);
     release_held_input();
 }
@@ -1891,7 +2005,7 @@ void WindowsBackend::release_toggles() noexcept {
 
 void WindowsBackend::interrupt() noexcept {
     interrupted_.store(true, std::memory_order_release);
-    if (auto* context = currentContext_.load(std::memory_order_acquire)) context->cancelled.store(true);
+    cancel_running_contexts();
     if (auto* context = sessionContext_.load(std::memory_order_acquire)) context->cancelled.store(true);
     release_held_input();
     indicator_.request_stop_async();

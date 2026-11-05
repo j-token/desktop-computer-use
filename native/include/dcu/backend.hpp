@@ -16,10 +16,14 @@ struct Context {
     std::atomic_bool cancelled{false};
     void check() const { if (cancelled.load()) throw Error("cancelled", "Session stopped"); }
 };
-// Main daemon serializes execute(); interrupt() must be thread-safe and nonblocking.
+// The daemon serializes execute() unless supports_concurrent_execute() is true;
+// it never runs session.start or session.stop alongside another call, and it
+// runs at most one physical input (or toggle call) at a time. interrupt() must
+// be thread-safe and nonblocking, and must cancel every running call.
 class Backend {
 public:
     virtual ~Backend() = default;
+    virtual bool supports_concurrent_execute() const noexcept { return false; }
     virtual Json execute(const std::string& method, const Json& params, Context& context) = 0;
     virtual void interrupt() noexcept = 0;
     // Toggle keys stay held across requests: shift, ctrl, alt, win, space.

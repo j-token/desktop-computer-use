@@ -8,8 +8,10 @@
 #include <algorithm>
 #include <atomic>
 #include <cmath>
+#include <cwchar>
 #include <cwctype>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <winrt/base.h>
 
@@ -292,6 +294,75 @@ DWORD guarded_set_value(IUIAutomationValuePattern* pattern, BSTR value,
     return 0;
 }
 
+// A leaf node can neither expand nor collapse, so it reports E_NOTIMPL.
+DWORD guarded_expand_or_collapse(IUIAutomationExpandCollapsePattern* pattern, bool* expanded,
+                                 HRESULT* status) noexcept {
+    __try {
+        ExpandCollapseState state = ExpandCollapseState_LeafNode;
+        *status = pattern->get_CurrentExpandCollapseState(&state);
+        if (SUCCEEDED(*status)) {
+            *expanded = state != ExpandCollapseState_Expanded;
+            if (state == ExpandCollapseState_LeafNode) *status = E_NOTIMPL;
+            else *status = *expanded ? pattern->Expand() : pattern->Collapse();
+        }
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
+// Static text and plain groups expose the pattern with an empty default action,
+// and DoDefaultAction on them does nothing while reporting success.
+DWORD guarded_default_action(IUIAutomationLegacyIAccessiblePattern* pattern,
+                             HRESULT* status) noexcept {
+    __try {
+        BSTR action = nullptr;
+        *status = pattern->get_CurrentDefaultAction(&action);
+        const bool hasAction = SUCCEEDED(*status) && action && SysStringLen(action) > 0;
+        if (action) SysFreeString(action);
+        *status = hasAction ? pattern->DoDefaultAction() : E_NOTIMPL;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
+DWORD guarded_set_range_value(IUIAutomationRangeValuePattern* pattern, double value,
+                              HRESULT* status) noexcept {
+    __try {
+        *status = pattern->SetValue(value);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
+DWORD guarded_scrollable(IUIAutomationScrollPattern* pattern, BOOL* horizontal, BOOL* vertical,
+                         HRESULT* status) noexcept {
+    __try {
+        *status = pattern->get_CurrentHorizontallyScrollable(horizontal);
+        if (SUCCEEDED(*status)) *status = pattern->get_CurrentVerticallyScrollable(vertical);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
+DWORD guarded_scroll(IUIAutomationScrollPattern* pattern, ScrollAmount horizontal,
+                     ScrollAmount vertical, HRESULT* status) noexcept {
+    __try {
+        *status = pattern->Scroll(horizontal, vertical);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        *status = E_FAIL;
+        return GetExceptionCode();
+    }
+    return 0;
+}
+
 DWORD guarded_bounding_rectangle(IUIAutomationElement* element, RECT* bounds,
                                  HRESULT* status) noexcept {
     __try {
@@ -341,6 +412,86 @@ DWORD guarded_scroll_percents(IUIAutomationScrollPattern* pattern, double* horiz
     return 0;
 }
 
+enum class PatternOutcome { performed, unavailable, faulted };
+
+// `call` invokes one guarded_* helper on the pattern and returns its fault code.
+template <typename Pattern, typename Call>
+PatternOutcome call_pattern(const ElementRecord& record, PATTERNID id, const char* lookupName,
+                            const char* callName, Call call) {
+    HRESULT status = E_FAIL;
+    ComPtr<Pattern> pattern;
+    if (const DWORD fault = guarded_pattern(record.element.Get(), id, __uuidof(Pattern),
+                                            reinterpret_cast<void**>(pattern.GetAddressOf()),
+                                            &status)) {
+        report_pattern_fault(lookupName, record.description, fault);
+        return PatternOutcome::faulted;
+    }
+    if (!pattern) return PatternOutcome::unavailable;
+    if (const DWORD fault = call(pattern.Get(), &status)) {
+        report_pattern_fault(callName, record.description, fault);
+        return PatternOutcome::faulted;
+    }
+    return SUCCEEDED(status) ? PatternOutcome::performed : PatternOutcome::unavailable;
+}
+
+// A caught fault leaves the provider, and possibly this apartment, in an
+// undefined state, so the element is abandoned on the first one instead of
+// being probed with the remaining patterns.
+std::optional<std::string> perform_element_action(const ElementRecord& record, Context& context,
+                                                  bool includeExpandAndDefault) {
+    context.check();
+    if (!record.element) return std::nullopt;
+
+    auto outcome = call_pattern<IUIAutomationInvokePattern>(
+        record, UIA_InvokePatternId, "GetCurrentPattern(Invoke)", "InvokePattern.Invoke",
+        [](IUIAutomationInvokePattern* pattern, HRESULT* status) { return guarded_invoke(pattern, status); });
+    if (outcome == PatternOutcome::performed) return "invoke";
+    if (outcome == PatternOutcome::faulted) return std::nullopt;
+
+    context.check();
+    outcome = call_pattern<IUIAutomationSelectionItemPattern>(
+        record, UIA_SelectionItemPatternId, "GetCurrentPattern(SelectionItem)", "SelectionItemPattern.Select",
+        [](IUIAutomationSelectionItemPattern* pattern, HRESULT* status) { return guarded_select(pattern, status); });
+    if (outcome == PatternOutcome::performed) return "select";
+    if (outcome == PatternOutcome::faulted) return std::nullopt;
+
+    context.check();
+    outcome = call_pattern<IUIAutomationTogglePattern>(
+        record, UIA_TogglePatternId, "GetCurrentPattern(Toggle)", "TogglePattern.Toggle",
+        [](IUIAutomationTogglePattern* pattern, HRESULT* status) { return guarded_toggle(pattern, status); });
+    if (outcome == PatternOutcome::performed) return "toggle";
+    if (outcome == PatternOutcome::faulted || !includeExpandAndDefault) return std::nullopt;
+
+    context.check();
+    bool expanded = false;
+    outcome = call_pattern<IUIAutomationExpandCollapsePattern>(
+        record, UIA_ExpandCollapsePatternId, "GetCurrentPattern(ExpandCollapse)",
+        "ExpandCollapsePattern.Expand/Collapse",
+        [&expanded](IUIAutomationExpandCollapsePattern* pattern, HRESULT* status) {
+            return guarded_expand_or_collapse(pattern, &expanded, status);
+        });
+    if (outcome == PatternOutcome::performed) return expanded ? "expand" : "collapse";
+    if (outcome == PatternOutcome::faulted) return std::nullopt;
+
+    context.check();
+    outcome = call_pattern<IUIAutomationLegacyIAccessiblePattern>(
+        record, UIA_LegacyIAccessiblePatternId, "GetCurrentPattern(LegacyIAccessible)",
+        "LegacyIAccessiblePattern.DoDefaultAction",
+        [](IUIAutomationLegacyIAccessiblePattern* pattern, HRESULT* status) {
+            return guarded_default_action(pattern, status);
+        });
+    if (outcome == PatternOutcome::performed) return "defaultAction";
+    return std::nullopt;
+}
+
+std::optional<double> parse_number(const std::wstring& text) {
+    if (text.empty()) return std::nullopt;
+    wchar_t* end = nullptr;
+    const double value = std::wcstod(text.c_str(), &end);
+    if (end != text.c_str() + text.size() || !std::isfinite(value)) return std::nullopt;
+    return value;
+}
+
 } // namespace
 
 AccessibilitySnapshot UiaSnapshotBuilder::build(HWND hwnd, const RECT& windowRect,
@@ -366,7 +517,9 @@ AccessibilitySnapshot UiaSnapshotBuilder::build(HWND hwnd, const RECT& windowRec
         winrt::check_hresult(cache->AddProperty(property));
     }
     for (const PATTERNID pattern : {UIA_InvokePatternId, UIA_ValuePatternId,
-                                    UIA_SelectionItemPatternId, UIA_TogglePatternId}) {
+                                    UIA_SelectionItemPatternId, UIA_TogglePatternId,
+                                    UIA_ExpandCollapsePatternId, UIA_RangeValuePatternId,
+                                    UIA_ScrollPatternId}) {
         winrt::check_hresult(cache->AddPattern(pattern));
     }
     ComPtr<IUIAutomationCondition> condition;
@@ -416,6 +569,9 @@ AccessibilitySnapshot UiaSnapshotBuilder::build(HWND hwnd, const RECT& windowRec
         if (cached_pattern(element.Get(), UIA_ValuePatternId)) patterns.push_back("value");
         if (cached_pattern(element.Get(), UIA_SelectionItemPatternId)) patterns.push_back("select");
         if (cached_pattern(element.Get(), UIA_TogglePatternId)) patterns.push_back("toggle");
+        if (cached_pattern(element.Get(), UIA_ExpandCollapsePatternId)) patterns.push_back("expand");
+        if (cached_pattern(element.Get(), UIA_RangeValuePatternId)) patterns.push_back("range");
+        if (cached_pattern(element.Get(), UIA_ScrollPatternId)) patterns.push_back("scroll");
         description["patterns"] = std::move(patterns);
 
         const auto runtimeId = get_runtime_id(element.Get());
@@ -440,91 +596,40 @@ AccessibilitySnapshot UiaSnapshotBuilder::build(HWND hwnd, const RECT& windowRec
     return result;
 }
 
-// A caught fault leaves the provider, and possibly this apartment, in an
-// undefined state, so the element is abandoned on the first one instead of
-// being probed with the remaining patterns.  Returning false is what lets the
-// caller fall back to synthetic input at the element's coordinates.
-bool UiaSnapshotBuilder::invoke(ElementRecord& record, Context& context) const {
-    context.check();
-    if (!record.element) return false;
-    HRESULT status = E_FAIL;
+std::optional<std::string> UiaSnapshotBuilder::invoke(ElementRecord& record, Context& context) const {
+    return perform_element_action(record, context, false);
+}
 
-    ComPtr<IUIAutomationInvokePattern> invokePattern;
-    if (const DWORD fault = guarded_pattern(record.element.Get(), UIA_InvokePatternId,
-                                            __uuidof(IUIAutomationInvokePattern),
-                                            reinterpret_cast<void**>(invokePattern.GetAddressOf()),
-                                            &status)) {
-        report_pattern_fault("GetCurrentPattern(Invoke)", record.description, fault);
-        return false;
-    }
-    if (invokePattern) {
-        if (const DWORD fault = guarded_invoke(invokePattern.Get(), &status)) {
-            report_pattern_fault("InvokePattern.Invoke", record.description, fault);
-            return false;
-        }
-        if (SUCCEEDED(status)) return true;
-    }
-
-    context.check();
-    ComPtr<IUIAutomationSelectionItemPattern> selection;
-    if (const DWORD fault = guarded_pattern(record.element.Get(), UIA_SelectionItemPatternId,
-                                            __uuidof(IUIAutomationSelectionItemPattern),
-                                            reinterpret_cast<void**>(selection.GetAddressOf()),
-                                            &status)) {
-        report_pattern_fault("GetCurrentPattern(SelectionItem)", record.description, fault);
-        return false;
-    }
-    if (selection) {
-        if (const DWORD fault = guarded_select(selection.Get(), &status)) {
-            report_pattern_fault("SelectionItemPattern.Select", record.description, fault);
-            return false;
-        }
-        if (SUCCEEDED(status)) return true;
-    }
-
-    context.check();
-    ComPtr<IUIAutomationTogglePattern> toggle;
-    if (const DWORD fault = guarded_pattern(record.element.Get(), UIA_TogglePatternId,
-                                            __uuidof(IUIAutomationTogglePattern),
-                                            reinterpret_cast<void**>(toggle.GetAddressOf()),
-                                            &status)) {
-        report_pattern_fault("GetCurrentPattern(Toggle)", record.description, fault);
-        return false;
-    }
-    if (toggle) {
-        if (const DWORD fault = guarded_toggle(toggle.Get(), &status)) {
-            report_pattern_fault("TogglePattern.Toggle", record.description, fault);
-            return false;
-        }
-        if (SUCCEEDED(status)) return true;
-    }
-    return false;
+std::optional<std::string> UiaSnapshotBuilder::perform_semantic_action(ElementRecord& record,
+                                                                       Context& context) const {
+    return perform_element_action(record, context, true);
 }
 
 bool UiaSnapshotBuilder::set_value(ElementRecord& record, const std::wstring& value,
                                    Context& context) const {
     context.check();
     if (!record.element) return false;
-    HRESULT status = E_FAIL;
-    ComPtr<IUIAutomationValuePattern> pattern;
-    if (const DWORD fault = guarded_pattern(record.element.Get(), UIA_ValuePatternId,
-                                            __uuidof(IUIAutomationValuePattern),
-                                            reinterpret_cast<void**>(pattern.GetAddressOf()),
-                                            &status)) {
-        report_pattern_fault("GetCurrentPattern(Value)", record.description, fault);
-        return false;
-    }
-    if (!pattern) return false;
-    context.check();
-    BSTR text = SysAllocString(value.c_str());
+    const std::unique_ptr<OLECHAR, decltype(&SysFreeString)> text(SysAllocString(value.c_str()),
+                                                                  &SysFreeString);
     if (!text) throw Error("out_of_memory", "Cannot allocate UIA value");
-    const DWORD fault = guarded_set_value(pattern.Get(), text, &status);
-    SysFreeString(text);
-    if (fault) {
-        report_pattern_fault("ValuePattern.SetValue", record.description, fault);
-        return false;
-    }
-    return SUCCEEDED(status);
+    const auto outcome = call_pattern<IUIAutomationValuePattern>(
+        record, UIA_ValuePatternId, "GetCurrentPattern(Value)", "ValuePattern.SetValue",
+        [&text](IUIAutomationValuePattern* pattern, HRESULT* status) {
+            return guarded_set_value(pattern, text.get(), status);
+        });
+    if (outcome == PatternOutcome::performed) return true;
+    if (outcome == PatternOutcome::faulted) return false;
+
+    // Sliders and spinners often pair a read-only ValuePattern with a writable RangeValuePattern.
+    const auto number = parse_number(value);
+    if (!number) return false;
+    context.check();
+    return call_pattern<IUIAutomationRangeValuePattern>(
+               record, UIA_RangeValuePatternId, "GetCurrentPattern(RangeValue)",
+               "RangeValuePattern.SetValue",
+               [number](IUIAutomationRangeValuePattern* pattern, HRESULT* status) {
+                   return guarded_set_range_value(pattern, *number, status);
+               }) == PatternOutcome::performed;
 }
 
 namespace {
@@ -597,6 +702,17 @@ std::optional<RECT> UiaSnapshotBuilder::visible_bounds(IUIAutomationElement* ele
                 visible.right - windowRect.left, visible.bottom - windowRect.top};
 }
 
+namespace {
+ComPtr<IUIAutomationScrollPattern> nearest_scroll_container(IUIAutomationTreeWalker* walker,
+                                                            ComPtr<IUIAutomationElement> node) {
+    for (int depth = 0; node && depth < kMaximumAncestors; ++depth) {
+        if (auto pattern = scroll_pattern_of(node.Get())) return pattern;
+        node = parent_of(walker, node.Get());
+    }
+    return nullptr;
+}
+} // namespace
+
 ComPtr<IUIAutomationScrollPattern> UiaSnapshotBuilder::scroll_container_at(POINT screenPoint) const {
     const auto automation = create_automation();
     const auto walker = control_view_walker(automation.Get());
@@ -607,11 +723,39 @@ ComPtr<IUIAutomationScrollPattern> UiaSnapshotBuilder::scroll_container_at(POINT
         FAILED(status)) {
         return nullptr;
     }
-    for (int depth = 0; node && depth < kMaximumAncestors; ++depth) {
-        if (auto pattern = scroll_pattern_of(node.Get())) return pattern;
-        node = parent_of(walker.Get(), node.Get());
+    return nearest_scroll_container(walker.Get(), std::move(node));
+}
+
+ComPtr<IUIAutomationScrollPattern> UiaSnapshotBuilder::scroll_container_of(
+    IUIAutomationElement* element) const {
+    const auto automation = create_automation();
+    const auto walker = control_view_walker(automation.Get());
+    if (!walker || !element) return nullptr;
+    return nearest_scroll_container(walker.Get(), ComPtr<IUIAutomationElement>(element));
+}
+
+std::optional<int> UiaSnapshotBuilder::scroll(IUIAutomationScrollPattern* container, bool horizontal,
+                                              bool forward, int increments, Context& context) const {
+    if (!container) return std::nullopt;
+    BOOL horizontallyScrollable = FALSE;
+    BOOL verticallyScrollable = FALSE;
+    HRESULT status = E_FAIL;
+    if (guarded_scrollable(container, &horizontallyScrollable, &verticallyScrollable, &status) ||
+        FAILED(status)) {
+        return std::nullopt;
     }
-    return nullptr;
+    if (!(horizontal ? horizontallyScrollable : verticallyScrollable)) return std::nullopt;
+    const ScrollAmount step = forward ? ScrollAmount_SmallIncrement : ScrollAmount_SmallDecrement;
+    const ScrollAmount horizontalStep = horizontal ? step : ScrollAmount_NoAmount;
+    const ScrollAmount verticalStep = horizontal ? ScrollAmount_NoAmount : step;
+    // The provider refuses an increment past the end, which ends the scroll early.
+    int applied = 0;
+    while (applied < increments) {
+        context.check();
+        if (guarded_scroll(container, horizontalStep, verticalStep, &status) || FAILED(status)) break;
+        ++applied;
+    }
+    return applied;
 }
 
 class UiaChangeWatcher::Handler final : public IUIAutomationEventHandler,

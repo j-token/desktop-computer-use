@@ -9,8 +9,11 @@ import {
   SESSIONLESS_METHODS,
   TOGGLE_KEY_ALIASES,
   WINDOW_TARGET_METHODS,
-  isValidModifiers
+  isValidModifiers,
+  sessionFileAction
 } from "./methods.js";
+
+export { sessionFileAction };
 import {
   clearSession,
   readSession,
@@ -59,6 +62,9 @@ const OPTION_DEFS: Record<string, { key: string; type: "string" | "number" | "bo
   "all": { key: "all", type: "boolean" },
   "restore-window": { key: "restoreWindow", type: "boolean" },
   "activate": { key: "activate", type: "boolean" },
+  "headless": { key: "headless", type: "boolean" },
+  "multi-agent": { key: "multiAgent", type: "boolean" },
+  "agent-id": { key: "agentId", type: "string" },
   "text-stdin": { key: "textStdin", type: "boolean" },
   "value-stdin": { key: "valueStdin", type: "boolean" },
   "timeout-ms": { key: "timeoutMs", type: "number" },
@@ -314,7 +320,12 @@ function helpText(): string {
     "  click, drag, scroll, type-text, press-key, hotkey, set-value, paste-text,",
     "  toggle on|off --key shift|ctrl|alt|win|space, toggle off --all, toggle status, mcp serve",
     "",
-    "Actions use a saved session from `session start`; pass --session-id to override it.",
+    "Actions use a saved session from `session start`; pass --session-id or set DCU_SESSION_ID to override it.",
+    "`session start --headless` makes actions use accessibility patterns that never move your pointer,",
+    "  keyboard, or focus (per action: --headless / --no-headless); type-text needs set-value instead.",
+    "`session start --multi-agent [--agent-id NAME]` lets several agents share the desktop at the same time.",
+    "  Each gets its own sessionId (not saved; pass --session-id or DCU_SESSION_ID on every command).",
+    "  `session stop --session-id ID` stops one agent; without any session ID it stops every agent.",
     "Observations are returned as JSON with a reduced screenshot path (0.5x above 1280x720).",
     "x/y coordinates are pixels of the window's latest reduced screenshot (or --observation-id).",
     "`get-full-screenshot --observation-id ID` returns the original image; click from it with --coords full.",
@@ -326,15 +337,6 @@ function helpText(): string {
     "Output is compact JSON (element/window records as one line each); --raw prints the native response.",
     "Emergency stop: press Esc twice within 1 second or run `dcu session stop`."
   ].join("\n");
-}
-
-// Decides how a native response changes the saved session file. A refused
-// stop (for example toggles_active) keeps the session file.
-export function sessionFileAction(method: string, response: NativeResponse): "write" | "clear" | undefined {
-  if (!response.ok) return undefined;
-  if (method === "session.start") return "write";
-  if (method === "session.stop") return "clear";
-  return undefined;
 }
 
 function sessionRequired(method: string): boolean {
@@ -377,8 +379,9 @@ function validateMethodParams(method: string, params: JsonObject): void {
     if (params.direction === undefined) {
       throw new DcuError("invalid_argument", "scroll requires --direction");
     }
-    if (params.x === undefined || params.y === undefined) {
-      throw new DcuError("invalid_argument", "scroll requires --x and --y");
+    const hasPoint = params.x !== undefined && params.y !== undefined;
+    if (!hasPoint && params.elementIndex === undefined) {
+      throw new DcuError("invalid_argument", "scroll requires --x and --y, or --element-index");
     }
     params.amount ??= 3;
   }
@@ -436,9 +439,13 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
     }
     const paths = resolveRuntimePaths();
     const saved = await readSession(paths);
-    const canUseSavedSession = sessionRequired(method) || method === "session.status";
-    if (canUseSavedSession && params.sessionId === undefined && saved) {
-      params.sessionId = saved.sessionId;
+    const canUseDefaultSession = sessionRequired(method) || method === "session.status";
+    const defaultSessionId = process.env.DCU_SESSION_ID || saved?.sessionId;
+    if (canUseDefaultSession && params.sessionId === undefined && defaultSessionId) {
+      params.sessionId = defaultSessionId;
+    }
+    if (method === "session.stop" && params.sessionId === undefined && process.env.DCU_SESSION_ID) {
+      params.sessionId = process.env.DCU_SESSION_ID;
     }
     validateMethodParams(method, params);
     const client = new DcuClient(paths);
@@ -450,7 +457,8 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
       output(errorToResponse(error), parsed.options);
       return 1;
     }
-    const sessionFile = sessionFileAction(method, response);
+    const requested = typeof params.sessionId === "string" ? params.sessionId : undefined;
+    const sessionFile = sessionFileAction(method, response, { requested, saved: saved?.sessionId });
     if (sessionFile === "write") {
       const result = asRecord(response.result);
       if (typeof result.sessionId === "string") await writeSession(result.sessionId, paths);

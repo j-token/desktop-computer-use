@@ -134,6 +134,9 @@ struct ObservationImage {
 
 struct ObservationRecord {
     std::string id;
+    // The agent session that took it; another agent's indexes and screenshot
+    // pixels describe what that agent saw, not this one.
+    std::string owner;
     WindowInfo window;
     Clock::time_point created;
     std::uint64_t coordinate_revision = 0;
@@ -217,6 +220,9 @@ void wait_checked(Context& context, int milliseconds);
 #if DCU_HAVE_ATSPI
 std::optional<std::array<int, 4>> atspi_rect(AtspiAccessible* node);
 AtspiAccessible* atspi_element_for_index(const WindowInfo& window, const Json& params, Context& context);
+// Runs the element's click-like AT-SPI action without the pointer or focus and
+// returns its name, or nullopt when the element has none or refuses it.
+std::optional<std::string> atspi_do_primary_action(AtspiAccessible* element);
 #endif
 }
 #if DCU_HAVE_GIO
@@ -632,6 +638,18 @@ Json LinuxBackend::capabilities() const {
         {"setValue", DCU_HAVE_ATSPI != 0},
         {"pasteText", command_exists("wl-copy") || command_exists("xclip") || command_exists("xsel")},
     };
+    result["headless"] = {
+        {"click", DCU_HAVE_ATSPI != 0},
+        {"setValue", DCU_HAVE_ATSPI != 0},
+        {"scroll", false},
+    };
+    // AT-SPI and Xlib are not thread-safe, so agents' operations take turns here.
+    result["multiAgent"] = {
+        {"maxAgents", 16},
+        {"concurrentObservation", false},
+        {"concurrentHeadless", false},
+        {"physicalInput", "one at a time"},
+    };
     result["observation"] = {
         {"screenshot", (x11_ && DCU_HAVE_JPEG) || (wayland_ && DCU_HAVE_GIO && DCU_HAVE_PIPEWIRE)},
         {"accessibility", DCU_HAVE_ATSPI != 0},
@@ -824,6 +842,9 @@ void LinuxBackend::validate_observation(const Json& params, const WindowInfo& wi
     if (id.empty()) return;
     const auto found = observations_.find(id);
     if (found == observations_.end()) throw Error("stale_observation", "Unknown observationId; observe again");
+    if (found->second.owner != string_value(params, "agentSessionId")) {
+        throw Error("stale_observation", "Observation belongs to another agent session; observe again");
+    }
     const auto& old = found->second.window;
     if (old.id != window.id || old.x != window.x || old.y != window.y ||
         old.width != window.width || old.height != window.height) {
@@ -850,7 +871,8 @@ void LinuxBackend::store_observation(ObservationRecord record) {
     const std::string id = record.id;
     observations_[id] = std::move(record);
     // Evict the oldest observations first; their screenshots go with them.
-    while (observations_.size() > 32) {
+    // Several agents share this cache, so it keeps more than one agent needs.
+    while (observations_.size() > 64) {
         const auto oldest = std::min_element(
             observations_.begin(), observations_.end(),
             [](const auto& a, const auto& b) { return a.second.created < b.second.created; });
@@ -875,9 +897,10 @@ CoordinateTransform LinuxBackend::coordinate_transform(const Json& params, const
         source = &found->second;
     } else {
         // Without an observationId, pixel coordinates refer to the most recent
-        // screenshot of this window.
+        // screenshot this agent took of this window.
+        const std::string owner = string_value(params, "agentSessionId");
         for (const auto& [_, candidate] : observations_) {
-            if (candidate.has_screenshot && candidate.window.id == window.id &&
+            if (candidate.has_screenshot && candidate.window.id == window.id && candidate.owner == owner &&
                 (!source || candidate.created > source->created)) {
                 source = &candidate;
             }
@@ -901,6 +924,9 @@ Json LinuxBackend::full_screenshot(const Json& params) {
     const auto found = observations_.find(id);
     if (found == observations_.end()) throw Error("stale_observation", "Unknown or expired observationId; observe again");
     const auto& record = found->second;
+    if (record.owner != string_value(params, "agentSessionId")) {
+        throw Error("stale_observation", "Observation belongs to another agent session; observe again");
+    }
     const std::string window_id = string_value(params, "windowId");
     if (!window_id.empty() && window_id != record.window.id) {
         throw Error("stale_observation", "Observation belongs to a different window; observe again");
@@ -1822,6 +1848,25 @@ Json LinuxBackend::click(const Json& params, Context& context) {
     WindowInfo window = select_window(params);
     window = current_window(window);
     validate_observation(params, window);
+    // The dispatcher only lets a primary click on an element through headless.
+    if (params.value("headless", false)) {
+#if DCU_HAVE_ATSPI
+        AtspiAccessible* element = atspi_element_for_index(window, params, context);
+        const auto action = atspi_do_primary_action(element);
+        g_object_unref(element);
+        if (!action) {
+            throw Error("headless_unavailable", "The element exposes no AT-SPI action; pass headless false to "
+                                                "click it with the pointer");
+        }
+        mark_input_complete();
+        Json result = action_result();
+        result["delivery"] = "semantic";
+        result["semanticAction"] = *action;
+        return result;
+#else
+        throw Error("headless_unavailable", "This build has no AT-SPI support, so it cannot click headless");
+#endif
+    }
     std::optional<CoordinateTransform> transform;
     if (!params.contains("elementIndex")) transform = coordinate_transform(params, window);
     activate(window);
@@ -1975,10 +2020,28 @@ Json LinuxBackend::drag(const Json& params, Context& context) {
 
 Json LinuxBackend::scroll(const Json& params, Context& context) {
     ensure_active(params);
+    if (params.value("headless", false)) {
+        throw Error("headless_unavailable", "AT-SPI has no directional scroll, so Linux scrolls only with the "
+                                            "pointer; pass headless false");
+    }
     WindowInfo window = current_window(select_window(params));
     validate_observation(params, window);
-    const auto transform = coordinate_transform(params, window);
-    const auto point = point_from_json(params, "x", "y", window, transform);
+    std::optional<CoordinateTransform> transform;
+    std::pair<int, int> point;
+    if (params.contains("elementIndex")) {
+#if DCU_HAVE_ATSPI
+        AtspiAccessible* element = atspi_element_for_index(window, params, context);
+        const auto rect = atspi_rect(element);
+        g_object_unref(element);
+        if (!rect) throw Error("element_not_found", "The selected accessibility element has no screen rectangle");
+        point = {rect->at(0) - window.x + rect->at(2) / 2, rect->at(1) - window.y + rect->at(3) / 2};
+#else
+        throw Error("unsupported", "This build has no AT-SPI support for element scrolling");
+#endif
+    } else {
+        transform = coordinate_transform(params, window);
+        point = point_from_json(params, "x", "y", window, *transform);
+    }
     activate(window);
     move_pointer(window.x + point.first, window.y + point.second, context, &window);
     const std::string direction = lower(string_value(params, "direction"));
@@ -1988,7 +2051,7 @@ Json LinuxBackend::scroll(const Json& params, Context& context) {
     scroll_event(std::max(1, integer(params, "amount", 3)), direction, context);
     mark_input_complete();
     Json result = action_result();
-    result["coordinateSpace"] = transform.space;
+    if (transform) result["coordinateSpace"] = transform->space;
     result["windowPoint"] = point_json(point);
     return result;
 }
@@ -2136,7 +2199,7 @@ Json LinuxBackend::set_value(const Json& params, Context& context) {
     ensure_active(params);
     WindowInfo window = current_window(select_window(params));
     validate_observation(params, window);
-    activate(window);
+    if (!params.value("headless", false)) activate(window);
     if (!params.contains("elementIndex")) throw Error("invalid_argument", "set-value requires elementIndex");
     if (!params.contains("value")) throw Error("invalid_argument", "value is required");
 #if DCU_HAVE_ATSPI
@@ -2160,7 +2223,9 @@ Json LinuxBackend::set_value(const Json& params, Context& context) {
     g_object_unref(element);
     if (!changed) throw Error("unsupported", "The selected AT-SPI element does not expose an editable value");
     mark_input_complete();
-    return action_result();
+    Json result = action_result();
+    result["delivery"] = "semantic";
+    return result;
 #else
     (void)context;
     throw Error("unsupported", "AT-SPI set-value is not available in this build");
@@ -3046,6 +3111,7 @@ Json LinuxBackend::make_observation(const Json& params, Context& context) {
     const std::string observation_id = uuid();
     ObservationRecord record;
     record.id = observation_id;
+    record.owner = string_value(params, "agentSessionId");
     // Images written before a failure below are not cached, so delete them here.
     struct PendingFiles {
         const ObservationRecord& record;
@@ -3216,6 +3282,33 @@ AtspiAccessible* atspi_element_for_index(const WindowInfo& window, const Json& p
     g_object_unref(root);
     if (!result) throw Error("element_not_found", "elementIndex is not present in the current accessibility tree");
     return result;
+}
+
+std::optional<std::string> atspi_do_primary_action(AtspiAccessible* element) {
+    AtspiAction* action = atspi_accessible_get_action_iface(element);
+    if (!action) return std::nullopt;
+    const gint count = atspi_action_get_n_actions(action, nullptr);
+    std::vector<std::string> names;
+    for (gint index = 0; index < count; ++index) {
+        gchar* name = atspi_action_get_action_name(action, index, nullptr);
+        names.push_back(name ? lower(name) : std::string{});
+        g_free(name);
+    }
+    // Toolkits name the same intent differently (GTK "click", Qt "Press",
+    // Firefox "jump" for links); the first action is the toolkit's default.
+    gint chosen = count > 0 ? 0 : -1;
+    for (const char* preferred : {"click", "press", "activate", "toggle", "jump", "open", "expand or contract"}) {
+        const auto found = std::find(names.begin(), names.end(), preferred);
+        if (found != names.end()) {
+            chosen = static_cast<gint>(found - names.begin());
+            break;
+        }
+    }
+    const bool performed = chosen >= 0 && atspi_action_do_action(action, chosen, nullptr) != FALSE;
+    g_object_unref(action);
+    if (!performed) return std::nullopt;
+    const auto& name = names[static_cast<std::size_t>(chosen)];
+    return name.empty() ? std::string("action0") : name;
 }
 } // namespace
 #endif

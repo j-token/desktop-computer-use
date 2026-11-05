@@ -61,7 +61,7 @@ dcu list-apps | list-windows --app APP | get-app-state --app APP [--include-text
 dcu get-full-screenshot --app APP --observation-id ID
 dcu click --app APP (--element-index N | --x X --y Y [--coords full]) [--modifiers shift+ctrl]
 dcu drag --app APP (--from-element-index N --to-element-index N | --from-x X --from-y Y --to-x X --to-y Y)
-dcu scroll --app APP --x X --y Y --direction up|down|left|right [--amount 3]
+dcu scroll --app APP (--x X --y Y | --element-index N) --direction up|down|left|right [--amount 3]
 dcu type-text|paste-text --app APP --text TEXT     (--text-stdin for secrets)
 dcu set-value --app APP --element-index N --value TEXT   (--value-stdin for secrets)
 dcu press-key --app APP --key KEY | hotkey --app APP --key MODIFIER+KEY
@@ -77,6 +77,24 @@ Prefer `--modifiers` on one click or drag. To hold a key across actions, `toggle
 then `toggle off --all` promptly. While held, results show `toggles` and a `notice`. `session stop`
 fails with `toggles_active` until released. `type-text` is refused while ctrl/alt/win (Windows) or
 any key (Linux) is toggled; use `paste-text`. Pressing a toggled key is refused.
+
+## Without touching the user's mouse and keyboard
+
+`session start --headless` (or `--headless` on one action) acts only through accessibility patterns:
+no pointer movement, key presses, focus, or window activation, so the user can keep working. Click
+by `--element-index` (left button, no modifiers), fill fields with `set-value` instead of
+`type-text`, and scroll by `--element-index` (Windows only). Anything that needs real input fails
+with `headless_unavailable`; then retry with `--no-headless` only if taking over the input is
+acceptable. Results report `delivery: "semantic"` or `"physical"`.
+
+## Several agents at once
+
+Each agent runs `session start --multi-agent [--agent-id NAME]` and gets its own `sessionId`. It is
+not saved, so pass `--session-id ID` on every command or set `DCU_SESSION_ID`. Observations and
+headless actions run at the same time; physical input from different agents takes turns (Linux runs
+everything in turn). `busy` means the turn did not come within 45 seconds or the same agent already
+has a request running: observe, then retry. Observation IDs and toggles belong to the agent that made
+them. `session stop --session-id ID` ends one agent; without an ID it ends every agent.
 
 ## Linux
 

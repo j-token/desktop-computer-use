@@ -8,7 +8,7 @@ Desktop Computer Use separates model reasoning from operating-system access. The
 |---|---|---|
 | Harness skill | `skills/desktop-computer-use/` | Tells the running LLM how to inspect state, choose a workflow, operate safely, and recover. |
 | CLI and MCP server | `src/` | Validates arguments, manages the local runtime, exposes JSON and MCP interfaces, and converts native screenshots to MCP image content. |
-| Common native daemon | `native/common/` | Authenticates requests, serializes operations, owns session leases, dispatches methods, and coordinates cancellation. |
+| Common native daemon | `native/common/` | Authenticates requests, schedules operations across agent sessions, owns session leases, dispatches methods, and coordinates cancellation. |
 | Platform backends | `native/windows/`, `native/linux/` | Capture the target window, read accessible controls, inject input, and implement platform permission checks. |
 | GNOME extension | `extensions/` | Shows the Linux session indicator, reports window geometry, and exposes the emergency-stop route. |
 
@@ -16,7 +16,7 @@ Desktop Computer Use separates model reasoning from operating-system access. The
 
 1. `dcu setup` creates a user-private runtime directory and authentication token. It also installs the matching GNOME extension on supported Linux desktops.
 2. The CLI starts or connects to the native daemon over a Windows named pipe or Linux Unix socket.
-3. `session start` establishes one visible input lease. Input commands without the active session ID fail closed.
+3. `session start` establishes one visible input lease. With `multiAgent`, later agents join that desktop session and each gets its own agent session ID. Input commands without an active session ID fail closed.
 4. The harness requests an observation. The backend returns window geometry, an observation ID, optional accessibility elements, and an optional screenshot path.
 5. The harness selects the next action itself.
 6. The native daemon validates the observation and target, delivers the action, and can attach a follow-up observation to the same response.
@@ -26,9 +26,11 @@ Each local connection carries one authenticated UTF-8 NDJSON request and one res
 
 ## State and ordering invariants
 
-- An action requires the current session ID.
-- Element indexes belong to the latest observation and cannot be reused after window geometry changes.
-- Native operations are serialized, while cancellation can bypass a blocked capture or input operation.
+- An action requires an active agent session ID. Observations, toggles, idle expiry, and per-agent stop belong to one agent session; the indicator, emergency stop, and input lease belong to the shared desktop session.
+- Element indexes belong to the latest observation of the same agent session and cannot be reused after window geometry changes.
+- Scheduling uses a shared desktop lock for operations and an exclusive one for start, stop, and cleanup. Physical input (pointer, keyboard, toggles, activation) holds a separate mutex because the desktop has one pointer and keyboard. A backend that is not thread-safe (Linux AT-SPI and Xlib) also holds a backend mutex, so its operations run one at a time. Lock order is desktop, physical input, backend, state. A request that cannot get its turn within 45 seconds fails with `busy`.
+- Headless requests never take the physical-input mutex; anything that would need real input fails with `headless_unavailable` instead of falling back.
+- Cancellation can bypass a blocked capture or input operation; stopping one agent cancels only that agent's operation.
 - A transport failure after request bytes were written can leave a mutation outcome unknown. The client does not replay that mutation automatically.
 - Input ownership is released on normal stop, timeout, cancellation, disconnect, and process termination paths.
 - A successful input-delivery response does not prove that the target application has finished processing or repainting. Observe again when visible final state matters.
