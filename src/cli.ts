@@ -52,6 +52,7 @@ const OPTION_DEFS: Record<string, { key: string; type: "string" | "number" | "bo
   "key": { key: "key", type: "string" },
   "value": { key: "value", type: "string" },
   "state": { key: "state", type: "string" },
+  "option": { key: "option", type: "string" },
   "include-text": { key: "includeText", type: "boolean" },
   "include-screenshot": { key: "includeScreenshot", type: "boolean" },
   "screenshot": { key: "includeScreenshot", type: "boolean" },
@@ -320,6 +321,7 @@ function helpText(): string {
     "Commands: setup, doctor, capabilities, session start|status|stop, daemon shutdown,",
     "  list-apps, list-windows, get-app-state, get-full-screenshot,",
     "  click, drag, scroll, type-text, press-key, hotkey, set-value, paste-text, set-state, scroll-to,",
+    "  select-option,",
     "  toggle on|off --key shift|ctrl|alt|win|space, toggle off --all, toggle status, mcp serve",
     "",
     "Actions use a saved session from `session start`; pass --session-id or set DCU_SESSION_ID to override it.",
@@ -327,6 +329,7 @@ function helpText(): string {
     "  keyboard, or focus (per action: --headless / --no-headless); type-text needs set-value instead.",
     "`set-state --element-index N --state checked|unchecked|expanded|collapsed|selected` and",
     "  `scroll-to --element-index N` always use accessibility patterns, so they never wait for other agents' input.",
+    "`select-option --element-index N --option NAME` selects the item named NAME in a combo box, list, or tree.",
     "`session start --multi-agent [--agent-id NAME]` lets several agents share the desktop at the same time.",
     "  Each gets its own sessionId (not saved; pass --session-id or DCU_SESSION_ID on every command).",
     "  `session stop --session-id ID` stops one agent; without any session ID it stops every agent.",
@@ -409,6 +412,12 @@ function validateMethodParams(method: string, params: JsonObject): void {
   }
   if (method === "scroll-to" && params.elementIndex === undefined) {
     throw new DcuError("invalid_argument", "scroll-to requires --element-index");
+  }
+  if (method === "select-option") {
+    if (params.elementIndex === undefined) throw new DcuError("invalid_argument", "select-option requires --element-index");
+    if (typeof params.option !== "string" || params.option === "") {
+      throw new DcuError("invalid_argument", "select-option requires --option NAME");
+    }
   }
 }
 

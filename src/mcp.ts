@@ -220,6 +220,16 @@ const tools: ToolDefinition[] = [
     schema: { ...common, state: z.enum(["checked", "unchecked", "expanded", "collapsed", "selected"]) }
   },
   {
+    name: "dcu_select_option",
+    method: "select-option",
+    description:
+      "Select the item named option (case-insensitive) inside an observation's elementIndex, such as a combo box, " +
+      "list, tree, or tab list, through SelectionItemPattern. A collapsed combo box is expanded and collapsed again, " +
+      "and a virtualized list is paged until the item appears. Fails with option_not_found or ambiguous_target. " +
+      "Never moves the pointer, keyboard, or focus, so it runs alongside other agents' physical input.",
+    schema: { ...common, option: z.string().min(1) }
+  },
+  {
     name: "dcu_scroll_to",
     method: "scroll-to",
     description:

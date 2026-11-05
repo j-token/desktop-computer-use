@@ -83,6 +83,11 @@ public:
     // start when it has none yet. Whether it shows, or nullopt without a
     // scrollable ancestor.
     std::optional<bool> scroll_ancestor_into_view(ElementRecord& element, Context& context) const;
+    // Selects the one SelectionItem descendant named `option` (case-insensitive):
+    // a collapsed container is expanded first and collapsed again afterwards,
+    // and a list is paged until the item is realized. Throws option_not_found
+    // or ambiguous_target.
+    StateChange select_option(ElementRecord& container, const std::wstring& option, Context& context) const;
 
     // Window-local bounds the provider reports now, clipped to every scrollable
     // ancestor, or nullopt once the element is gone. An observation's bounds go

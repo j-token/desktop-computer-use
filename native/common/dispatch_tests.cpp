@@ -336,6 +336,12 @@ int main() {
             require(send("scroll-to", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"},
                                        {"elementIndex", 1}})["ok"],
                     "scroll-to runs during another agent's physical input without headless");
+            require(send("select-option", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"},
+                                           {"elementIndex", 1}, {"option", "Medium"}})["ok"],
+                    "select-option runs during another agent's physical input without headless");
+            require(send("select-option", {{"sessionId", beta}, {"app", "test"}, {"observationId", "o"},
+                                           {"elementIndex", 1}, {"option", ""}})["error"]["code"] == "invalid_argument",
+                    "select-option refuses an empty option");
             Json headlessClick;
             std::thread headless([&] {
                 headlessClick = send("click", {{"sessionId", gamma}, {"app", "test"}, {"observationId", "o"},

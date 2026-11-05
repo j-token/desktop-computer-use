@@ -1541,7 +1541,8 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
                                    Context& context) {
     if (method == "click" || method == "drag" || method == "scroll" || method == "type-text" ||
         method == "press-key" || method == "hotkey" || method == "set-value" ||
-        method == "paste-text" || method == "set-state" || method == "scroll-to") {
+        method == "paste-text" || method == "set-state" || method == "scroll-to" ||
+        method == "select-option") {
         const auto target = require_target_window(params);
         // Windows discards input to a disabled owner, so it would only look delivered.
         reject_blocked_target(target);
@@ -1764,8 +1765,20 @@ Json WindowsBackend::handle_action(const std::string& method, const Json& params
             }
             return semanticResult("");
         }
-        // set-state and scroll-to never activate the window, even outside headless
-        // mode, because the dispatcher runs them without the physical-input turn.
+        // set-state, scroll-to, and select-option never activate the window, even
+        // outside headless mode, because the dispatcher runs them without the
+        // physical-input turn.
+        if (method == "select-option") {
+            if (!observation) throw Error("observation_required", "select-option requires observationId");
+            auto& record = require_element(params, *observation, "elementIndex");
+            const auto option = json_string(params, "option");
+            const auto change = uia_.select_option(record, wide(option), context);
+            auto result = semanticResult(change.pattern);
+            result["option"] = option;
+            result["changed"] = change.changed;
+            result["verified"] = change.verified;
+            return result;
+        }
         if (method == "set-state") {
             if (!observation) throw Error("observation_required", "set-state requires observationId");
             auto& record = require_element(params, *observation, "elementIndex");
@@ -1918,7 +1931,7 @@ Json WindowsBackend::capabilities() const {
                                {"stopKey", "Escape x2"}, {"edgeBorder", true}}},
                 {"coordinateSpace", "reduced"},
                 {"headless", {{"click", true}, {"setValue", true}, {"scroll", true},
-                              {"setState", true}, {"scrollTo", true}}},
+                              {"setState", true}, {"scrollTo", true}, {"selectOption", true}}},
                 {"multiAgent", {{"maxAgents", 16}, {"concurrentObservation", true},
                                 {"concurrentHeadless", true}, {"physicalInput", "one at a time"}}},
                 {"defaults", {{"durationMs", 240}, {"steps", 12},

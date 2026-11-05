@@ -35,6 +35,8 @@ test("MCP stdio server advertises the desktop tools", async () => {
     assert.ok(names.includes("dcu_get_app_state"));
     assert.ok(names.includes("dcu_get_full_screenshot"));
     assert.ok(names.includes("dcu_scroll_to"));
+    const selectOption = response.result.tools.find(tool => tool.name === "dcu_select_option");
+    assert.ok(selectOption?.inputSchema.required.includes("option"), "dcu_select_option requires option");
     const setState = response.result.tools.find(tool => tool.name === "dcu_set_state");
     assert.ok(setState, "dcu_set_state is advertised");
     assert.deepEqual(setState.inputSchema.properties.state.enum, ["checked", "unchecked", "expanded", "collapsed", "selected"]);

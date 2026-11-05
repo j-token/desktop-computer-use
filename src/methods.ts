@@ -53,7 +53,8 @@ export const WINDOW_TARGET_METHODS: ReadonlySet<string> = new Set([
   "set-value",
   "paste-text",
   "set-state",
-  "scroll-to"
+  "scroll-to",
+  "select-option"
 ]);
 
 export const ELEMENT_STATES: readonly string[] = ["checked", "unchecked", "expanded", "collapsed", "selected"];
