@@ -8,11 +8,9 @@ USER root
 # native daemon; the daemon itself is deliberately built outside this image.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        libxtst6 libxrandr2 libjpeg-turbo8 libatspi2.0-0 \
-        libpipewire-0.3-0 libpng16-16 || \
+        libpipewire-0.3-0 || \
     apt-get install -y --no-install-recommends \
-        libxtst6 libxrandr2 libjpeg-turbo8 libatspi2.0-0 \
-        libpipewire-0.3-0t64 libpng16-16t64
+        libpipewire-0.3-0t64
 # GTK reaches the AT-SPI bus through the ATK bridge, which the base image's
 # --no-install-recommends GNOME install does not guarantee.
 RUN apt-get install -y --no-install-recommends at-spi2-core libatk-adaptor gir1.2-atspi-2.0

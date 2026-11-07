@@ -28,22 +28,23 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build pkg-config libglib2.0-dev libx11-dev libxtst-dev libxrandr-dev libjpeg-dev libpng-dev libpipewire-0.3-dev libatspi2.0-dev nlohmann-json3-dev
-      - name: Configure Linux
+          sudo apt-get install -y build-essential libpipewire-0.3-dev dbus
+      - run: rustc --version && cargo --version
+      - run: cargo build --release --locked -p desktop-computer-use-native
+      - run: cargo test --release --locked --workspace
+      - name: Build the Linux backend without PipeWire
         if: runner.os == 'Linux'
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-      - name: Configure Windows
-        if: runner.os == 'Windows'
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
-      - run: cmake --build build --config Release --parallel 2
-      - run: ctest --test-dir build -C Release --output-on-failure
+        run: cargo build --release --locked -p dcu-linux --no-default-features
+      - name: Check the native license report
+        if: matrix.os == 'ubuntu-24.04'
+        run: node scripts/native-licenses.mjs --check
       - name: Upload native executable
         uses: actions/upload-artifact@v7
         with:
           name: native-${{ matrix.os }}
           path: |
-            build/desktop-computer-use-native
-            build/Release/desktop-computer-use-native.exe
+            target/release/desktop-computer-use-native
+            target/release/desktop-computer-use-native.exe
           if-no-files-found: error
   linux-semantic:
     # Runs set-state, scroll-to, and select-option against a GTK fixture in a
