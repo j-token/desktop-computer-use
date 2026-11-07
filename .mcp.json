@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "desktop-computer-use": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/skills/desktop-computer-use/scripts/dcu.mjs",
+        "mcp",
+        "serve"
+      ]
+    }
+  }
+}
