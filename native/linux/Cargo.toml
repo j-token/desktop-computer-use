@@ -1,0 +1,27 @@
+[package]
+name = "dcu-linux"
+description = "Linux backend: AT-SPI, X11/XTest, xdg-desktop-portal RemoteDesktop/ScreenCast, EIS, and PipeWire"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[features]
+default = ["pipewire"]
+# Wayland screen capture links libpipewire-0.3. Without it the backend still
+# builds and reports PipeWire as missing in doctor and capabilities.
+pipewire = []
+
+[target.'cfg(target_os = "linux")'.dependencies]
+async-io = "2"
+dcu-core = { path = "../core" }
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+getrandom = "0.3"
+jpeg-encoder = "0.6"
+libc = "0.2"
+parking_lot = "0.12"
+png = "0.17"
+serde = "1"
+serde_json = "1"
+x11rb = { version = "0.13", features = ["randr", "xtest"] }
+zbus = { version = "5", default-features = false, features = ["async-io"] }

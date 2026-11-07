@@ -3,7 +3,7 @@ node_modules/
 __pycache__/
 *.pyc
 build*/
-cmake-empty/
+/target/
 dist/
 artifacts/
 .cache/

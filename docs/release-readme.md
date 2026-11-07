@@ -1,6 +1,6 @@
 # Desktop Computer Use 0.1.0
 
-This package contains the standalone CLI, Windows x64 and Linux x64 native executables, and GNOME 42–50 extension archives. Node.js 22 or newer is required; no C++ SDK or Orca installation is needed.
+This package contains the standalone CLI, Windows x64 and Linux x64 native executables, and GNOME 42–50 extension archives. Node.js 22 or newer is required; no compiler toolchain or Orca installation is needed.
 
 Install in Claude Code as a plugin:
 

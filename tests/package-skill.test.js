@@ -39,7 +39,9 @@ test("full package mode requires and copies both native binaries and GNOME archi
     assert.match(bundledLicenses, /@modelcontextprotocol\/sdk@/);
     assert.match(bundledLicenses, /## zod@/);
     const nativeNotices = await readFile(join(output, "skills", "desktop-computer-use", "references", "THIRD_PARTY_NOTICES.md"), "utf8");
-    assert.match(nativeNotices, /nlohmann\/json/);
+    assert.match(nativeNotices, /NATIVE_THIRD_PARTY_LICENSES\.md/);
+    const nativeLicenses = await readFile(join(output, "skills", "desktop-computer-use", "references", "NATIVE_THIRD_PARTY_LICENSES.md"), "utf8");
+    assert.match(nativeLicenses, /## serde_json@/);
     const plugin = JSON.parse(await readFile(join(output, ".claude-plugin", "plugin.json"), "utf8"));
     assert.equal(plugin.name, "desktop-computer-use");
     const mcp = JSON.parse(await readFile(join(output, ".mcp.json"), "utf8"));

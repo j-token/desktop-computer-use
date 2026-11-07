@@ -10,7 +10,7 @@ This guide describes reproducible checks. Raw desktop evidence is runtime data: 
 |---|---|---|
 | TypeScript compile | Public and internal TypeScript types are consistent. | `npm run typecheck` |
 | Adapter suite | CLI, MCP, transport, and packaging behavior. | `npm test` |
-| Native contract suite | Authentication, sessions, dispatch, request validation, and supported platform contract tests. | CMake build followed by CTest |
+| Native contract suite | Authentication, sessions, dispatch, request validation, transport framing, and supported platform contract tests. | `cargo test --workspace` |
 | Integration harness | Real transport, extension, capture, input, or cancellation behavior in a controlled environment. | `tests/integration/` |
 | Live desktop check | Visible behavior in the target OS session, including final state and cleanup. | Manual or harness-assisted procedure below |
 
@@ -35,15 +35,16 @@ npm run typecheck
 
 ## Native contract checks
 
-Configure and build the repository, then run CTest:
+Build the workspace and run its tests:
 
 ```powershell
-cmake -S . -B build
-cmake --build build --config Release --parallel 2
-ctest --test-dir build -C Release --output-on-failure
+cargo build --workspace
+cargo test --workspace
 ```
 
-On Linux, the root build also enables the portal request-lifetime test when the required GIO development package is available. A skipped optional target must be reported as skipped rather than passed.
+The contract tests start desktop sessions against fake backends and hold the per-user input lease, so close any running daemon first.
+
+On Linux, the portal request-lifetime and transport tests start a private `dbus-daemon`, so install the `dbus` package before running them. The libei tests are ignored by default and run through `tests/integration/eis/run.sh`. Report ignored tests as skipped rather than passed.
 
 The concurrent runtime-token harness exercises first-start coordination separately:
 
@@ -53,13 +54,12 @@ node tests/integration/verify-runtime-race.mjs
 
 ## Native drag fixture
 
-`tests/integration/drag-fixture.cpp` builds a disposable window that records pointer down, movement, and release as flushed NDJSON. The Windows fixture and Linux GTK fixture use the same blue-to-green drag task.
+`tests/integration/drag-fixture/` builds a disposable Windows window that records pointer down, movement, and release as flushed NDJSON. On Linux, `tests/integration/gtk-fixture.py` records the same events for the same blue-to-green drag task.
 
-Build the fixture in its own directory:
+Build the Windows fixture, which lands at `target/release/dcu-drag-fixture.exe`:
 
 ```powershell
-cmake -S tests/integration -B build/integration
-cmake --build build/integration --config Release
+cargo build --release -p dcu-drag-fixture
 ```
 
 Use an output log outside the repository. Then:
@@ -79,7 +79,7 @@ Do not assume client-area fixture coordinates equal the backend's window-local c
 The MCP smoke needs a built native executable and a visible test window. Use the disposable drag fixture rather than a personal application:
 
 ```powershell
-$env:DCU_NATIVE_PATH = (Resolve-Path build/Release/desktop-computer-use-native.exe)
+$env:DCU_NATIVE_PATH = (Resolve-Path target/release/desktop-computer-use-native.exe)
 $env:DCU_SMOKE_WINDOW_ID = 'hwnd:123456'
 node tests/mcp-native-smoke.mjs
 ```
