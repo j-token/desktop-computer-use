@@ -1,0 +1,10 @@
+[workspace]
+resolver = "3"
+members = ["native/core", "native/daemon", "native/linux", "native/windows", "tests/integration/drag-fixture"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+# File::try_lock, which the Linux input lease uses, is stable from 1.89.
+rust-version = "1.89"
+publish = false

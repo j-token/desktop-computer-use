@@ -1,0 +1,20 @@
+[package]
+name = "desktop-computer-use-native"
+description = "Authenticated local daemon that observes and operates the desktop for the desktop-computer-use CLI"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "desktop-computer-use-native"
+path = "src/main.rs"
+
+[dependencies]
+dcu-core = { path = "../core" }
+
+[target.'cfg(windows)'.dependencies]
+dcu-windows = { path = "../windows" }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+dcu-linux = { path = "../linux" }
