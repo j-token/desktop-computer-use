@@ -8,7 +8,7 @@ Desktop Computer Use separates model reasoning from operating-system access. The
 |---|---|---|
 | Harness skill | `skills/desktop-computer-use/` | Tells the running LLM how to inspect state, choose a workflow, operate safely, and recover. |
 | CLI and MCP server | `src/` | Validates arguments, manages the local runtime, exposes JSON and MCP interfaces, and converts native screenshots to MCP image content. |
-| Common native daemon | `native/common/` | Authenticates requests, schedules operations across agent sessions, owns session leases, dispatches methods, and coordinates cancellation. |
+| Common native daemon | `native/core/`, `native/daemon/` | Authenticates requests, schedules operations across agent sessions, owns session leases, dispatches methods, and coordinates cancellation. `native/daemon/` builds the `desktop-computer-use-native` executable. |
 | Platform backends | `native/windows/`, `native/linux/` | Capture the target window, read accessible controls, inject input, and implement platform permission checks. |
 | GNOME extension | `extensions/` | Shows the Linux session indicator, reports window geometry, and exposes the emergency-stop route. |
 

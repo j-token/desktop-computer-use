@@ -8,10 +8,9 @@ All platforms require:
 
 - Node.js 22 or newer
 - npm
-- CMake 3.22 or newer
-- A C++20 compiler
+- Rust 1.89 or newer with Cargo
 
-Windows builds use Visual Studio 2022 with the Desktop development with C++ workload. Linux builds need a compiler, Ninja or Make, pkg-config, GLib/GIO, X11, XTest, XRandR, JPEG, PNG, PipeWire, AT-SPI, and nlohmann-json development packages. The GitHub Actions package list in `.github/workflows/build.yml` is the maintained Ubuntu reference.
+Windows builds use the MSVC toolchain, which needs the Visual Studio 2022 Build Tools with the Desktop development with C++ workload for the linker. Linux builds need a C toolchain and the PipeWire development package (`build-essential libpipewire-0.3-dev` on Ubuntu). CI also checks `cargo build -p dcu-linux --no-default-features`, the backend without PipeWire, which reports PipeWire as missing and cannot capture on Wayland. The GitHub Actions package list in `.github/workflows/build.yml` is the maintained Ubuntu reference.
 
 ## Build the TypeScript client and skill
 
@@ -35,17 +34,16 @@ npm run typecheck
 Configure, build, and run the native contract tests:
 
 ```powershell
-cmake -S . -B build
-cmake --build build --config Release --parallel 2
-ctest --test-dir build -C Release --output-on-failure
+cargo build --release -p desktop-computer-use-native
+cargo test --workspace
 ```
 
-Windows multi-configuration generators normally write the executable to `build/Release/desktop-computer-use-native.exe`. Single-configuration Linux generators normally write `build/desktop-computer-use-native`.
+The executable is `target/release/desktop-computer-use-native.exe` on Windows and `target/release/desktop-computer-use-native` on Linux.
 
 Set `DCU_NATIVE_PATH` while developing so the CLI uses that binary:
 
 ```powershell
-$env:DCU_NATIVE_PATH = (Resolve-Path build/Release/desktop-computer-use-native.exe)
+$env:DCU_NATIVE_PATH = (Resolve-Path target/release/desktop-computer-use-native.exe)
 node skills/desktop-computer-use/scripts/dcu.mjs doctor
 ```
 
@@ -69,12 +67,12 @@ CLI 회귀 테스트는 실제 경로뿐 아니라 디렉터리 링크를 통한
 
 `npx skills`가 만든 `.claude/skills` 등의 경로는 실제 설치 디렉터리를 가리키는 링크일 수 있습니다. Node는 기본적으로 main 모듈의 링크를 실제 경로로 해석하지만 `process.argv[1]`에는 호출 경로가 남습니다. CLI 진입점에서 이 경로들을 realpath로 해석하지 않고 URL 문자열만 비교하면 모든 명령이 출력 없이 종료 코드 `0`으로 끝날 수 있습니다. 이 증상이 발생하는 이전 설치본은 수정된 번들을 `npm run build:all`로 생성한 뒤 갱신해야 합니다.
 
-Native contract tests run through CTest as shown above. Reusable desktop and transport harnesses live under `tests/integration/`; follow [Validation](validation.md) before running anything that opens a window or sends input.
+Native contract tests run through `cargo test` as shown above. Reusable desktop and transport harnesses live under `tests/integration/`; follow [Validation](validation.md) before running anything that opens a window or sends input.
 
 The real MCP image smoke test needs a built native daemon and a visible target window:
 
 ```powershell
-$env:DCU_NATIVE_PATH = (Resolve-Path build/Release/desktop-computer-use-native.exe)
+$env:DCU_NATIVE_PATH = (Resolve-Path target/release/desktop-computer-use-native.exe)
 $env:DCU_SMOKE_WINDOW_ID = 'hwnd:123456'
 node tests/mcp-native-smoke.mjs
 ```

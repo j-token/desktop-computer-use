@@ -8,7 +8,7 @@ The LLM already running the skill observes the desktop, chooses every action, an
 
 ## What it provides
 
-- A C++20 native daemon for desktop observation and input.
+- A Rust native daemon for desktop observation and input.
 - A TypeScript CLI and MCP server over an authenticated local NDJSON transport.
 - A harness-first skill in which the running LLM makes every decision.
 - Visible session indicators and an emergency stop with `Esc` pressed twice within 1 second.
@@ -22,8 +22,7 @@ The LLM already running the skill observes the desktop, chooses every action, an
 Requirements:
 
 - Node.js 22 or newer
-- CMake 3.22 or newer
-- A C++20 compiler
+- Rust 1.89 or newer (stable toolchain with Cargo)
 
 Build the TypeScript client and the skill bundle:
 
@@ -36,20 +35,19 @@ node skills/desktop-computer-use/scripts/dcu.mjs --help
 Build and test the native daemon:
 
 ```powershell
-cmake -S . -B build
-cmake --build build --config Release --parallel 2
-ctest --test-dir build -C Release --output-on-failure
+cargo build --release -p desktop-computer-use-native
+cargo test --workspace
 ```
 
 Point the CLI at the locally built executable, then check platform readiness:
 
 ```powershell
-$env:DCU_NATIVE_PATH = (Resolve-Path build/Release/desktop-computer-use-native.exe)
+$env:DCU_NATIVE_PATH = (Resolve-Path target/release/desktop-computer-use-native.exe)
 node skills/desktop-computer-use/scripts/dcu.mjs setup
 node skills/desktop-computer-use/scripts/dcu.mjs doctor
 ```
 
-On single-configuration Linux generators, the executable is normally `build/desktop-computer-use-native`. Platform dependencies and full build commands are in [Development](docs/development.md).
+On Linux, the executable is `target/release/desktop-computer-use-native`. Platform dependencies and full build commands are in [Development](docs/development.md).
 
 ## Install
 
@@ -106,7 +104,7 @@ See [Architecture](docs/architecture.md) for component boundaries, state flow, a
 ├─ .github/              GitHub Actions and contribution templates
 ├─ docs/                 architecture, development, and validation guides
 ├─ extensions/           GNOME Shell indicator implementations and packaging
-├─ native/               shared C++ daemon plus Windows and Linux backends
+├─ native/               Rust daemon: shared core, Windows and Linux backends
 ├─ scripts/              build, packaging, and fixture-sanitizing utilities
 ├─ skills/               installable desktop-computer-use skill
 ├─ src/                  TypeScript CLI, MCP server, and transport
