@@ -63,10 +63,7 @@ const nativeSearchRoots = nativeDir ? [nativeDir] : [
   join(root, ".cache", "package-bin"),
   join(root, "dist", "native"),
   join(root, "artifacts", "native"),
-  join(root, "build", "package-bin"),
-  join(root, "build"),
-  join(root, "build-win"),
-  join(root, "build-linux")
+  join(root, "target", "release")
 ];
 const extensionSearchRoots = extensionDir ? [extensionDir] : [
   join(root, "extensions", "dist"),
@@ -184,6 +181,7 @@ if (!adaptersOnly) {
 const packagedReferences = join(skillOutput, "references");
 await mkdir(packagedReferences, { recursive: true });
 await cp(join(root, "THIRD_PARTY_NOTICES.md"), join(packagedReferences, "THIRD_PARTY_NOTICES.md"));
+await cp(join(root, "native", "THIRD_PARTY_LICENSES.md"), join(packagedReferences, "NATIVE_THIRD_PARTY_LICENSES.md"));
 await cp(
   join(root, "skills", "desktop-computer-use", "references", "THIRD_PARTY_LICENSES.md"),
   join(packagedReferences, "THIRD_PARTY_LICENSES.md")
