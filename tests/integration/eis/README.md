@@ -1,9 +1,9 @@
 # Real libei/EIS transport harness
 
 This directory contains the standalone EIS server/client checks used for the
-Linux transport. The server uses the public `libeis` API and the client links
-only to `libdl`; `libei.so.1` is loaded by `native/linux/eis_client.cpp` at
-runtime.
+Linux transport. The C fixture server uses the public `libeis` API, while
+the clients are Rust tests in `native/linux/src/eis_client_tests.rs`.
+The production Rust sender loads `libei.so.1` at runtime.
 
 The primary harness exercises the complete sender sequence: connect, seat
 capability binding, device-added/device-resumed handling, emulation start,
@@ -23,6 +23,7 @@ separately in the logged-in session.
 Run from the repository root on Ubuntu 22.04 or newer x86_64:
 
 * `build-essential` and `libei1`/`libeis1` runtime packages;
+* Rust 1.89 or newer with Cargo;
 * `libei-dev` for the test server header and linker library;
 * the extracted or installed public header directory, normally
   `/usr/include/libei-1.0`.
@@ -44,15 +45,17 @@ bash tests/integration/eis/run.sh
 The script compiles into a new directory below `${TMPDIR:-/tmp}` and prints
 that directory when it finishes, so no binaries or logs are written to the
 repository. Set `DCU_EIS_OUTPUT_DIR` to choose another external output
-directory. The minimal test-only context is in `stubs/dcu/backend.hpp`; the
-production build uses `native/include/dcu/backend.hpp`.
+directory. Cargo builds the production sender and its tests in the normal
+workspace target directory. The tests are ignored in the default unit suite
+because they require the runtime library and local fixture servers; this
+script selects and runs them explicitly.
 
 The output directory contains:
 
 * `smoke.log` — mapped absolute point, button, scroll, key, and release;
 * `multiregion.log` — global point routed to the second region without IDs;
 * `cancellation.log` — cancellation during a quiet handshake;
-* `asan-multiregion.log` — sanitized global-region run.
 
-The symbol and linkage checks are printed to standard output. Redirect the
-script output if those checks also need to be retained for a test run.
+The script asserts the server's input records, including button and key
+releases. Required runtime symbol checks are printed to standard output.
+Redirect the script output if those checks also need to be retained.
