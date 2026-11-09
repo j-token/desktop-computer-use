@@ -1,0 +1,46 @@
+{
+  "name": "desktop-computer-use",
+  "version": "0.6.0",
+  "description": "Standalone native desktop computer-use CLI and skill",
+  "author": {
+    "name": "j-token"
+  },
+  "homepage": "https://github.com/j-token/desktop-computer-use",
+  "repository": "https://github.com/j-token/desktop-computer-use",
+  "keywords": [
+    "desktop",
+    "automation",
+    "computer-use",
+    "accessibility",
+    "windows",
+    "linux"
+  ],
+  "skills": "./skills/",
+  "mcpServers": {
+    "desktop-computer-use": {
+      "command": "node",
+      "args": [
+        "./skills/desktop-computer-use/scripts/dcu.mjs",
+        "mcp",
+        "serve"
+      ],
+      "cwd": "."
+    }
+  },
+  "interface": {
+    "displayName": "Desktop Computer Use",
+    "shortDescription": "Operate native desktop apps on Windows and Linux",
+    "longDescription": "Observe native desktop applications through accessibility trees and screenshots, then act on them with paced mouse and keyboard input or headless accessibility actions through an authenticated local daemon.",
+    "developerName": "j-token",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/j-token/desktop-computer-use",
+    "defaultPrompt": [
+      "Use $desktop-computer-use to inspect and operate a visible desktop application."
+    ]
+  }
+}
