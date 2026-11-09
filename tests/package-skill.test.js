@@ -46,6 +46,14 @@ test("full package mode requires and copies both native binaries and GNOME archi
     assert.deepEqual(mcp.mcpServers["desktop-computer-use"].args, [
       "${CLAUDE_PLUGIN_ROOT}/skills/desktop-computer-use/scripts/dcu.mjs", "mcp", "serve"
     ]);
+    const codexPlugin = JSON.parse(await readFile(join(output, ".codex-plugin", "plugin.json"), "utf8"));
+    assert.equal(codexPlugin.name, "desktop-computer-use");
+    assert.equal(codexPlugin.skills, "./skills/");
+    assert.deepEqual(codexPlugin.mcpServers["desktop-computer-use"], {
+      command: "node",
+      args: ["./skills/desktop-computer-use/scripts/dcu.mjs", "mcp", "serve"],
+      cwd: "."
+    });
   } finally {
     await rm(root, { recursive: true, force: true });
   }

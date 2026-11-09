@@ -164,12 +164,12 @@ jobs:
           name: desktop-computer-use-skill
           path: dist/desktop-computer-use-skill
           if-no-files-found: error
-          # .claude-plugin/ and .mcp.json are dotfiles, which upload-artifact skips by default.
+          # .claude-plugin/, .codex-plugin/, and .mcp.json are dotfiles, which upload-artifact skips by default.
           include-hidden-files: true
   release:
-    # The release branch is the install source for the Claude Code plugin and
-    # `npx skills add`: it carries the built bundle and both native binaries,
-    # which the source branches never track.
+    # The release branch is the install source for the Claude Code and Codex
+    # plugins and `npx skills add`: it carries the built bundle and both native
+    # binaries, which the source branches never track.
     needs: [package]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
