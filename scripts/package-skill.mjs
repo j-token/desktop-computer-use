@@ -132,9 +132,9 @@ if (!adaptersOnly) {
 await runCommand(process.execPath, [join(root, "scripts", "build-skill.mjs")]);
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
-// One self-contained skill directory serves both installers: `npx skills add`
-// copies only skills/desktop-computer-use/, and the Claude Code plugin at the
-// package root discovers the same skills/*/SKILL.md.
+// One self-contained skill directory serves every installer: `npx skills add`
+// copies only skills/desktop-computer-use/, and the Claude Code and Codex
+// plugins at the package root discover the same skills/*/SKILL.md.
 const skillOutput = join(output, "skills", "desktop-computer-use");
 const skillSource = join(root, "skills", "desktop-computer-use");
 await cp(skillSource, skillOutput, {
@@ -163,6 +163,42 @@ await writeFile(join(output, ".mcp.json"), `${JSON.stringify({
       command: "node",
       args: ["${CLAUDE_PLUGIN_ROOT}/skills/desktop-computer-use/scripts/dcu.mjs", "mcp", "serve"]
     }
+  }
+}, null, 2)}
+`);
+// Codex does not expand ${CLAUDE_PLUGIN_ROOT} in .mcp.json, so its manifest
+// declares the server inline and relies on Codex resolving a relative `cwd`
+// against the installed plugin root.
+await mkdir(join(output, ".codex-plugin"), { recursive: true });
+await writeFile(join(output, ".codex-plugin", "plugin.json"), `${JSON.stringify({
+  name: "desktop-computer-use",
+  version,
+  description,
+  author: { name: "j-token" },
+  homepage: "https://github.com/j-token/desktop-computer-use",
+  repository: "https://github.com/j-token/desktop-computer-use",
+  keywords: ["desktop", "automation", "computer-use", "accessibility", "windows", "linux"],
+  skills: "./skills/",
+  mcpServers: {
+    "desktop-computer-use": {
+      command: "node",
+      args: ["./skills/desktop-computer-use/scripts/dcu.mjs", "mcp", "serve"],
+      cwd: "."
+    }
+  },
+  interface: {
+    displayName: "Desktop Computer Use",
+    shortDescription: "Operate native desktop apps on Windows and Linux",
+    longDescription: "Observe native desktop applications through accessibility trees and screenshots, " +
+      "then act on them with paced mouse and keyboard input or headless accessibility actions " +
+      "through an authenticated local daemon.",
+    developerName: "j-token",
+    category: "Productivity",
+    capabilities: ["Interactive", "Read", "Write"],
+    websiteURL: "https://github.com/j-token/desktop-computer-use",
+    defaultPrompt: [
+      "Use $desktop-computer-use to inspect and operate a visible desktop application."
+    ]
   }
 }, null, 2)}
 `);

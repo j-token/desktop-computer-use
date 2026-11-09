@@ -21,7 +21,10 @@ skills/desktop-computer-use/scripts/dcu*.mjs
 *.p12
 *.pfx
 /.codex/
-/.agents/
+/.agents/*
+!/.agents/plugins/
+/.agents/plugins/*
+!/.agents/plugins/marketplace.json
 /.claude/
 
 # Raw desktop recordings may contain private text and session identifiers.

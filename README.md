@@ -51,7 +51,7 @@ On Linux, the executable is `target/release/desktop-computer-use-native`. Platfo
 
 ## Install
 
-Both installers read the `release` branch, which CI rebuilds from `main` with the skill bundle, the Windows and Linux native binaries, and both GNOME extension archives.
+Every installer reads the `release` branch, which CI rebuilds from `main` with the skill bundle, the Windows and Linux native binaries, and both GNOME extension archives.
 
 Claude Code, as a plugin (the skill plus an MCP server that returns screenshots as images):
 
@@ -59,6 +59,15 @@ Claude Code, as a plugin (the skill plus an MCP server that returns screenshots 
 /plugin marketplace add j-token/desktop-computer-use
 /plugin install desktop-computer-use@desktop-computer-use
 ```
+
+Codex, as a plugin (the same skill and MCP server):
+
+```text
+codex plugin marketplace add j-token/desktop-computer-use
+codex plugin add desktop-computer-use@desktop-computer-use
+```
+
+The Codex desktop app also lists the plugin under the Desktop Computer Use source in its Plugins Directory once the marketplace is added.
 
 Other agents, as a skill:
 
@@ -129,7 +138,7 @@ Create an adapter-only skill package for CLI and MCP development:
 npm run package:skill -- --adapters-only
 ```
 
-A complete package (the `release` branch layout: `.claude-plugin/plugin.json`, `.mcp.json`, and a self-contained `skills/desktop-computer-use/`) also requires Windows and Linux native binaries plus both GNOME extension archives. See [Development](docs/development.md#package-the-skill) for the expected artifact layout and command.
+A complete package (the `release` branch layout: `.claude-plugin/plugin.json` and `.mcp.json` for Claude Code, `.codex-plugin/plugin.json` for Codex, and a self-contained `skills/desktop-computer-use/`) also requires Windows and Linux native binaries plus both GNOME extension archives. See [Development](docs/development.md#package-the-skill) for the expected artifact layout and command.
 
 ## Contributing
 
