@@ -1,0 +1,21 @@
+{
+  "name": "desktop-computer-use",
+  "interface": {
+    "displayName": "Desktop Computer Use"
+  },
+  "plugins": [
+    {
+      "name": "desktop-computer-use",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/j-token/desktop-computer-use.git",
+        "ref": "release"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

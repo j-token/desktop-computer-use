@@ -9,6 +9,13 @@ Install in Claude Code as a plugin:
 /plugin install desktop-computer-use@desktop-computer-use
 ```
 
+Install in Codex as a plugin:
+
+```text
+codex plugin marketplace add j-token/desktop-computer-use
+codex plugin add desktop-computer-use@desktop-computer-use
+```
+
 Install for another agent as a skill:
 
 ```text
